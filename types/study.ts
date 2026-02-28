@@ -1,18 +1,30 @@
-export type ContentType = 'text' | 'audio' | 'video' | 'dialogue';
+// src/types/study.ts
 
-export interface LessonContent {
-  type: ContentType;
-  data: string;
+// 1. New Localization Types specifically for your Afaan Oromo/Amharic platform
+export interface LocalizedContent {
+  am: string; // Amharic
+  ao: string; // Afaan Oromo
 }
 
+export interface QuizQuestion {
+  question: LocalizedContent;
+  options: LocalizedContent[];
+  correctAnswerIndex: number;
+}
+
+// 2. Updated Lesson Interface to match backend exactly
 export interface Lesson {
   _id: string;
-  frontContent: LessonContent;
-  backContent: LessonContent;
-  easeFactor?: number;
-  repetition?: number;
+  topicId: string;
+  order: number;
+  content: LocalizedContent;
+  isVerified: boolean;
+  quiz: QuizQuestion[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
+// 3. The Gamification Stats (What we WANT the backend to send eventually)
 export interface UserStats {
   lifetimeXp: number;
   seasonXp: number;
@@ -22,9 +34,18 @@ export interface UserStats {
   dailyGoalReached: boolean;
 }
 
+// 4. The actual Session Response mapping
 export interface SessionInitResponse {
   lessons: Lesson[];
-  userStats: UserStats;
+  // NOTE: Your backend is currently returning { id, role, iat, exp }. 
+  // We will type it as 'any' for a moment until you fix the backend to return real stats.
+  userStats: any; 
+  breakdown: {
+    due: number;
+    weak: number;
+    new: number;
+  };
+  total: number;
 }
 
 export interface ReviewResponse {

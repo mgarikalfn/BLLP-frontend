@@ -36,14 +36,18 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   initSession: async () => {
     set({ status: 'loading' });
     try {
-      const { lessons, userStats } = await StudyAPI.fetchSession();
+      const data = await StudyAPI.fetchSession();
+      
+      // SAFEGUARD: If backend sends a token instead of stats, inject fallback stats
+      const safeStats = data.userStats?.iat 
+        ? { lifetimeXp: 0, seasonXp: 0, level: 1, currentStreak: 0, seasonTier: 'Bronze', dailyGoalReached: false }
+        : data.userStats;
+
       set({ 
-        lessons, 
-        stats: userStats, 
-        status: lessons.length > 0 ? 'active' : 'completed',
+        lessons: data.lessons, 
+        stats: safeStats, 
+        status: data.lessons.length > 0 ? 'active' : 'completed',
         currentIndex: 0,
-        sessionXpGained: 0,
-        leveledUpThisSession: false,
         isFlipped: false
       });
     } catch (error) {
