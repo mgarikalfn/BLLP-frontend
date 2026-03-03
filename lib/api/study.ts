@@ -7,7 +7,7 @@ export const StudyAPI = {
   fetchSession: async (): Promise<SessionInitResponse> => {
     // Assuming you have an auth token mechanism (e.g., from cookies or Clerk)
     const res = await fetch(`${API_BASE}/study/session`, {
-      headers: { "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjI2Nzc0NiwiZXhwIjoxNzcyMjcxMzQ2fQ.6CA4I-QwWoWKFxCv8q4b1OjqqX0wIHgSYH-1xlI0c44` }
+      headers: { "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjU0OTc0MSwiZXhwIjoxNzcyNTUzMzQxfQ.PPmvpOakwBRa0WWnjNTZ7nJN-xfLAY9zXKVY5dHVePc` }
     });
     if (!res.ok) throw new Error("Failed to fetch session");
     return res.json();
