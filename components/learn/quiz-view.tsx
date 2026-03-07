@@ -20,7 +20,7 @@ export const QuizView = ({ quiz }: { quiz: any }) => {
     if (correct) {
       // Wait a moment so the user sees the "Correct" green state
       setTimeout(() => {
-        completeLesson("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjUzODA2OSwiZXhwIjoxNzcyNTQxNjY5fQ.s-FycEDHNPQpmLvI5Aw3Ftjy-9yvPpllKfFgv6K2QZI");
+        completeLesson("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjU1MzI3NywiZXhwIjoxNzcyNTU2ODc3fQ.IBmIS86D1AdJsppnR7skO7d-ouy4sGMPiJ89e2Ae2Sg");
         setSelectedIdx(null);
         setIsCorrect(null);
       }, 1500);

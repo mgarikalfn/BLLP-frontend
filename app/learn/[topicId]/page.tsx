@@ -14,7 +14,7 @@ export default function TopicSessionPage() {
     const init = async () => {
      
       if ( typeof topicId === "string") {
-        await startTopic(topicId, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjU0OTc0MSwiZXhwIjoxNzcyNTUzMzQxfQ.PPmvpOakwBRa0WWnjNTZ7nJN-xfLAY9zXKVY5dHVePc");
+        await startTopic(topicId, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTAzZWNhYjUzMTNiNjEwODQ2ODNhNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MjU1MzI3NywiZXhwIjoxNzcyNTU2ODc3fQ.IBmIS86D1AdJsppnR7skO7d-ouy4sGMPiJ89e2Ae2Sg");
       }
     };
 
