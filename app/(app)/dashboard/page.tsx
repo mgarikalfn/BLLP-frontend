@@ -1,35 +1,20 @@
-"use client";
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import { getDashboard } from "@/api/dashboard.api";
+import DashboardClient from "./DashboardClient";
 
-import { useDashboard } from "@/features/dashboard/useDashboard";
-import DashboardStats from "@/features/dashboard/DashboardStats";
-import DashboardProgress from "@/features/dashboard/DashboardProgress";
+export default async function DashboardPage() {
+  const queryClient = new QueryClient();
 
-export default function DashboardPage() {
-
-  const { data, loading } = useDashboard();
-
-  if (loading) {
-    return <p>Loading dashboard...</p>;
-  }
+  // Prefetching ensures the data is ready before the page hits the browser
+  await queryClient.prefetchQuery({
+    queryKey: ["dashboard"],
+    queryFn: getDashboard,
+  });
 
   return (
-    <div>
-
-      <h1 className="text-2xl font-bold mb-6">
-        Dashboard
-      </h1>
-
-      <DashboardStats
-        xp={data.xp}
-        streak={data.streak}
-        level={data.level}
-      />
-
-      <DashboardProgress
-        completedLessons={data.completedLessons}
-        totalLessons={data.totalLessons}
-      />
-
-    </div>
+    // This boundary passes the prefetched data to useQuery() inside DashboardClient
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <DashboardClient />
+    </HydrationBoundary>
   );
 }

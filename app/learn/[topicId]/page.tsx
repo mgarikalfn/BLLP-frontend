@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -41,8 +41,8 @@ export default function TopicSessionPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* We don't show the standard header here to keep user focused on learning */}
+       We don't show the standard header here to keep user focused on learning 
       <LearnRunner />
     </div>
   );
-}
+} */
