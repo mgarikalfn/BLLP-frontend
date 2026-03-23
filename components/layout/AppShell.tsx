@@ -2,32 +2,20 @@
 
 import Header from "./Header";
 import GlobalModals from "./GlobalModals";
+import MobileHeader from "./mobile-header";
 import Sidebar from "./Sidebar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
-    <div className="flex h-screen bg-gray-50">
-
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1">
-
-        {/* Header */}
-        <Header />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+    <>
+    <MobileHeader/>
+      <Sidebar className="hidden lg:flex"/>
+      <main className="lg:pl-64 h-full pt-12.5 lg:pt-0">
+        <div>
           {children}
-        </main>
-
-      </div>
-
-      {/* Global Modals */}
-      <GlobalModals />
-
-    </div>
+        </div>
+      </main>
+    </>
   );
 }

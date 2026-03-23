@@ -1,12 +1,25 @@
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
       <h1 className="text-4xl font-bold text-bird mb-8">Hello Lingo!</h1>
       
       {/* Test a "Chunky" Button manually */}
-      <button className="px-8 py-4 bg-bird text-white font-bold rounded-2xl border-b-4 border-green-700 active:border-b-0 active:translate-y-[2px] transition-all">
-        START LEARNING
-      </button>
+      <Button>Default</Button>
+      <Button variant="primary">Primary</Button>
+      <Button variant="primaryOutline">Primary Outline</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="secondaryOutline">Secondary Outline</Button>
+      <Button variant="danger">danger</Button>
+      <Button variant="dangerOutline">danger Outline</Button>
+      <Button variant="super">super</Button>
+      <Button variant="superOutline">super Outline</Button>
+      <Button variant="ghost">ghost</Button>
+      
+      <Button variant="sidebar">sidebar</Button>
+      <Button variant="sidebarOutline">sidebar Outline</Button>
+
     </main>
   );
 }

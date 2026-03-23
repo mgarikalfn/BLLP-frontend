@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 
 import { useEffect } from "react";
 import { useStudyStore } from "@/store/use-study-store";
@@ -38,13 +38,13 @@ export default function StudyPage() {
       
       <main className="flex-1 flex flex-col items-center justify-center">
         <div className="max-w-[600px] w-full px-6 h-full flex flex-col justify-center gap-y-12">
-          {/* We'll drop the LessonCard here next */}
+           We'll drop the LessonCard here next 
           <LessonCard/>
-        {/*   <div className="h-[350px] w-full bg-white border-2 border-b-8 border-slate-200 rounded-3xl flex items-center justify-center text-slate-400">
+           <div className="h-[350px] w-full bg-white border-2 border-b-8 border-slate-200 rounded-3xl flex items-center justify-center text-slate-400">
              Lesson Content Placeholder
-          </div> */}
+          </div> 
         </div>
       </main>
     </div>
   );
-}
+} */

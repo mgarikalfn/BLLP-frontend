@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ChunkyButton } from "@/components/ui/chunky-button";
+import { Button } from "@/components/ui/button";
+//import { ChunkyButton } from "@/components/ui/chunky-button";
 
 export function UnitCard({ actions, level }: { actions: any; level: number }) {
   const isReview = actions.isReviewPriority;
@@ -20,7 +21,7 @@ export function UnitCard({ actions, level }: { actions: any; level: number }) {
             <h1 className="text-3xl md:text-4xl font-black leading-tight drop-shadow-sm">
               {isReview 
                 ? "Retention Session" 
-                : `Master: "${actions.recommendedLesson?.content.am || 'Next Lesson'}"`}
+                : `Master: "${actions.recommendedLesson?.title.am || 'Next Lesson'}"`}
             </h1>
             <p className="text-lg font-bold opacity-90">
               {isReview 
@@ -30,7 +31,7 @@ export function UnitCard({ actions, level }: { actions: any; level: number }) {
           </div>
 
           <Link href={isReview ? "/review" : `/learn/${actions.recommendedLesson?._id}`}>
-            <ChunkyButton 
+            <Button 
               variant="primary" 
               className="w-full md:w-auto bg-white text-[#4b4b4b] border-[#e5e5e5] hover:bg-[#f7f7f7] text-xl px-12 py-4 mt-2"
             >
@@ -38,7 +39,7 @@ export function UnitCard({ actions, level }: { actions: any; level: number }) {
                 {isReview ? "Start Review" : "Continue Path"}
                 <ChevronRight size={24} strokeWidth={3} />
               </span>
-            </ChunkyButton>
+            </Button>
           </Link>
         </div>
       </div>

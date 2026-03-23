@@ -2,53 +2,75 @@
 
 import Link from "next/link";
 import { Home, BookOpen, Brain, Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SidebarItem } from "./sidebar-item";
+import Image from "next/image";
 
-const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Topics", href: "/topics", icon: BookOpen },
-  { name: "Study", href: "/study", icon: Brain },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-];
 
-export default function Sidebar() {
 
+
+type Props = {
+  className?: string;
+};
+
+export default function  Sidebar  ({ className }: Props)  {
   return (
-    <aside className="w-64 bg-white border-r flex flex-col">
-
-      {/* Logo */}
-      <div className="p-6 font-bold text-xl">
-        LangBridge
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-4 space-y-2">
-
-        {navItems.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100"
-          >
-            <item.icon size={18} />
-            {item.name}
-          </Link>
-        ))}
-
-      </nav>
-
-      {/* User Section */}
-      <div className="p-4 border-t">
-
-        <div className="text-sm font-medium">
-          User
+    <div className={cn(
+      "flex h-full lg:w-[256px] lg:fixed left-0 top-0 px-4 border-r-2 flex-col",
+      className,
+    )}>
+      <Link href="/learn">
+        <div className="pt-8 pl-4 pb-7 flex items-center gap-x-3">
+          <Image src="/mascot.svg" height={40} width={40} alt="Mascot" />
+          <h1 className="text-2xl font-extrabold text-green-600 tracking-wide">
+            Lingo
+          </h1>
         </div>
+      </Link>
+      <div className="flex flex-col gap-y-2 flex-1">
+         <SidebarItem
+          label="Dashboard"
+          href="/dashboard"
+          icon={Home}
+        />
 
-        <button className="text-red-500 text-sm mt-2">
-          Logout
-        </button>
+         <SidebarItem
+          label="topic"
+          href="/topic"
+          icon={BookOpen}
+        />
+       
+        <SidebarItem
+          label="Study"
+          href="/study"
+          icon={Brain}
+        />
+        <SidebarItem 
+          label="Learn" 
+          href="/learn"
+          iconSrc="/learn.svg"
+        />
+        <SidebarItem 
+          label="Leaderboard" 
+          href="/leaderboard"
+          iconSrc="/leaderboard.svg"
+        />
+       {/*  <SidebarItem 
+          label="quests" 
+          href="/quests"
+          iconSrc="/quests.svg"
+        /> */}
+       {/*  <SidebarItem 
+          label="shop" 
+          href="/shop"
+          iconSrc="/shop.svg"
+        /> */}
+       
 
       </div>
-
-    </aside>
+      <div className="p-4">
+       profileIcon
+      </div>
+    </div>
   );
-}
+};
