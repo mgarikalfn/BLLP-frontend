@@ -16,6 +16,20 @@ export const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const getErrorMessage = (error: unknown) => {
+    const responseData = (error as any)?.response?.data;
+    const message = responseData?.message ?? responseData?.error ?? responseData;
+
+    if (typeof message === "string") return message;
+    if (Array.isArray(message)) return message.join(", ");
+    if (message && typeof message === "object") {
+      const flatValues = Object.values(message).flat();
+      return flatValues.map((value) => String(value)).join(", ");
+    }
+
+    return "Something went wrong";
+  };
+
   // Initialize Form
   const {
     register,
@@ -33,13 +47,13 @@ export const SignupForm = () => {
         username: values.username,
         email: values.email,
         password: values.password,
-        targetLang: values.targetLanguage,
-        proficiency: values.proficiencyLevel,
+        targetLang: values.targetLang,
+        proficiency: values.proficiency,
       });
       
       router.push("/login");
-    } catch (err: any) {
-      setServerError(err.response?.data?.message || "Something went wrong");
+    } catch (err) {
+      setServerError(getErrorMessage(err));
     }
   };
 
@@ -65,6 +79,7 @@ export const SignupForm = () => {
         <div>
           <Input
             {...register("email")}
+            type="email"
             placeholder="ኢሜይል (Email)"
             className={`h-14 rounded-2xl border-2 ${errors.email ? 'border-red-500' : 'border-slate-200'}`}
           />
@@ -109,29 +124,29 @@ export const SignupForm = () => {
 
         <div>
           <select
-            {...register("targetLanguage")}
+            {...register("targetLang")}
             defaultValue=""
-            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.targetLanguage ? 'border-red-500' : 'border-slate-200'}`}
+            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.targetLang ? 'border-red-500' : 'border-slate-200'}`}
           >
             <option value="" disabled>የቋንቋ ይምረጡ (Select Target Language)</option>
-            <option value="amharic">Amharic (Amharic)</option>
-            <option value="oromo">Oromo (Oromo)</option>
+            <option value="AMHARIC">Amharic (Amharic)</option>
+            <option value="OROMO">Oromo (Oromo)</option>
           </select>
-          {errors.targetLanguage && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.targetLanguage.message}</p>}
+          {errors.targetLang && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.targetLang.message}</p>}
         </div>
 
         <div>
           <select
-            {...register("proficiencyLevel")}
+            {...register("proficiency")}
             defaultValue=""
-            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.proficiencyLevel ? 'border-red-500' : 'border-slate-200'}`}
+            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.proficiency ? 'border-red-500' : 'border-slate-200'}`}
           >
             <option value="" disabled>የቋንቋ ደረጃ ይምረጡ (Select Proficiency Level)</option>
-            <option value="beginner">ጀማሪ (Beginner)</option>
-            <option value="intermediate">መካከለኛ (Intermediate)</option>
-            <option value="advanced">የላቀ (Advanced)</option>
+            <option value="BEGINNER">ጀማሪ (Beginner)</option>
+            <option value="INTERMEDIATE">መካከለኛ (Intermediate)</option>
+            <option value="ADVANCED">የላቀ (Advanced)</option>
           </select>
-          {errors.proficiencyLevel && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.proficiencyLevel.message}</p>}
+          {errors.proficiency && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.proficiency.message}</p>}
         </div>
       </div>
 
