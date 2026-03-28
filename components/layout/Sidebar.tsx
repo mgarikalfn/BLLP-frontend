@@ -37,7 +37,7 @@ export default function  Sidebar  ({ className }: Props)  {
          <SidebarItem
           label="topic"
           href="/topic"
-          icon={BookOpen}
+          iconSrc="/topic.jpg"
         />
        
         {/* <SidebarItem
