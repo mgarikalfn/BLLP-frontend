@@ -1,11 +1,14 @@
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
+  redirect("/marketing");
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
+      {/* 
       <h1 className="text-4xl font-bold text-bird mb-8">Hello Lingo!</h1>
       
-      {/* Test a "Chunky" Button manually */}
       <Button>Default</Button>
       <Button variant="primary">Primary</Button>
       <Button variant="primaryOutline">Primary Outline</Button>
@@ -19,7 +22,7 @@ export default function Home() {
       
       <Button variant="sidebar">sidebar</Button>
       <Button variant="sidebarOutline">sidebar Outline</Button>
-
+      */}
     </main>
   );
 }

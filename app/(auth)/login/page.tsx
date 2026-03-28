@@ -65,13 +65,13 @@ export default function LoginPage() {
     </div>
   );
 } */
-import { AuthForm } from "@/components/auth/AuthForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-700 text-center">እንኳን ደህና መጡ! (Welcome back!)</h2>
-      <AuthForm type="login" />
+      <LoginForm />
     </div>
-  );  
+  );
 }
