@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ export const LoginForm = () => {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Initialize Form
   const {
@@ -58,13 +60,21 @@ export const LoginForm = () => {
           {errors.email && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.email.message}</p>}
         </div>
 
-        <div>
+        <div className="relative">
           <Input
             {...register("password")}
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="የይለፍ ቃል (Password)"
-            className={`h-14 rounded-2xl border-2 ${errors.password ? 'border-red-500' : 'border-slate-200'}`}
+            className={`h-14 rounded-2xl border-2 pr-12 ${errors.password ? 'border-red-500' : 'border-slate-200'}`}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
           {errors.password && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.password.message}</p>}
         </div>
       </div>
