@@ -31,7 +31,7 @@ export default function  Sidebar  ({ className }: Props)  {
          <SidebarItem
           label="Dashboard"
           href="/dashboard"
-          icon={Home}
+          iconSrc="/learn.svg"
         />
 
          <SidebarItem
@@ -40,7 +40,7 @@ export default function  Sidebar  ({ className }: Props)  {
           icon={BookOpen}
         />
        
-        <SidebarItem
+        {/* <SidebarItem
           label="Study"
           href="/study"
           icon={Brain}
@@ -49,12 +49,12 @@ export default function  Sidebar  ({ className }: Props)  {
           label="Learn" 
           href="/learn"
           iconSrc="/learn.svg"
-        />
+        />c:\Users\hp\Downloads\idea.png
         <SidebarItem 
           label="Leaderboard" 
           href="/leaderboard"
           iconSrc="/leaderboard.svg"
-        />
+        /> */}
        {/*  <SidebarItem 
           label="quests" 
           href="/quests"
