@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { translations, Language } from "@/lib/translations";
+import { translations } from "@/lib/translations";
+import { useLanguageStore } from "@/store/languageStore";
 // import { useAuth } from "@/hooks/useAuth"; 
 
 export default function Home() {
-  // Replace these with your actual global state / auth hooks
-  const lang: Language = "am"; // Assume this comes from a hook e.g., useLanguage()
+  const lang = useLanguageStore((s) => s.lang);
   const t = translations[lang];
 
   // const { user, isLoading } = useAuth();
@@ -42,7 +42,7 @@ export default function Home() {
           ) : (
             <>
               <Button size="lg" variant="secondary" className="w-full" asChild>
-                <Link href="/register">
+                <Link href="/signup">
                   {t.getStarted}
                 </Link>
               </Button>

@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader, UserCircle, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { translations, Language } from "@/lib/translations";
+import { useEffect } from "react";
+import { translations } from "@/lib/translations";
+import { useLanguageStore } from "@/store/languageStore";
 // import { useAuth } from "@/hooks/useAuth"; // <-- Your custom auth hook!
 
 export const Header = () => {
@@ -14,8 +15,13 @@ export const Header = () => {
   const isLoading = false; 
   const user = null; 
 
-  const [lang, setLang] = useState<Language>("am");
+  const lang = useLanguageStore((s) => s.lang);
+  const toggleLang = useLanguageStore((s) => s.toggleLang);
   const t = translations[lang];
+
+  useEffect(() => {
+    document.body.lang = lang;
+  }, [lang]);
 
   return (
     <header className="h-20 w-full border-b-2 border-slate-200 px-4">
@@ -34,7 +40,7 @@ export const Header = () => {
           {/* Language Toggle */}
           <Button 
             variant="ghost" 
-            onClick={() => setLang(lang === "am" ? "ao" : "am")}
+            onClick={toggleLang}
             className="flex items-center gap-2 text-slate-500"
           >
             <Globe className="w-5 h-5" />
