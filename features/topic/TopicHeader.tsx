@@ -35,9 +35,7 @@ export const TopicHeader = ({ title, progress, colorClass = "bg-blue-500" }: Top
           <div className="text-sm font-bold opacity-90 bg-black/10 inline-block px-3 py-1 rounded-full">
             {progress.completedLessons}/{progress.totalLessons} Lessons
           </div>
-        </div>
-        
-       
+        </div>    
       </div>
     </header>
   );
