@@ -16,26 +16,36 @@ export enum DifficultyLevel {
  * 2. Model Specific Types (Lessons, Dialogues, Writing)
  */
 export interface VocabularyItem {
+  _id?: string;
   am: string;
   ao: string;
   audioUrl?: string;
   example?: LocalizedString;
 }
 
+export interface QuizOption extends LocalizedString {
+  _id?: string;
+}
+
 export interface QuizQuestion {
+  _id?: string;
   question: LocalizedString;
-  options: LocalizedString[];
+  options: QuizOption[];
   correctAnswerIndex: number;
 }
 
 export interface Lesson {
   _id: string;
-  topicId: string;
+  topicId?: string;
   order: number;
   title: LocalizedString;
-  vocabulary: VocabularyItem[];
-  quiz: QuizQuestion[];
-  isVerified: boolean;
+  vocabulary?: VocabularyItem[];
+  quiz?: QuizQuestion[];
+  isVerified?: boolean;
+  completed?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 export interface Dialogue {
@@ -78,14 +88,13 @@ export interface TopicWorkspaceResponse {
     title: LocalizedString;
     description?: string;
   };
-  userProgress: {
-    completedLessons: number; // e.g. 2
-    totalLessons: number;     // e.g. 5
-    isTopicMastered: boolean;
+  progress: {
+    completedLessons: number;
+    totalLessons: number;
   };
   lessons: Lesson[];
   dialogues: Dialogue[];
-  writingExercises: WritingExercise[];
+  writing: WritingExercise[];
 }
 
 // This matches your Dashboard Summary
