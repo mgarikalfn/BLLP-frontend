@@ -4,7 +4,11 @@ export const translations = {
     login: "ግባ",
     getStarted: "ጀምር",
     haveAccount: "አካውንት አለኝ",
-    continue: "ትምህርትህን ቀጥል",
+    continue: "ትምህርቶን ይቀጥሉ",
+    lessonCompleted: "ትምህርቶን አጠናቀዋል!",
+    greatJob: "በጣም ጥሩ! አዲስ ነገሮችን ተምረዋል።",
+    xpEarned: "ያገኙት XP",
+    totalXP: "ጠቅላላ XP",
   },
   ao: {
     title: "Afaanota haaraa Lingo waliin baradhu, shaakali, fi itti cimaa.",
@@ -12,6 +16,10 @@ export const translations = {
     getStarted: "Eegali",
     haveAccount: "Herrega nan qaba",
     continue: "Barumsa itti fufi",
+    lessonCompleted: "Barnoota xumurtaniittu!",
+    greatJob: "Baay’ee gaarii! Wantoota haaraa barattaniittu.",
+    xpEarned: "XP argattan",
+    totalXP: "Waliigala XP",
   }
 };
 
