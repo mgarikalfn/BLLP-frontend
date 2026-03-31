@@ -10,8 +10,8 @@ export const signupSchema = z.object({
   email: z.string().email("ኢሜይል ትክክል አይደለም (Invalid email)"),
   password: z.string().min(6, "ቢያንስ 6 ፊደላት (Min 6 characters)"),
   confirmPassword: z.string(),
-  targetLanguage: z.enum(["amharic", "oromo"], { message: "ቋንቋ ይምረጡ (Select language)" }),
-  proficiencyLevel: z.enum(["beginner", "intermediate", "advanced"], { message: "የቋንቋ ደረጃ ይምረጡ (Select proficiency)" })
+  targetLang: z.enum(["AMHARIC", "OROMO"], { message: "ቋንቋ ይምረጡ (Select language)" }),
+  proficiency: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"], { message: "የቋንቋ ደረጃ ይምረጡ (Select proficiency)" })
 }).refine((data) => data.password === data.confirmPassword, {
   message: "የይለፍ ቃል አይዛመድም (Passwords don't match)",
   path: ["confirmPassword"], // sets error to this field
