@@ -81,20 +81,33 @@ export interface WritingExercise {
  * 3. API Response Payloads (The "Aggregators")
  */
 
-// This matches your GET /api/topics/:topicId/workspace
-export interface TopicWorkspaceResponse {
-  topic: {
-    _id: string;
-    title: LocalizedString;
-    description?: string;
-  };
+// This matches your GET /api/workspace
+export interface WorkspaceLesson {
+  _id: string;
+  title: LocalizedString;
+  status: 'locked' | 'active' | 'completed';
+}
+
+export interface WorkspaceTopic {
+  _id: string;
+  title: LocalizedString;
+  level: string;
+  lessons: WorkspaceLesson[];
   progress: {
     completedLessons: number;
     totalLessons: number;
+    percentage: number;
   };
-  lessons: Lesson[];
-  dialogues: Dialogue[];
-  writing: WritingExercise[];
+  isCompleted: boolean;
+}
+
+export interface TopicWorkspaceResponse {
+  topics: WorkspaceTopic[];
+  pagination: {
+    currentPage: number;
+    hasMore: boolean;
+    nextPage: number | null;
+  };
 }
 
 // This matches your Dashboard Summary

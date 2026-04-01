@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Lesson, VocabularyItem, QuizQuestion } from '@/types/learning';
 import { api } from '@/lib/api';
 
@@ -9,6 +10,7 @@ export type Slide =
 export type LessonStatus = 'idle' | 'checking' | 'correct' | 'incorrect' | 'completed' | 'celebration';
 
 export const useLessonEngine = (lesson?: Lesson) => {
+  const queryClient = useQueryClient();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<LessonStatus>('idle');
@@ -58,6 +60,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
       if (lesson?._id) {
         try {
           await api.post('/learn/complete', { lessonId: lesson._id });
+          queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] });
         } catch (e) {
           console.error("Failed to complete lesson", e);
         }
