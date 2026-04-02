@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 
 import { useMemo } from "react";
 import { LessonPath, TimelineItem } from "@/features/topic/LessonPath";
@@ -121,3 +121,4 @@ export default function TopicWorkspaceClient({ topicId }: { topicId: string }) {
     </div>
   );
 }
+ */
