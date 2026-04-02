@@ -19,8 +19,18 @@ export interface VocabularyItem {
   _id?: string;
   am: string;
   ao: string;
-  audioUrl?: string;
-  example?: LocalizedString;
+  audioUrl?: {
+    am?: string;
+    ao?: string;
+  };
+  example?: {
+    am: string;
+    ao: string;
+    audioUrl?: {
+      am?: string;
+      ao?: string;
+    };
+  };
 }
 
 export interface QuizOption extends LocalizedString {
