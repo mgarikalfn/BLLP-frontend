@@ -37,8 +37,8 @@ export const PathNode = ({ id, order, status, styleOffset }: PathNodeProps) => {
       {isLocked ? (
         <div
           className={cn(
-            "relative w-[72px] h-[72px] rounded-full flex items-center justify-center transition-all",
-            "bg-[#e5e5e5] border-b-[8px] border-[#cecece] text-[#afafaf] cursor-not-allowed my-2"
+            "relative w-18 h-18 rounded-full flex items-center justify-center transition-all",
+            "bg-[#e5e5e5] border-b-8 border-[#cecece] text-[#afafaf] cursor-not-allowed my-2"
           )}
         >
           <Lock size={32} strokeWidth={2.5} />
@@ -47,8 +47,8 @@ export const PathNode = ({ id, order, status, styleOffset }: PathNodeProps) => {
         <Link href={`/lessons/${id}`} className="block my-2 group outline-none">
           <div
             className={cn(
-              "relative w-[72px] h-[72px] rounded-full flex items-center justify-center transition-all",
-              "border-b-[8px] active:border-b-0 active:translate-y-[8px]",
+              "relative w-18 h-18 rounded-full flex items-center justify-center transition-all",
+              "border-b-8 active:border-b-0 active:translate-y-2",
               isCompleted
                 ? "bg-yellow-400 border-yellow-500 text-white"
                 : "bg-green-500 border-green-600 text-white shadow-xl"

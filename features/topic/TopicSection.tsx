@@ -37,7 +37,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
             <p className="text-xs opacity-80 uppercase tracking-widest font-semibold">{topic.level}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 items-end min-w-[120px]">
+        <div className="flex flex-col gap-2 items-end min-w-30">
           <span className="text-sm font-bold whitespace-nowrap">
             {completedLessons} / {totalLessons} Lessons
           </span>
@@ -46,7 +46,11 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
       </div>
       
       <div className="pt-10 px-4">
-        <LessonPathContainer lessons={topic.lessons || []} />
+        <LessonPathContainer
+          topicId={topic._id}
+          lessons={topic.lessons || []}
+          dialogues={topic.dialogues || []}
+        />
       </div>
     </section>
   );

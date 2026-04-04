@@ -1,17 +1,27 @@
 "use client";
 
 import React from "react";
-import { WorkspaceLesson } from "@/types/learning";
+import { WorkspaceLesson, WorkspaceDialogue } from "@/types/learning";
 import Link from "next/link";
 import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { BossBattleCard } from "./BossBattleCard";
+import { NodeStatus } from "./PathNode";
 
 interface LessonPathContainerProps {
+  topicId: string;
   lessons: WorkspaceLesson[];
+  dialogues?: WorkspaceDialogue[];
 }
 
-export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({ lessons }) => {
+export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
+  topicId,
+  lessons,
+  dialogues = [],
+}) => {
+  const allLessonsCompleted = lessons.every((lesson) => lesson.status === "completed");
+
   return (
-    <div className="relative flex flex-col items-center py-8 min-h-[500px]">
+    <div className="relative flex flex-col items-center py-8 min-h-125">
       {lessons.map((lesson, index) => {
         // Calculate the S-Curve utilizing a sine wave
         const amplitude = 90;
@@ -56,7 +66,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({ lesson
         return (
           <div key={lesson._id} className={`relative group w-full flex justify-center ${hasNext ? 'mb-16' : ''}`}>
             {hasNext && (
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[300px] h-[140px] -z-10 pointer-events-none">
+              <div className="absolute top-10 left-1/2 -translate-x-1/2 w-75 h-35 -z-10 pointer-events-none">
                 <svg
                   className="w-full h-full"
                   viewBox="0 0 300 144"
@@ -95,6 +105,24 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({ lesson
               {amharicTitle}
               <div className="text-xs text-gray-400 font-normal capitalize">{lesson.status}</div>
             </div>
+          </div>
+        );
+      })}
+
+      {dialogues.map((dialogue, index) => {
+        const dialogueStatus: NodeStatus = allLessonsCompleted ? "active" : "locked";
+        const amplitude = 90;
+        const styleOffset = Math.sin(((lessons.length + index) / 2) * Math.PI) * amplitude;
+
+        return (
+          <div key={`dialogue-${dialogue._id}`} className="relative w-full flex justify-center mt-2 mb-8">
+            <BossBattleCard
+              id={topicId}
+              type="DIALOGUE"
+              items={[{ ...dialogue, topicId }]}
+              status={dialogueStatus}
+              styleOffset={styleOffset}
+            />
           </div>
         );
       })}
