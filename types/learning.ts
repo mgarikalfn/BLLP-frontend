@@ -61,6 +61,8 @@ export interface Lesson {
 export interface Dialogue {
   _id: string;
   topicId: string;
+  level?: DifficultyLevel;
+  isVerified?: boolean;
   scenario: LocalizedString;
   characters: Array<{
     characterId: string;
@@ -98,11 +100,17 @@ export interface WorkspaceLesson {
   status: 'locked' | 'active' | 'completed';
 }
 
+export interface WorkspaceDialogue {
+  _id: string;
+  title: LocalizedString;
+}
+
 export interface WorkspaceTopic {
   _id: string;
   title: LocalizedString;
   level: string;
   lessons: WorkspaceLesson[];
+  dialogues?: WorkspaceDialogue[];
   progress: {
     completedLessons: number;
     totalLessons: number;
