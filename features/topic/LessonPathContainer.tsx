@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { WorkspaceLesson, WorkspaceDialogue } from "@/types/learning";
+import { WorkspaceLesson, WorkspaceDialogue, WorkspaceWritingExercise } from "@/types/learning";
 import Link from "next/link";
 import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { BossBattleCard } from "./BossBattleCard";
@@ -11,12 +11,14 @@ interface LessonPathContainerProps {
   topicId: string;
   lessons: WorkspaceLesson[];
   dialogues?: WorkspaceDialogue[];
+  writingExercises?: WorkspaceWritingExercise[];
 }
 
 export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   topicId,
   lessons,
   dialogues = [],
+  writingExercises = [],
 }) => {
   const allLessonsCompleted = lessons.every((lesson) => lesson.status === "completed");
 
@@ -27,7 +29,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
         const amplitude = 90;
         const xOffset = Math.sin((index / 2) * Math.PI) * amplitude;
         
-        let hasNext = index < lessons.length - 1;
+        const hasNext = index < lessons.length - 1;
         let nextXOffset = 0;
         if (hasNext) {
           nextXOffset = Math.sin(((index + 1) / 2) * Math.PI) * amplitude;
@@ -121,6 +123,29 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
               type="DIALOGUE"
               items={[{ ...dialogue, topicId }]}
               status={dialogueStatus}
+              styleOffset={styleOffset}
+            />
+          </div>
+        );
+      })}
+
+      {writingExercises.map((writingExercise, index) => {
+        const fallbackWritingStatus: NodeStatus = allLessonsCompleted
+          ? index === 0
+            ? "active"
+            : "locked"
+          : "locked";
+        const writingStatus: NodeStatus = writingExercise.status || fallbackWritingStatus;
+        const amplitude = 90;
+        const styleOffset = Math.sin(((lessons.length + dialogues.length + index) / 2) * Math.PI) * amplitude;
+
+        return (
+          <div key={`writing-${writingExercise._id}`} className="relative w-full flex justify-center mt-2 mb-8">
+            <BossBattleCard
+              id={writingExercise._id}
+              type="WRITING"
+              items={[{ ...writingExercise, topicId }]}
+              status={writingStatus}
               styleOffset={styleOffset}
             />
           </div>

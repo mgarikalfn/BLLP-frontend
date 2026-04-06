@@ -1,12 +1,21 @@
-import { Lesson } from "@/types/learning";
 import { PathNode, NodeStatus } from "./PathNode";
 import { BossBattleCard } from "./BossBattleCard";
 
+export type LessonTimelineData = {
+  order: number;
+};
+
+export type TimelineBranchItem = {
+  _id?: string;
+  topicId?: string;
+  [key: string]: unknown;
+};
+
 // Unified timeline item type
 export type TimelineItem =
-  | { type: "lesson"; data: Lesson; status: NodeStatus; id: string }
-  | { type: "dialogue"; data: any[]; status: NodeStatus; id: string }
-  | { type: "writing"; data: any[]; status: NodeStatus; id: string };
+  | { type: "lesson"; data: LessonTimelineData; status: NodeStatus; id: string }
+  | { type: "dialogue"; data: TimelineBranchItem[]; status: NodeStatus; id: string }
+  | { type: "writing"; data: TimelineBranchItem[]; status: NodeStatus; id: string };
 
 interface LessonPathProps {
   timeline: TimelineItem[];

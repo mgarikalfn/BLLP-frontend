@@ -3,10 +3,16 @@ import { MessageSquare, PenTool, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NodeStatus } from "./PathNode";
 
+interface BossBattleCardItem {
+  _id?: string;
+  topicId?: string;
+  [key: string]: unknown;
+}
+
 interface BossBattleCardProps {
   id: string; // The first dialogue or writing exercise id to link to
   type: "DIALOGUE" | "WRITING";
-  items: any[];
+  items: BossBattleCardItem[];
   status: NodeStatus;
   styleOffset: number;
 }
@@ -16,12 +22,15 @@ export const BossBattleCard = ({ id, type, items, status, styleOffset }: BossBat
   const isDialogue = type === "DIALOGUE";
   const Icon = isDialogue ? MessageSquare : PenTool;
   const dialogueTopicId = items?.[0]?.topicId || id;
+  const writingTopicId = items?.[0]?.topicId;
   const dialogueId = items?.[0]?._id;
   const href = isDialogue
     ? dialogueId
       ? `/dialogue/${dialogueTopicId}?dialogueId=${dialogueId}`
       : `/dialogue/${dialogueTopicId}`
-    : `/${type.toLowerCase()}/${id}`;
+    : writingTopicId
+      ? `/writing/${id}?topicId=${writingTopicId}`
+      : `/${type.toLowerCase()}/${id}`;
 
   const content = (
     <div
