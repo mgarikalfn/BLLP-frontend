@@ -84,9 +84,41 @@ export interface WritingExercise {
   _id: string;
   topicId: string;
   type: "TRANSLATION" | "OPEN_PROMPT";
+  instruction?: LocalizedString;
   prompt: LocalizedString;
-  hints?: LocalizedString[];
+  targetLanguage?: "am" | "ao";
+  nativeLanguage?: "am" | "ao";
+  hints?: string[] | LocalizedString[];
   sampleAnswer: LocalizedString;
+  level?: DifficultyLevel | string;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
+export type WritingFeedbackStatus = "PERFECT" | "TYPO" | "INCORRECT" | "EVALUATED";
+
+export interface WritingSubmitPayload {
+  exerciseId: string;
+  topicId: string;
+  submittedText: string;
+  targetLanguage: "am" | "ao";
+  nativeLanguage: "am" | "ao";
+}
+
+export interface WritingFeedbackResult {
+  isCorrect: boolean;
+  status: WritingFeedbackStatus;
+  feedback: string;
+  sampleAnswer: string;
+  attemptId: string;
+}
+
+export interface WritingSubmitResponse {
+  success: boolean;
+  data: WritingFeedbackResult;
+  message?: string;
 }
 
 /**
@@ -94,15 +126,42 @@ export interface WritingExercise {
  */
 
 // This matches your GET /api/workspace
+export type WorkspaceNodeStatus = "locked" | "active" | "completed";
+
 export interface WorkspaceLesson {
   _id: string;
   title: LocalizedString;
-  status: 'locked' | 'active' | 'completed';
+  status: WorkspaceNodeStatus;
+  order?: number;
 }
 
 export interface WorkspaceDialogue {
   _id: string;
   title: LocalizedString;
+  status?: WorkspaceNodeStatus;
+  topicId?: string;
+}
+
+export interface WorkspaceWritingExercise {
+  _id: string;
+  title?: LocalizedString | string;
+  type?: "TRANSLATION" | "OPEN_PROMPT";
+  status?: WorkspaceNodeStatus;
+  topicId?: string;
+}
+
+export type WorkspaceActivityType = "LESSON" | "DIALOGUE" | "WRITING";
+
+export interface WorkspaceActivity {
+  _id: string;
+  type: WorkspaceActivityType;
+  status: WorkspaceNodeStatus;
+  order?: number;
+  title?: LocalizedString | string;
+  topicId?: string;
+  lesson?: WorkspaceLesson;
+  dialogue?: WorkspaceDialogue;
+  writing?: WorkspaceWritingExercise;
 }
 
 export interface WorkspaceTopic {
@@ -111,6 +170,9 @@ export interface WorkspaceTopic {
   level: string;
   lessons: WorkspaceLesson[];
   dialogues?: WorkspaceDialogue[];
+  writingExercises?: WorkspaceWritingExercise[];
+  writings?: WorkspaceWritingExercise[];
+  activities?: WorkspaceActivity[];
   progress: {
     completedLessons: number;
     totalLessons: number;

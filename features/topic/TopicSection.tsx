@@ -2,7 +2,7 @@ import React from "react";
 import { WorkspaceTopic } from "@/types/learning";
 import { LessonPathContainer } from "./LessonPathContainer";
 import { Progress } from "@/components/ui/progress"; // Assuming shadcn ui
-import { Shield, BookOpen, Star } from "lucide-react"; // Sample icons
+import { Shield, BookOpen } from "lucide-react"; // Sample icons
 
 interface TopicSectionProps {
   topic: WorkspaceTopic;
@@ -50,6 +50,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
           topicId={topic._id}
           lessons={topic.lessons || []}
           dialogues={topic.dialogues || []}
+          writingExercises={topic.writingExercises || topic.writings || []}
         />
       </div>
     </section>
