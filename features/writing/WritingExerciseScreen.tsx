@@ -17,6 +17,7 @@ interface WritingExerciseScreenProps {
     topicId: string;
     exerciseId: string;
     feedback: WritingFeedbackResult;
+    
   }) => void;
 }
 
