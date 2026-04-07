@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, PenTool, Lock } from "lucide-react";
+import { MessageSquare, PenTool, Lock, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NodeStatus } from "./PathNode";
 
@@ -11,7 +11,7 @@ interface BossBattleCardItem {
 
 interface BossBattleCardProps {
   id: string; // The first dialogue or writing exercise id to link to
-  type: "DIALOGUE" | "WRITING";
+  type: "DIALOGUE" | "WRITING" | "SPEAKING";
   items: BossBattleCardItem[];
   status: NodeStatus;
   styleOffset: number;
@@ -20,17 +20,23 @@ interface BossBattleCardProps {
 export const BossBattleCard = ({ id, type, items, status, styleOffset }: BossBattleCardProps) => {
   const isLocked = status === "locked";
   const isDialogue = type === "DIALOGUE";
-  const Icon = isDialogue ? MessageSquare : PenTool;
+  const isWriting = type === "WRITING";
+  const Icon = isDialogue ? MessageSquare : isWriting ? PenTool : Mic;
   const dialogueTopicId = items?.[0]?.topicId || id;
   const writingTopicId = items?.[0]?.topicId;
+  const speakingTopicId = items?.[0]?.topicId;
   const dialogueId = items?.[0]?._id;
   const href = isDialogue
     ? dialogueId
       ? `/dialogue/${dialogueTopicId}?dialogueId=${dialogueId}`
       : `/dialogue/${dialogueTopicId}`
-    : writingTopicId
-      ? `/writing/${id}?topicId=${writingTopicId}`
-      : `/${type.toLowerCase()}/${id}`;
+    : isWriting
+      ? writingTopicId
+        ? `/writing/${id}?topicId=${writingTopicId}`
+        : `/writing/${id}`
+      : speakingTopicId
+        ? `/speaking/${id}?topicId=${speakingTopicId}`
+        : `/speaking/${id}`;
 
   const content = (
     <div
@@ -40,7 +46,9 @@ export const BossBattleCard = ({ id, type, items, status, styleOffset }: BossBat
           ? "bg-[#e5e5e5] border-b-8 border-[#cecece] text-[#afafaf] cursor-not-allowed"
           : isDialogue
             ? "bg-purple-500 border-b-8 border-purple-700 text-white shadow-xl active:border-b-0 active:translate-y-2"
-            : "bg-orange-500 border-b-8 border-orange-700 text-white shadow-xl active:border-b-0 active:translate-y-2"
+            : isWriting
+              ? "bg-orange-500 border-b-8 border-orange-700 text-white shadow-xl active:border-b-0 active:translate-y-2"
+              : "bg-sky-500 border-b-8 border-sky-700 text-white shadow-xl active:border-b-0 active:translate-y-2"
       )}
     >
       {isLocked ? <Lock size={36} strokeWidth={2.5} /> : <Icon size={40} strokeWidth={2.5} />}

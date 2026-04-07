@@ -59,6 +59,23 @@ const toTimelineItem = (activity: WorkspaceActivity, index: number): TimelineIte
     };
   }
 
+  if (activity.type === "SPEAKING") {
+    const speakingId = activity.speaking?._id || activity._id;
+
+    return {
+      type: "speaking",
+      id: speakingId,
+      status,
+      data: [
+        {
+          ...(activity.speaking || {}),
+          _id: speakingId,
+          topicId: activity.speaking?.topicId || activity.topicId,
+        },
+      ],
+    };
+  }
+
   return null;
 };
 
@@ -82,6 +99,7 @@ const buildFallbackActivities = (topic: WorkspaceTopic): WorkspaceActivity[] => 
   const lessons = topic.lessons || [];
   const dialogues = topic.dialogues || [];
   const writings = topic.writingExercises || topic.writings || [];
+  const speakings = topic.speakingExercises || [];
 
   const allLessonsCompleted = lessons.length > 0 && lessons.every((lesson) => lesson.status === "completed");
   const hasDialogueStatusInfo = dialogues.some((dialogue) => !!dialogue.status);
@@ -89,6 +107,11 @@ const buildFallbackActivities = (topic: WorkspaceTopic): WorkspaceActivity[] => 
     dialogues.length === 0 ||
     !hasDialogueStatusInfo ||
     dialogues.every((dialogue) => dialogue.status === "completed");
+  const hasWritingStatusInfo = writings.some((writing) => !!writing.status);
+  const writingsCompleted =
+    writings.length === 0 ||
+    !hasWritingStatusInfo ||
+    writings.every((writing) => writing.status === "completed");
 
   const lessonActivities = lessons.map((lesson, index): WorkspaceActivity => ({
     _id: lesson._id,
@@ -136,7 +159,25 @@ const buildFallbackActivities = (topic: WorkspaceTopic): WorkspaceActivity[] => 
     };
   });
 
-  return [...lessonActivities, ...dialogueActivities, ...writingActivities];
+  const speakingActivities = speakings.map((speaking, index): WorkspaceActivity => {
+    const fallbackStatus: WorkspaceNodeStatus = allLessonsCompleted && dialoguesCompleted && writingsCompleted
+      ? index === 0
+        ? "active"
+        : "locked"
+      : "locked";
+
+    return {
+      _id: speaking._id,
+      type: "SPEAKING",
+      status: speaking.status || fallbackStatus,
+      order: lessonActivities.length + dialogueActivities.length + writingActivities.length + index + 1,
+      title: speaking.title,
+      topicId: speaking.topicId || topic._id,
+      speaking,
+    };
+  });
+
+  return [...lessonActivities, ...dialogueActivities, ...writingActivities, ...speakingActivities];
 };
 
 export const LessonMap = ({ topic }: LessonMapProps) => {

@@ -15,7 +15,8 @@ export type TimelineBranchItem = {
 export type TimelineItem =
   | { type: "lesson"; data: LessonTimelineData; status: NodeStatus; id: string }
   | { type: "dialogue"; data: TimelineBranchItem[]; status: NodeStatus; id: string }
-  | { type: "writing"; data: TimelineBranchItem[]; status: NodeStatus; id: string };
+  | { type: "writing"; data: TimelineBranchItem[]; status: NodeStatus; id: string }
+  | { type: "speaking"; data: TimelineBranchItem[]; status: NodeStatus; id: string };
 
 interface LessonPathProps {
   timeline: TimelineItem[];
@@ -59,8 +60,9 @@ export const LessonPath = ({ timeline }: LessonPathProps) => {
           );
         }
 
-        if (item.type === "dialogue" || item.type === "writing") {
-          const typeLabel = item.type === "dialogue" ? "DIALOGUE" : "WRITING";
+        if (item.type === "dialogue" || item.type === "writing" || item.type === "speaking") {
+          const typeLabel: "DIALOGUE" | "WRITING" | "SPEAKING" =
+            item.type === "dialogue" ? "DIALOGUE" : item.type === "writing" ? "WRITING" : "SPEAKING";
           return (
             <div key={item.id} className="relative z-10 w-full flex justify-center py-4" style={{ minHeight: nodeDistance }}>
               {connector}
