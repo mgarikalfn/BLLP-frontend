@@ -4,6 +4,10 @@ import { cn } from "@/lib/utils";
 interface TargetSentenceProps {
   expectedText: string;
   transcribedText?: string;
+  labels: {
+    targetSentence: string;
+    aiHeard: string;
+  };
 }
 
 const normalizeWord = (word: string) => {
@@ -43,7 +47,7 @@ const getMatchedWordIndices = (expectedText: string, transcribedText?: string) =
   };
 };
 
-export const TargetSentence = ({ expectedText, transcribedText }: TargetSentenceProps) => {
+export const TargetSentence = ({ expectedText, transcribedText, labels }: TargetSentenceProps) => {
   const { expectedWords, matchedIndices } = useMemo(
     () => getMatchedWordIndices(expectedText, transcribedText),
     [expectedText, transcribedText]
@@ -51,7 +55,7 @@ export const TargetSentence = ({ expectedText, transcribedText }: TargetSentence
 
   return (
     <section className="rounded-2xl border-2 border-sky-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-widest text-sky-600">Target Sentence</p>
+      <p className="text-xs font-black uppercase tracking-widest text-sky-600">{labels.targetSentence}</p>
       <p className="mt-3 text-2xl font-black leading-snug text-slate-900">
         {expectedWords.map((word, index) => (
           <span
@@ -68,7 +72,7 @@ export const TargetSentence = ({ expectedText, transcribedText }: TargetSentence
 
       {transcribedText ? (
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">AI Heard</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">{labels.aiHeard}</p>
           <p className="mt-1 text-base font-semibold text-slate-700">{transcribedText}</p>
         </div>
       ) : null}

@@ -6,6 +6,12 @@ interface MicrophoneControlProps {
   disabled?: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
+  labels: {
+    startRecordingAriaLabel: string;
+    stopRecordingAriaLabel: string;
+    recordingHint: string;
+    idleHint: string;
+  };
 }
 
 export const MicrophoneControl = ({
@@ -13,6 +19,7 @@ export const MicrophoneControl = ({
   disabled = false,
   onStartRecording,
   onStopRecording,
+  labels,
 }: MicrophoneControlProps) => {
   const handlePressStart = () => {
     if (disabled || isRecording) return;
@@ -28,7 +35,7 @@ export const MicrophoneControl = ({
     <div className="flex flex-col items-center gap-3">
       <button
         type="button"
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
+        aria-label={isRecording ? labels.stopRecordingAriaLabel : labels.startRecordingAriaLabel}
         aria-pressed={isRecording}
         onMouseDown={handlePressStart}
         onMouseUp={handlePressEnd}
@@ -67,7 +74,7 @@ export const MicrophoneControl = ({
       </button>
 
       <p className="text-sm font-black uppercase tracking-widest text-slate-500">
-        {isRecording ? "Recording... release to stop" : "Press and hold to speak"}
+        {isRecording ? labels.recordingHint : labels.idleHint}
       </p>
     </div>
   );

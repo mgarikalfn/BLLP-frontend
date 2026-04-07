@@ -4,9 +4,13 @@ import { cn } from "@/lib/utils";
 interface ResultBannerProps {
   isCorrect: boolean;
   feedback: string;
+  labels: {
+    successTitle: string;
+    retryTitle: string;
+  };
 }
 
-export const ResultBanner = ({ isCorrect, feedback }: ResultBannerProps) => {
+export const ResultBanner = ({ isCorrect, feedback, labels }: ResultBannerProps) => {
   const Icon = isCorrect ? CheckCircle2 : XCircle;
 
   return (
@@ -24,7 +28,7 @@ export const ResultBanner = ({ isCorrect, feedback }: ResultBannerProps) => {
         <Icon className="mt-0.5 shrink-0" size={24} />
         <div>
           <p className="text-xs font-black uppercase tracking-widest">
-            {isCorrect ? "Nice pronunciation" : "Keep practicing"}
+            {isCorrect ? labels.successTitle : labels.retryTitle}
           </p>
           <p className="mt-1 text-sm font-semibold leading-relaxed">{feedback}</p>
         </div>
