@@ -1,7 +1,12 @@
 "use client";
 
 import React from "react";
-import { WorkspaceLesson, WorkspaceDialogue, WorkspaceWritingExercise } from "@/types/learning";
+import {
+  WorkspaceLesson,
+  WorkspaceDialogue,
+  WorkspaceWritingExercise,
+  WorkspaceSpeakingExercise,
+} from "@/types/learning";
 import Link from "next/link";
 import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { BossBattleCard } from "./BossBattleCard";
@@ -12,6 +17,7 @@ interface LessonPathContainerProps {
   lessons: WorkspaceLesson[];
   dialogues?: WorkspaceDialogue[];
   writingExercises?: WorkspaceWritingExercise[];
+  speakingExercises?: WorkspaceSpeakingExercise[];
 }
 
 export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
@@ -19,8 +25,19 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   lessons,
   dialogues = [],
   writingExercises = [],
+  speakingExercises = [],
 }) => {
   const allLessonsCompleted = lessons.every((lesson) => lesson.status === "completed");
+  const hasDialogueStatusInfo = dialogues.some((dialogue) => !!dialogue.status);
+  const dialoguesCompleted =
+    dialogues.length === 0 ||
+    !hasDialogueStatusInfo ||
+    dialogues.every((dialogue) => dialogue.status === "completed");
+  const hasWritingStatusInfo = writingExercises.some((writingExercise) => !!writingExercise.status);
+  const writingsCompleted =
+    writingExercises.length === 0 ||
+    !hasWritingStatusInfo ||
+    writingExercises.every((writingExercise) => writingExercise.status === "completed");
 
   return (
     <div className="relative flex flex-col items-center py-8 min-h-125">
@@ -112,7 +129,8 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
       })}
 
       {dialogues.map((dialogue, index) => {
-        const dialogueStatus: NodeStatus = allLessonsCompleted ? "active" : "locked";
+        const fallbackDialogueStatus: NodeStatus = allLessonsCompleted ? "active" : "locked";
+        const dialogueStatus: NodeStatus = dialogue.status || fallbackDialogueStatus;
         const amplitude = 90;
         const styleOffset = Math.sin(((lessons.length + index) / 2) * Math.PI) * amplitude;
 
@@ -131,8 +149,10 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
 
       {writingExercises.map((writingExercise, index) => {
         const fallbackWritingStatus: NodeStatus = allLessonsCompleted
-          ? index === 0
-            ? "active"
+          ? dialoguesCompleted
+            ? index === 0
+              ? "active"
+              : "locked"
             : "locked"
           : "locked";
         const writingStatus: NodeStatus = writingExercise.status || fallbackWritingStatus;
@@ -146,6 +166,29 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
               type="WRITING"
               items={[{ ...writingExercise, topicId }]}
               status={writingStatus}
+              styleOffset={styleOffset}
+            />
+          </div>
+        );
+      })}
+
+      {speakingExercises.map((speakingExercise, index) => {
+        const fallbackSpeakingStatus: NodeStatus = allLessonsCompleted && dialoguesCompleted && writingsCompleted
+          ? index === 0
+            ? "active"
+            : "locked"
+          : "locked";
+        const speakingStatus: NodeStatus = speakingExercise.status || fallbackSpeakingStatus;
+        const amplitude = 90;
+        const styleOffset = Math.sin(((lessons.length + dialogues.length + writingExercises.length + index) / 2) * Math.PI) * amplitude;
+
+        return (
+          <div key={`speaking-${speakingExercise._id}`} className="relative w-full flex justify-center mt-2 mb-8">
+            <BossBattleCard
+              id={speakingExercise._id}
+              type="SPEAKING"
+              items={[{ ...speakingExercise, topicId }]}
+              status={speakingStatus}
               styleOffset={styleOffset}
             />
           </div>

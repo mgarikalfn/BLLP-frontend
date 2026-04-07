@@ -51,6 +51,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
           lessons={topic.lessons || []}
           dialogues={topic.dialogues || []}
           writingExercises={topic.writingExercises || topic.writings || []}
+          speakingExercises={topic.speakingExercises || []}
         />
       </div>
     </section>

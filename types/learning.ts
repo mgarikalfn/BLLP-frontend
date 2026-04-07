@@ -97,6 +97,25 @@ export interface WritingExercise {
   __v?: number;
 }
 
+export interface SpeakingExercise {
+  _id: string;
+  topicId: string;
+  title?: LocalizedString | string;
+  instruction?: LocalizedString | string;
+  expectedText?: LocalizedString | string;
+  prompt?: LocalizedString | string;
+  script?: LocalizedString | string;
+  text?: LocalizedString | string;
+  targetLang?: "am" | "ao";
+  targetLanguage?: "am" | "ao";
+  nativeLanguage?: "am" | "ao";
+  level?: DifficultyLevel | string;
+  status?: WorkspaceNodeStatus;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
 export type WritingFeedbackStatus = "PERFECT" | "TYPO" | "INCORRECT" | "EVALUATED";
 
 export interface WritingSubmitPayload {
@@ -150,7 +169,14 @@ export interface WorkspaceWritingExercise {
   topicId?: string;
 }
 
-export type WorkspaceActivityType = "LESSON" | "DIALOGUE" | "WRITING";
+export interface WorkspaceSpeakingExercise {
+  _id: string;
+  title?: LocalizedString | string;
+  status?: WorkspaceNodeStatus;
+  topicId?: string;
+}
+
+export type WorkspaceActivityType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING";
 
 export interface WorkspaceActivity {
   _id: string;
@@ -162,6 +188,7 @@ export interface WorkspaceActivity {
   lesson?: WorkspaceLesson;
   dialogue?: WorkspaceDialogue;
   writing?: WorkspaceWritingExercise;
+  speaking?: WorkspaceSpeakingExercise;
 }
 
 export interface WorkspaceTopic {
@@ -171,6 +198,7 @@ export interface WorkspaceTopic {
   lessons: WorkspaceLesson[];
   dialogues?: WorkspaceDialogue[];
   writingExercises?: WorkspaceWritingExercise[];
+  speakingExercises?: WorkspaceSpeakingExercise[];
   writings?: WorkspaceWritingExercise[];
   activities?: WorkspaceActivity[];
   progress: {
