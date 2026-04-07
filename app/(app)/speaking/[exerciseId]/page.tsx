@@ -12,6 +12,21 @@ import { LocalizedString, SpeakingExercise } from "@/types/learning";
 
 type LearningLanguage = "am" | "ao";
 
+const pageText = {
+  am: {
+    invalidExerciseId: "የንግግር ልምምድ መለያ ልክ አይደለም።",
+    loadFailed: "የንግግር ልምምድ መጫን አልተቻለም",
+    tryAgain: "እባክዎ ደግመው ይሞክሩ።",
+    backToTopic: "ወደ ርዕስ ተመለስ",
+  },
+  ao: {
+    invalidExerciseId: "ID shaakala dubbii sirrii miti.",
+    loadFailed: "Shaakala dubbii fe'uu hin dandeenye",
+    tryAgain: "Mee irra deebi'i yaali.",
+    backToTopic: "Gara mata duree deebi'i",
+  },
+} as const;
+
 const resolveLocalizedText = (
   value: LocalizedString | string | undefined,
   targetLanguage: LearningLanguage,
@@ -70,6 +85,7 @@ export default function SpeakingExercisePage() {
 
   const language = useLanguageStore((state) => state.lang);
   const nativeLanguage: LearningLanguage = language === "ao" ? "ao" : "am";
+  const localizedPageText = pageText[nativeLanguage];
 
   const exerciseId = Array.isArray(params.exerciseId) ? params.exerciseId[0] : params.exerciseId;
   const topicIdFromQuery = searchParams.get("topicId");
@@ -118,7 +134,7 @@ export default function SpeakingExercisePage() {
   if (!exerciseId) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white px-4 text-center">
-        <p className="text-lg font-semibold text-red-500">Invalid speaking exercise id.</p>
+        <p className="text-lg font-semibold text-red-500">{localizedPageText.invalidExerciseId}</p>
       </div>
     );
   }
@@ -134,12 +150,12 @@ export default function SpeakingExercisePage() {
   if (error || !exercise) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-white px-4 text-center">
-        <h2 className="text-xl font-black text-slate-700">Failed to load speaking exercise</h2>
+        <h2 className="text-xl font-black text-slate-700">{localizedPageText.loadFailed}</h2>
         <p className="max-w-sm text-sm font-medium text-slate-500">
-          {error instanceof Error ? error.message : "Please try again."}
+          {error instanceof Error ? error.message : localizedPageText.tryAgain}
         </p>
         <Button onClick={handleBack} variant="primary" size="lg">
-          Back To Topic
+          {localizedPageText.backToTopic}
         </Button>
       </div>
     );

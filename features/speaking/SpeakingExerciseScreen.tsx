@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
 import { MicrophoneControl } from "./components/MicrophoneControl";
 import { ResultBanner } from "./components/ResultBanner";
 import { TargetSentence } from "./components/TargetSentence";
@@ -30,6 +31,69 @@ interface SpeakingSubmitResponse {
   message?: string;
 }
 
+const speakingUiText = {
+  am: {
+    targetSentence: "የሚነበብ ዓረፍተ ነገር",
+    aiHeard: "AI የሰማው",
+    speakingChallenge: "የንግግር ፈተና",
+    recordedAudio: "የተቀዳ ድምፅ",
+    releaseToStop: "ለማቆም አዝራሩን ይልቀቁ።",
+    noRecordingYet: "እስካሁን የተቀዳ ድምፅ የለም።",
+    checking: "በመፈተሽ ላይ...",
+    check: "ፈትሽ",
+    recordAgain: "እንደገና ቅጂ",
+    microphoneLabels: {
+      startRecordingAriaLabel: "መቅጃ ጀምር",
+      stopRecordingAriaLabel: "መቅጃ አቁም",
+      recordingHint: "በመቅዳት ላይ... ለማቆም ይልቀቁ",
+      idleHint: "ለመናገር ተጭነው ይያዙ",
+    },
+    resultLabels: {
+      successTitle: "ትክክለኛ አነባበብ",
+      retryTitle: "ቀጥለው ይሞክሩ",
+    },
+    errors: {
+      unsupportedAudioRecording: "ይህ አሳሽ የድምፅ መቅጃን አይደግፍም።",
+      unsupportedMicRecording: "ይህ አሳሽ የማይክሮፎን መቅጃን አይደግፍም።",
+      recordingFailed: "መቅጃው አልተሳካም። እባክዎ ደግመው ይሞክሩ።",
+      microphoneAccessRequired: "ለመቅዳት የማይክሮፎን ፍቃድ ያስፈልጋል።",
+      loginRequired: "የንግግር ሙከራ ለመላክ መግባት አለብዎት።",
+      failedToEvaluate: "የንግግር ሙከራውን መገምገም አልተቻለም።",
+      unableToSubmit: "አሁን የንግግር ሙከራውን መላክ አይቻልም።",
+    },
+  },
+  ao: {
+    targetSentence: "Himicha dubbifamuu qabu",
+    aiHeard: "AI kan dhageesse",
+    speakingChallenge: "Qormaata dubbii",
+    recordedAudio: "Sagalee galmeeffame",
+    releaseToStop: "Dhaabuuf button gadi dhiisi.",
+    noRecordingYet: "Ammaaf sagaleen hin galmoofne.",
+    checking: "Qoramaa jira...",
+    check: "Qori",
+    recordAgain: "Irra deebi'ii galchi",
+    microphoneLabels: {
+      startRecordingAriaLabel: "Galmeessuu jalqabi",
+      stopRecordingAriaLabel: "Galmeessuu dhaabi",
+      recordingHint: "Galmaa'aa jira... dhaabuuf gadi dhiisi",
+      idleHint: "Dubbachuuf qabii qabi",
+    },
+    resultLabels: {
+      successTitle: "Dubbisni kee gaarii dha",
+      retryTitle: "Itti fufi shaakaluu",
+    },
+    errors: {
+      unsupportedAudioRecording: "Browser kun sagalee galmeessuu hin deeggartu.",
+      unsupportedMicRecording: "Browser kun maayikiroofonii galmeessuu hin deeggartu.",
+      recordingFailed: "Galmeen hin milkoofne. Mee irra deebi'i yaali.",
+      microphoneAccessRequired: "Sagalee galchuuf hayyama maayikiroofonii barbaachisa.",
+      loginRequired: "Yaalii dubbii erguuf seenuu qabda.",
+      failedToEvaluate: "Yaalii dubbii madaaluu hin dandeenye.",
+      unableToSubmit: "Amma yaalii dubbii erguu hin dandeenyu.",
+    },
+  },
+} as const;
+
 const getFileExtension = (mimeType: string) => {
   if (mimeType.includes("mp4") || mimeType.includes("aac")) return "m4a";
   if (mimeType.includes("mpeg")) return "mp3";
@@ -44,6 +108,22 @@ export const SpeakingExerciseScreen = ({
   onComplete,
 }: SpeakingExerciseScreenProps) => {
   const authToken = useAuthStore((state) => state.token);
+  const nativeLanguage = useLanguageStore((state) => (state.lang === "ao" ? "ao" : "am"));
+  const uiText = speakingUiText[nativeLanguage];
+
+  const targetLanguageLabel =
+    nativeLanguage === "am"
+      ? targetLang === "am"
+        ? "አማርኛ"
+        : "አፋን ኦሮሞ"
+      : targetLang === "am"
+        ? "Afaan Amaaraa"
+        : "Afaan Oromoo";
+
+  const recordInstructionText =
+    nativeLanguage === "am"
+      ? `${targetLanguageLabel} ቋንቋ በትክክል እንዲነገር ድምፅዎን ይቅዱ።`
+      : `Dubbisa ${targetLanguageLabel} sirnaan akka dubbattuuf sagalee kee galchi.`;
 
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -88,12 +168,12 @@ export const SpeakingExerciseScreen = ({
     if (isRecording || isLoading) return;
 
     if (typeof MediaRecorder === "undefined") {
-      setError("This browser does not support audio recording.");
+      setError(uiText.errors.unsupportedAudioRecording);
       return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("This browser does not support microphone recording.");
+      setError(uiText.errors.unsupportedMicRecording);
       return;
     }
 
@@ -137,7 +217,7 @@ export const SpeakingExerciseScreen = ({
       };
 
       recorder.onerror = () => {
-        setError("Recording failed. Please try again.");
+        setError(uiText.errors.recordingFailed);
         setIsRecording(false);
         releaseMediaStream();
         mediaRecorderRef.current = null;
@@ -147,7 +227,7 @@ export const SpeakingExerciseScreen = ({
       recorder.start();
       setIsRecording(true);
     } catch {
-      setError("Microphone access is required to record your speech.");
+      setError(uiText.errors.microphoneAccessRequired);
       setIsRecording(false);
       releaseMediaStream();
     }
@@ -167,7 +247,7 @@ export const SpeakingExerciseScreen = ({
     const token = authToken || window.localStorage.getItem("token");
 
     if (!token) {
-      setError("You must be logged in to submit speaking attempts.");
+      setError(uiText.errors.loginRequired);
       return;
     }
 
@@ -201,7 +281,7 @@ export const SpeakingExerciseScreen = ({
       const payload = (await response.json()) as SpeakingSubmitResponse;
 
       if (!response.ok || !payload.success || !payload.data) {
-        throw new Error(payload.message || "Failed to evaluate speaking attempt.");
+        throw new Error(payload.message || uiText.errors.failedToEvaluate);
       }
 
       setResult(payload.data);
@@ -213,7 +293,7 @@ export const SpeakingExerciseScreen = ({
       const message =
         submissionError instanceof Error
           ? submissionError.message
-          : "Unable to submit speaking attempt right now.";
+          : uiText.errors.unableToSubmit;
       setError(message);
     } finally {
       setIsLoading(false);
@@ -229,13 +309,18 @@ export const SpeakingExerciseScreen = ({
   return (
     <div className="relative mx-auto w-full max-w-3xl rounded-3xl border-2 border-slate-200 bg-slate-50/80 px-4 py-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:px-6 md:py-8">
       <div className="space-y-6">
-        <TargetSentence expectedText={expectedText} transcribedText={result?.transcribedText} />
+        <TargetSentence
+          expectedText={expectedText}
+          transcribedText={result?.transcribedText}
+          labels={{
+            targetSentence: uiText.targetSentence,
+            aiHeard: uiText.aiHeard,
+          }}
+        />
 
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-5 text-center shadow-sm">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Speaking Challenge</p>
-          <p className="mt-2 text-sm font-semibold text-slate-600">
-            Record your pronunciation in {targetLang === "am" ? "Amharic" : "Afan Oromo"}
-          </p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">{uiText.speakingChallenge}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-600">{recordInstructionText}</p>
 
           <div className="mt-5 flex justify-center">
             <MicrophoneControl
@@ -243,6 +328,7 @@ export const SpeakingExerciseScreen = ({
               disabled={isLoading}
               onStartRecording={startRecording}
               onStopRecording={stopRecording}
+              labels={uiText.microphoneLabels}
             />
           </div>
 
@@ -250,13 +336,13 @@ export const SpeakingExerciseScreen = ({
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
                 <Volume2 size={14} />
-                Recorded Audio
+                {uiText.recordedAudio}
               </p>
               <audio controls src={audioPreviewUrl} className="w-full" />
             </div>
           ) : (
             <p className="mt-5 text-sm font-semibold text-slate-500">
-              {isRecording ? "Release the button to stop recording." : "No recording yet."}
+              {isRecording ? uiText.releaseToStop : uiText.noRecordingYet}
             </p>
           )}
 
@@ -271,10 +357,10 @@ export const SpeakingExerciseScreen = ({
               {isLoading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="animate-spin" />
-                  Checking...
+                  {uiText.checking}
                 </span>
               ) : (
-                "Check"
+                uiText.check
               )}
             </Button>
 
@@ -285,7 +371,7 @@ export const SpeakingExerciseScreen = ({
               onClick={handleRecordAgain}
               disabled={isLoading || isRecording || !audioBlob}
             >
-              Record Again
+              {uiText.recordAgain}
             </Button>
           </div>
         </div>
@@ -297,7 +383,7 @@ export const SpeakingExerciseScreen = ({
         ) : null}
       </div>
 
-      {result ? <ResultBanner isCorrect={result.isCorrect} feedback={result.feedback} /> : null}
+      {result ? <ResultBanner isCorrect={result.isCorrect} feedback={result.feedback} labels={uiText.resultLabels} /> : null}
     </div>
   );
 };
