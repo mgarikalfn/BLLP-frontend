@@ -1,11 +1,37 @@
 import { Volume2 } from "lucide-react";
 import { VocabularyItem } from "@/types/learning";
+import { useLanguageStore } from "@/store/languageStore";
 
 interface VocabCardProps {
   vocab: VocabularyItem;
 }
 
 export const VocabCard = ({ vocab }: VocabCardProps) => {
+  const targetLanguage = useLanguageStore((state) => state.lang);
+  const helperLanguage = targetLanguage === "am" ? "ao" : "am";
+
+  const primaryWord = vocab[targetLanguage];
+  const secondaryWord = vocab[helperLanguage];
+  const primaryAudio = vocab.audioUrl?.[targetLanguage];
+  const secondaryAudio = vocab.audioUrl?.[helperLanguage];
+
+  const primaryAudioLabel =
+    targetLanguage === "am" ? "Play Amharic audio" : "Play Afan Oromo audio";
+  const secondaryAudioLabel =
+    helperLanguage === "am" ? "Play Amharic audio" : "Play Afan Oromo audio";
+
+  const examplePrimaryText = vocab.example?.[targetLanguage];
+  const exampleSecondaryText = vocab.example?.[helperLanguage];
+  const examplePrimaryAudio = vocab.example?.audioUrl?.[targetLanguage];
+  const exampleSecondaryAudio = vocab.example?.audioUrl?.[helperLanguage];
+
+  const examplePrimaryLabel =
+    targetLanguage === "am" ? "Play example Amharic audio" : "Play example Afan Oromo audio";
+  const exampleSecondaryLabel =
+    helperLanguage === "am" ? "Play example Amharic audio" : "Play example Afan Oromo audio";
+
+  const exampleContextTitle = targetLanguage === "am" ? "የአጠቃቀም ምሳሌ" : "Fakkeenya Haala Itti Fayyadamaa";
+
   const getAudioUrl = (path?: string) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
@@ -27,24 +53,24 @@ export const VocabCard = ({ vocab }: VocabCardProps) => {
     <div className="flex flex-col items-center justify-center w-full animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="text-center mb-8">
         <h1 className="text-5xl sm:text-6xl font-black text-gray-800 mb-4 flex items-center justify-center gap-4">
-          {vocab.am}
-          {vocab.audioUrl?.am && (
+          {primaryWord}
+          {primaryAudio && (
             <button 
-              onClick={() => playAudio(vocab.audioUrl?.am)} 
+              onClick={() => playAudio(primaryAudio)} 
               className="text-blue-500 hover:bg-blue-50 p-3 rounded-full transition-colors active:scale-95"
-              aria-label="Play Amharic audio"
+              aria-label={primaryAudioLabel}
             >
               <Volume2 size={36} strokeWidth={2.5} />
             </button>
           )}
         </h1>
         <h2 className="text-2xl sm:text-3xl font-bold text-blue-500 flex items-center justify-center gap-2">
-          {vocab.ao}
-          {vocab.audioUrl?.ao && (
+          {secondaryWord}
+          {secondaryAudio && (
             <button 
-              onClick={() => playAudio(vocab.audioUrl?.ao)} 
+              onClick={() => playAudio(secondaryAudio)} 
               className="text-orange-500 hover:bg-orange-50 p-2 rounded-full transition-colors active:scale-95"
-              aria-label="Play Afan Oromo audio"
+              aria-label={secondaryAudioLabel}
             >
               <Volume2 size={24} strokeWidth={2.5} />
             </button>
@@ -54,26 +80,26 @@ export const VocabCard = ({ vocab }: VocabCardProps) => {
 
       {vocab.example && (
         <div className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-2xl p-6 mt-6">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Example Context</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">{exampleContextTitle}</h3>
           <h4 className="flex items-center gap-2">
-            <span className="text-xl text-gray-700 font-medium mb-2">{vocab.example.am}</span>
-            {vocab.example.audioUrl?.am && (
+            <span className="text-xl text-gray-700 font-bold mb-2">{examplePrimaryText}</span>
+            {examplePrimaryAudio && (
               <button 
-                onClick={() => playAudio(vocab.example?.audioUrl?.am)} 
+                onClick={() => playAudio(examplePrimaryAudio)} 
                 className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-colors active:scale-95 -mt-2"
-                aria-label="Play example Amharic audio"
+                aria-label={examplePrimaryLabel}
               >
                 <Volume2 size={20} strokeWidth={2.5} />
               </button>
             )}
           </h4>
           <p className="flex items-center gap-2">
-            <span className="text-lg text-gray-500">{vocab.example.ao}</span>
-            {vocab.example.audioUrl?.ao && (
+            <span className="text-lg text-gray-500">{exampleSecondaryText}</span>
+            {exampleSecondaryAudio && (
                <button 
-                 onClick={() => playAudio(vocab.example?.audioUrl?.ao)} 
+                 onClick={() => playAudio(exampleSecondaryAudio)} 
                  className="text-orange-500 hover:bg-orange-50 p-1.5 rounded-full transition-colors active:scale-95"
-                 aria-label="Play example Afan Oromo audio"
+                 aria-label={exampleSecondaryLabel}
                >
                  <Volume2 size={18} strokeWidth={2.5} />
                </button>

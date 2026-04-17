@@ -20,6 +20,10 @@ export const LessonFooter = ({
   correctAnswerText,
 }: LessonFooterProps) => {
 
+  if (!isLearningSlide && status === "idle") {
+    return <div className="w-full border-t-2 border-gray-200 bg-white p-4 sm:p-6 md:px-8" />;
+  }
+
   if (status === "correct") {
     return (
       <div className="w-full bg-green-100 border-t-2 border-green-200 p-4 sm:p-6 md:px-8 animate-in slide-in-from-bottom-full duration-300">
@@ -85,7 +89,7 @@ export const LessonFooter = ({
             "w-full sm:w-48 font-bold text-lg rounded-xl shadow-sm h-12 transition-all duration-200",
             disabled 
               ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-              : "bg-green-500 hover:bg-green-600 text-white hover:shadow-md border-b-4 border-green-600 active:border-b-0 active:translate-y-[4px]"
+              : "bg-green-500 hover:bg-green-600 text-white hover:shadow-md border-b-4 border-green-600 active:border-b-0 active:translate-y-1"
           )}
         >
           {isLearningSlide ? "Continue" : "Check"}

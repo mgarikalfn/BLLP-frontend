@@ -7,6 +7,7 @@ import {
   WorkspaceWritingExercise,
   WorkspaceSpeakingExercise,
 } from "@/types/learning";
+import { useLanguageStore } from "@/store/languageStore";
 import Link from "next/link";
 import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { BossBattleCard } from "./BossBattleCard";
@@ -27,6 +28,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   writingExercises = [],
   speakingExercises = [],
 }) => {
+  const lang = useLanguageStore((state) => state.lang);
   const allLessonsCompleted = lessons.every((lesson) => lesson.status === "completed");
   const hasDialogueStatusInfo = dialogues.some((dialogue) => !!dialogue.status);
   const dialoguesCompleted =
@@ -38,6 +40,8 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
     writingExercises.length === 0 ||
     !hasWritingStatusInfo ||
     writingExercises.every((writingExercise) => writingExercise.status === "completed");
+  const testNodeStatus: NodeStatus = allLessonsCompleted ? "active" : "locked";
+  const testNodeLabel = lang === "am" ? "የመጨረሻ ግምገማ" : "Final Review";
 
   return (
     <div className="relative flex flex-col items-center py-8 min-h-125">
@@ -194,6 +198,17 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
           </div>
         );
       })}
+
+      <div className="relative w-full flex justify-center mt-2 mb-8">
+        <BossBattleCard
+          id={topicId}
+          type="TEST"
+          items={[{ topicId }]}
+          status={testNodeStatus}
+          styleOffset={Math.sin((lessons.length + dialogues.length + writingExercises.length + speakingExercises.length) / 2 * Math.PI) * 90}
+          label={testNodeLabel}
+        />
+      </div>
     </div>
   );
 };
