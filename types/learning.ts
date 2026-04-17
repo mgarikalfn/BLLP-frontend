@@ -37,11 +37,94 @@ export interface QuizOption extends LocalizedString {
   _id?: string;
 }
 
-export interface QuizQuestion {
+export interface LegacyQuizQuestion {
   _id?: string;
   question: LocalizedString;
   options: QuizOption[];
   correctAnswerIndex: number;
+}
+
+export type QuestionType = "MULTIPLE_CHOICE" | "MATCHING" | "SCRAMBLE" | "CLOZE";
+
+export type LocalizedOrString = LocalizedString | string;
+
+export interface MultipleChoiceQuestionContent {
+  question?: LocalizedOrString;
+  prompt?: LocalizedOrString;
+  options: Array<LocalizedOrString>;
+  correctIndex?: number;
+  correctAnswerIndex?: number;
+}
+
+export interface MatchingPair {
+  left: string;
+  right: string;
+}
+
+export interface MatchingQuestionContent {
+  prompt?: LocalizedOrString;
+  pairs: MatchingPair[];
+}
+
+export interface ScrambleQuestionContent {
+  prompt?: LocalizedOrString;
+  targetLanguage?: string;
+  shuffledWords?: string[];
+  correctSentence?: string;
+  scrambled?: string[];
+  answer?: string;
+}
+
+export interface ClozeQuestionContent {
+  textBeforeBlank: LocalizedOrString;
+  textAfterBlank: LocalizedOrString;
+  options: Array<LocalizedOrString>;
+  correctAnswer: LocalizedOrString;
+}
+
+export type LessonQuestionContent =
+  | MultipleChoiceQuestionContent
+  | MatchingQuestionContent
+  | ScrambleQuestionContent
+  | ClozeQuestionContent;
+
+export interface LessonQuestion {
+  _id?: string;
+  topicId?: string;
+  lessonId?: string;
+  intendedFor?: "LESSON" | "TOPIC" | "BOTH" | "TEST";
+  type: QuestionType;
+  content: LessonQuestionContent;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
+export interface TopicTestClozeContent {
+  sentence: LocalizedOrString;
+  answer: LocalizedOrString;
+}
+
+export type TopicTestQuestionType = "MATCHING" | "CLOZE";
+
+export interface TopicTestQuestion {
+  _id: string;
+  topicId: string;
+  lessonId?: string;
+  intendedFor?: "LESSON" | "TOPIC" | "BOTH" | "TEST";
+  type: TopicTestQuestionType;
+  content: MatchingQuestionContent | TopicTestClozeContent;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
+export interface TopicTestResponse {
+  topicId: string;
+  count: number;
+  questions: TopicTestQuestion[];
 }
 
 export interface Lesson {
@@ -49,8 +132,14 @@ export interface Lesson {
   topicId?: string;
   order: number;
   title: LocalizedString;
+  grammarNotes?: LocalizedString;
   vocabulary?: VocabularyItem[];
-  quiz?: QuizQuestion[];
+  dialogue?: Array<{
+    _id?: string;
+    speaker: string;
+    text: LocalizedString;
+  }>;
+  quiz?: Array<LessonQuestion | LegacyQuizQuestion>;
   isVerified?: boolean;
   completed?: boolean;
   createdAt?: string;
