@@ -2,9 +2,31 @@ import { CheckCircle2, CircleAlert, CircleX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WritingFeedbackResult } from "@/types/learning";
 
+type LearningLanguage = "am" | "ao";
+
 interface FeedbackCardProps {
   result: WritingFeedbackResult;
+  nativeLanguage: LearningLanguage;
 }
+
+const feedbackUiText = {
+  am: {
+    labels: {
+      success: "በጣም ጥሩ",
+      warning: "ጥቂት ቀርቷል",
+      error: "እንደገና ይሞክሩ",
+    },
+    sampleAnswer: "ትክክለኛ መልስ",
+  },
+  ao: {
+    labels: {
+      success: "Baay'ee gaarii",
+      warning: "Xiqqoo hafa",
+      error: "Irra deebi'ii yaali",
+    },
+    sampleAnswer: "Deebii sirrii",
+  },
+} as const;
 
 const isPassingResult = (result: WritingFeedbackResult) => {
   return result.status === "PERFECT" || (result.status === "EVALUATED" && result.isCorrect);
@@ -12,14 +34,16 @@ const isPassingResult = (result: WritingFeedbackResult) => {
 
 const isWarningResult = (result: WritingFeedbackResult) => result.status === "TYPO";
 
-const getFeedbackCardStyles = (result: WritingFeedbackResult) => {
+const getFeedbackCardStyles = (result: WritingFeedbackResult, nativeLanguage: LearningLanguage) => {
+  const uiText = feedbackUiText[nativeLanguage];
+
   if (isPassingResult(result)) {
     return {
       wrapper: "border-green-200 bg-green-50",
       title: "text-green-700",
       body: "text-green-800",
       icon: CheckCircle2,
-      label: "Great Work",
+      label: uiText.labels.success,
     };
   }
 
@@ -29,7 +53,7 @@ const getFeedbackCardStyles = (result: WritingFeedbackResult) => {
       title: "text-amber-700",
       body: "text-amber-800",
       icon: CircleAlert,
-      label: "Almost There",
+      label: uiText.labels.warning,
     };
   }
 
@@ -38,7 +62,7 @@ const getFeedbackCardStyles = (result: WritingFeedbackResult) => {
     title: "text-rose-700",
     body: "text-rose-800",
     icon: CircleX,
-    label: "Try Again",
+    label: uiText.labels.error,
   };
 };
 
@@ -48,10 +72,11 @@ export const shouldShowSampleAnswer = (result: WritingFeedbackResult) => {
 
 export const isSuccessfulWritingResult = isPassingResult;
 
-export const FeedbackCard = ({ result }: FeedbackCardProps) => {
-  const styles = getFeedbackCardStyles(result);
+export const FeedbackCard = ({ result, nativeLanguage }: FeedbackCardProps) => {
+  const styles = getFeedbackCardStyles(result, nativeLanguage);
   const Icon = styles.icon;
   const showSampleAnswer = shouldShowSampleAnswer(result) && !!result.sampleAnswer?.trim();
+  const sampleAnswerLabel = feedbackUiText[nativeLanguage].sampleAnswer;
 
   return (
     <section className={cn("rounded-2xl border-2 p-5", styles.wrapper)}>
@@ -66,7 +91,7 @@ export const FeedbackCard = ({ result }: FeedbackCardProps) => {
 
       {showSampleAnswer ? (
         <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-3">
-          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Sample Answer</p>
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">{sampleAnswerLabel}</p>
           <p className="mt-2 text-base font-semibold text-slate-700">{result.sampleAnswer}</p>
         </div>
       ) : null}

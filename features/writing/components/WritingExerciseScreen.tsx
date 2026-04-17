@@ -14,6 +14,35 @@ interface WritingExerciseScreenProps {
   onComplete: () => void;
 }
 
+type LearningLanguage = "am" | "ao";
+
+const writingUiText = {
+  am: {
+    fallbackInstruction: {
+      TRANSLATION: "ይህን ዓረፍተ ነገር ተርጉሙ",
+      OPEN_PROMPT: "በራስዎ ቃላት ምላሽ ይጻፉ",
+    },
+    responseLabel: "የእርስዎ ምላሽ",
+    placeholder: "መልስዎን እዚህ ይጻፉ...",
+    grading: "በመገምገም ላይ...",
+    continue: "ቀጥል",
+    checkAnswer: "መልስ ፈትሽ",
+    submitError: "አሁን መልስዎን መገምገም አልተቻለም።",
+  },
+  ao: {
+    fallbackInstruction: {
+      TRANSLATION: "Himicha kana hiiki",
+      OPEN_PROMPT: "Jechoota keessaniin deebii barreessaa",
+    },
+    responseLabel: "Deebii kee",
+    placeholder: "Deebii kee asitti barreessi...",
+    grading: "Madaalamaa jira...",
+    continue: "Itti fufi",
+    checkAnswer: "Deebii qori",
+    submitError: "Amma deebii kee madaaluu hin dandeenye.",
+  },
+} as const;
+
 const playSuccessTone = () => {
   if (typeof window === "undefined" || !window.AudioContext) {
     return;
@@ -44,21 +73,32 @@ const playSuccessTone = () => {
 };
 
 export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseScreenProps) => {
-  const lang = useLanguageStore((state) => state.lang);
+  const preferredTargetLanguage = useLanguageStore((state) => (state.lang === "ao" ? "ao" : "am"));
   const submitMutation = useSubmitWritingExercise();
 
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackResult, setFeedbackResult] = useState<WritingFeedbackResult | null>(null);
 
-  const nativeLanguage = exercise.nativeLanguage || lang;
-  const targetLanguage = exercise.targetLanguage || (nativeLanguage === "am" ? "ao" : "am");
+  const targetLanguage: LearningLanguage =
+    exercise.targetLanguage || preferredTargetLanguage;
+  const nativeLanguage: LearningLanguage =
+    exercise.nativeLanguage || (targetLanguage === "am" ? "ao" : "am");
+  const uiText = writingUiText[targetLanguage];
 
-  const promptText = exercise.prompt[targetLanguage] || exercise.prompt.am || exercise.prompt.ao;
-  const promptTranslation = exercise.prompt[nativeLanguage] || undefined;
+  // Opposite mode: display target language as primary with native helper translation.
+  const promptDisplayLanguage: LearningLanguage = targetLanguage;
+  const promptHelperLanguage: LearningLanguage =
+    promptDisplayLanguage === "am" ? "ao" : "am";
+
+  const promptText =
+    exercise.prompt[promptDisplayLanguage] ||
+    exercise.prompt[promptHelperLanguage] ||
+    exercise.prompt.am;
+  const promptTranslation = exercise.prompt[promptHelperLanguage] || undefined;
   const instructionText =
-    exercise.instruction?.[nativeLanguage] ||
-    (exercise.type === "TRANSLATION" ? "Translate this sentence" : "Write your response");
+    exercise.instruction?.[targetLanguage] ||
+    uiText.fallbackInstruction[exercise.type];
 
   const isPassingResult = useMemo(() => {
     if (!feedbackResult) {
@@ -82,12 +122,16 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
 
     setIsLoading(true);
 
+    // Opposite expectation mode: evaluate answers in the reverse language direction.
+    const submissionTargetLanguage: LearningLanguage = nativeLanguage;
+    const submissionNativeLanguage: LearningLanguage = targetLanguage;
+
     const payload: WritingSubmitPayload = {
       exerciseId: exercise._id,
       topicId: exercise.topicId,
       submittedText: trimmedInput,
-      targetLanguage,
-      nativeLanguage,
+      targetLanguage: submissionTargetLanguage,
+      nativeLanguage: submissionNativeLanguage,
     };
 
     try {
@@ -101,7 +145,7 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
       setFeedbackResult({
         isCorrect: false,
         status: "INCORRECT",
-        feedback: error instanceof Error ? error.message : "Unable to grade your answer right now.",
+        feedback: error instanceof Error ? error.message : uiText.submitError,
         sampleAnswer: "",
         attemptId: "submission-error",
       });
@@ -121,7 +165,7 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
 
         <section className="rounded-2xl border-2 border-slate-200 bg-white p-5">
           <label htmlFor="writing-input" className="text-xs font-black uppercase tracking-widest text-slate-400">
-            Your Answer
+            {uiText.responseLabel}
           </label>
 
           <textarea
@@ -129,12 +173,12 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
             value={inputText}
             disabled={isLoading}
             onChange={(event) => setInputText(event.target.value)}
-            placeholder="Type your translation or creative response here..."
+            placeholder={uiText.placeholder}
             className="mt-3 min-h-40 w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-4 text-base font-medium text-slate-800 outline-none transition-colors focus:border-sky-300 focus:bg-white disabled:cursor-not-allowed disabled:opacity-70"
           />
         </section>
 
-        {feedbackResult ? <FeedbackCard result={feedbackResult} /> : null}
+        {feedbackResult ? <FeedbackCard result={feedbackResult} nativeLanguage={targetLanguage} /> : null}
 
         <Button
           type="button"
@@ -147,12 +191,12 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
           {isLoading ? (
             <>
               <Loader2 className="animate-spin" />
-              Grading...
+              {uiText.grading}
             </>
           ) : isPassingResult ? (
-            "Continue"
+            uiText.continue
           ) : (
-            "Check Answer"
+            uiText.checkAnswer
           )}
         </Button>
       </div>
