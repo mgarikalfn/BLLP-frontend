@@ -35,8 +35,8 @@ export default function  Sidebar  ({ className }: Props)  {
         />
 
          <SidebarItem
-          label="topic"
-          href="/topic"
+          label="learn"
+          href="/topics"
           iconSrc="/topic.jpg"
         />
        

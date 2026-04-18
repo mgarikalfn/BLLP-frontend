@@ -7,22 +7,19 @@ import { getTopicWorkspace } from '@/api/topicWorkspace.api';
 export default async function TopicWorkspacePage({ 
   params 
 }: { 
-  params: Promise<{ topicId: string }> // 1. Update type to Promise
+  params: Promise<{ topicId: string }>
 }) {
-  // 2. Unwrap the promise here
   const { topicId } = await params; 
   
   const queryClient = new QueryClient();
 
-  // 3. Use the unwrapped topicId for prefetching
   await queryClient.prefetchQuery({
-    queryKey: ["topicWorkspace", topicId],
-    queryFn: () => getTopicWorkspace(topicId),
+    queryKey: ["topicWorkspace"],
+    queryFn: () => getTopicWorkspace(1, 10),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      {/* 4. Pass the unwrapped topicId to your client component */}
       <TopicWorkspaceClient topicId={topicId} />
     </HydrationBoundary>
   );

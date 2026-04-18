@@ -1,38 +1,47 @@
 import { useState, useEffect } from 'react';
-import { Lesson, VocabularyItem, QuizQuestion } from '@/types/learning';
+import { useQueryClient } from '@tanstack/react-query';
+import { Lesson, VocabularyItem, LessonQuestion } from '@/types/learning';
+import { normalizeQuestion } from '@/features/lesson/components/QuestionHost';
 import { api } from '@/lib/api';
 
 export type Slide = 
+  | { type: 'study'; data: { grammarNotes?: Lesson['grammarNotes']; dialogue?: Lesson['dialogue'] } }
   | { type: 'learning'; data: VocabularyItem }
-  | { type: 'quiz'; data: QuizQuestion };
+  | { type: 'quiz'; data: LessonQuestion };
 
 export type LessonStatus = 'idle' | 'checking' | 'correct' | 'incorrect' | 'completed' | 'celebration';
 
 export const useLessonEngine = (lesson?: Lesson) => {
+  const queryClient = useQueryClient();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<LessonStatus>('idle');
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
   // Initialize slides when lesson loads
   useEffect(() => {
     if (lesson) {
+      const hasStudyContent = Boolean(lesson.grammarNotes) || Boolean(lesson.dialogue && lesson.dialogue.length > 0);
+      const studySlides: Slide[] = hasStudyContent
+        ? [
+            {
+              type: 'study',
+              data: {
+                grammarNotes: lesson.grammarNotes,
+                dialogue: lesson.dialogue,
+              },
+            },
+          ]
+        : [];
       const vocabSlides: Slide[] = (lesson.vocabulary || []).map(v => ({ type: 'learning', data: v }));
-      const quizSlides: Slide[] = (lesson.quiz || []).map(q => ({ type: 'quiz', data: q }));
-      setSlides([...vocabSlides, ...quizSlides]);
+      const quizSlides: Slide[] = (lesson.quiz || []).map(q => ({ type: 'quiz', data: normalizeQuestion(q) }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSlides([...studySlides, ...vocabSlides, ...quizSlides]);
       setCurrentIndex(0);
       setStatus('idle');
-      setSelectedOption(null);
     }
-  }, [lesson?._id]);
+  }, [lesson]);
 
   const currentSlide = slides[currentIndex];
-
-  const selectOption = (index: number) => {
-    // Prevent changing answer once submitted
-    if (status !== 'idle' && status !== 'checking') return; 
-    setSelectedOption(index);
-  };
 
   const checkAnswer = () => {
     if (!currentSlide) return;
@@ -41,15 +50,16 @@ export const useLessonEngine = (lesson?: Lesson) => {
       nextSlide();
       return;
     }
+  };
 
-    if (currentSlide.type === 'quiz') {
-      const isCorrect = selectedOption === currentSlide.data.correctAnswerIndex;
-      setStatus(isCorrect ? 'correct' : 'incorrect');
+  const completeQuestion = (isCorrect: boolean) => {
+    if (!currentSlide || currentSlide.type !== 'quiz') return;
 
-      if (!isCorrect) {
-        // Push a copy to the end of the line so they must do it again
-        setSlides(prev => [...prev, currentSlide]);
-      }
+    setStatus(isCorrect ? 'correct' : 'incorrect');
+
+    if (!isCorrect) {
+      // Push a copy to the end of the line so they must do it again
+      setSlides(prev => [...prev, currentSlide]);
     }
   };
 
@@ -58,6 +68,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
       if (lesson?._id) {
         try {
           await api.post('/learn/complete', { lessonId: lesson._id });
+          queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] });
         } catch (e) {
           console.error("Failed to complete lesson", e);
         }
@@ -66,7 +77,6 @@ export const useLessonEngine = (lesson?: Lesson) => {
     } else {
       setCurrentIndex(prev => prev + 1);
       setStatus('idle');
-      setSelectedOption(null);
     }
   };
 
@@ -75,9 +85,8 @@ export const useLessonEngine = (lesson?: Lesson) => {
     currentIndex,
     currentSlide,
     status,
-    selectedOption,
-    selectOption,
     checkAnswer,
+    completeQuestion,
     nextSlide
   };
 };

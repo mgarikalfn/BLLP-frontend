@@ -14,7 +14,7 @@ interface LessonLayoutProps {
 export const LessonLayout = ({ currentIndex, totalSlides, children, footer, topicId }: LessonLayoutProps) => {
   const progressPercentage = totalSlides === 0 ? 0 : (currentIndex / totalSlides) * 100;
   // Fallback to /learn if no topicId is provided
-  const exitLink = topicId ? `/topics/${topicId}` : "/learn";
+  const exitLink =   "/topics";
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-white relative overflow-hidden">
