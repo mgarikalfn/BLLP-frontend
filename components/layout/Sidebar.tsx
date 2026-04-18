@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, BookOpen, Brain, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
@@ -39,6 +39,12 @@ export default function  Sidebar  ({ className }: Props)  {
           href="/topics"
           iconSrc="/topic.jpg"
         />
+
+        <SidebarItem
+          label="Leaderboard"
+          href="/leaderboard"
+          icon={Trophy}
+        />
        
         {/* <SidebarItem
           label="Study"
@@ -54,11 +60,6 @@ export default function  Sidebar  ({ className }: Props)  {
           label="Leaderboard" 
           href="/leaderboard"
           iconSrc="/leaderboard.svg"
-        /> */}
-       {/*  <SidebarItem 
-          label="quests" 
-          href="/quests"
-          iconSrc="/quests.svg"
         /> */}
        {/*  <SidebarItem 
           label="shop" 
