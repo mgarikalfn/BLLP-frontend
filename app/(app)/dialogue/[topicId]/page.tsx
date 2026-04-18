@@ -3,12 +3,14 @@
 import { useMemo, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useDialogueById, useDialoguesByTopic } from "@/hooks/useDialogue";
 import { Dialogue } from "@/types/learning";
 import { LessonLayout } from "@/features/lesson/components/LessonLayout";
 import { LessonFooter } from "@/features/lesson/components/LessonFooter";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 type DialogueStatus = "idle" | "correct" | "incorrect" | "completed";
 
@@ -45,6 +47,7 @@ export default function DialoguePage() {
   const params = useParams<{ topicId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const topicId = Array.isArray(params.topicId) ? params.topicId[0] : params.topicId;
   const dialogueId = searchParams.get("dialogueId");
   const hasDialogueId = Boolean(dialogueId);
@@ -67,6 +70,9 @@ export default function DialoguePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [status, setStatus] = useState<DialogueStatus>("idle");
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionMeta, setCompletionMeta] = useState<{ xpEarned?: number; totalXP?: number } | null>(null);
 
   const selectedDialogue = useMemo(() => {
     if (dialogueById) {
@@ -133,8 +139,46 @@ export default function DialoguePage() {
     setStatus(selectedOption === correctAnswerIndex ? "correct" : "incorrect");
   };
 
-  const handleContinue = () => {
+  const submitDialogueCompletion = async () => {
+    if (!selectedDialogue?._id || isCompleting) return;
+
+    setIsCompleting(true);
+    setCompletionError(null);
+
+    try {
+      const res = await api.post(`/dialogues/${selectedDialogue._id}/complete`);
+      const payload =
+        res.data && typeof res.data === "object" && "data" in res.data
+          ? (res.data as { data?: { xpEarned?: number; totalXP?: number } }).data
+          : (res.data as { xpEarned?: number; totalXP?: number });
+
+      setCompletionMeta({
+        xpEarned: payload?.xpEarned,
+        totalXP: payload?.totalXP,
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
+        queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),
+      ]);
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" && error !== null && "response" in error
+          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to sync dialogue completion")
+          : error instanceof Error
+            ? error.message
+            : "Failed to sync dialogue completion";
+
+      setCompletionError(message);
+      console.error("Failed to complete dialogue", error);
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const handleContinue = async () => {
     if (currentIndex + 1 >= slides.length) {
+      await submitDialogueCompletion();
       setStatus("completed");
       return;
     }
@@ -199,6 +243,20 @@ export default function DialoguePage() {
         <div className="w-full max-w-md rounded-2xl border-2 border-green-200 bg-green-50 p-8 text-center">
           <h1 className="text-3xl font-black text-green-600">Dialogue Completed</h1>
           <p className="mt-3 text-gray-600">Great job progressing through the conversation.</p>
+          {completionMeta?.xpEarned !== undefined ? (
+            <p className="mt-2 text-sm font-semibold text-green-700">
+              XP Earned: +{completionMeta.xpEarned}
+              {completionMeta.totalXP !== undefined ? ` | Total XP: ${completionMeta.totalXP}` : ""}
+            </p>
+          ) : null}
+          {completionError ? (
+            <div className="mt-4 rounded-xl border-2 border-red-300 bg-red-50 p-3 text-left text-sm font-semibold text-red-700">
+              Progress sync failed: {completionError}
+              <Button className="mt-3 w-full" variant="secondary" size="lg" onClick={submitDialogueCompletion} disabled={isCompleting}>
+                {isCompleting ? "Retrying..." : "Retry Sync"}
+              </Button>
+            </div>
+          ) : null}
           <Button className="mt-6 w-full" variant="secondary" size="lg" onClick={() => router.push(`/topics/${topicId}`)}>
             Return To Topic
           </Button>

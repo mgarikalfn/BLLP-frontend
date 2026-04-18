@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTopicTest } from "@/hooks/useTopicTest";
 import { useLanguageStore } from "@/store/languageStore";
+import { useProgressStore } from "@/store/progressStore";
 import { cn } from "@/lib/utils";
 import { LocalizedOrString, MatchingQuestionContent, TopicTestClozeContent, TopicTestQuestion } from "@/types/learning";
 
@@ -231,8 +232,7 @@ const ClozeQuestion = ({
 export default function TopicTestPage() {
   const params = useParams<{ topicId: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient();    const markCompleted = useProgressStore((state) => state.markCompleted);
   const lang = useLanguageStore((state) => state.lang);
   const targetLanguage: LearningLanguage = lang === "ao" ? "ao" : "am";
   const helperLanguage: LearningLanguage = targetLanguage === "am" ? "ao" : "am";
@@ -311,6 +311,10 @@ export default function TopicTestPage() {
   }, [finished, passed]);
 
   const completeAndGoTopics = async () => {
+    if (passed && topicId) {
+      markCompleted(topicId + "_test");
+    }
+
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),

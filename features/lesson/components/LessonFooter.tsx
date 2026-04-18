@@ -20,7 +20,7 @@ export const LessonFooter = ({
   correctAnswerText,
 }: LessonFooterProps) => {
 
-  if (!isLearningSlide && status === "idle") {
+  if (!isLearningSlide && status === "idle" && disabled) {
     return <div className="w-full border-t-2 border-gray-200 bg-white p-4 sm:p-6 md:px-8" />;
   }
 
