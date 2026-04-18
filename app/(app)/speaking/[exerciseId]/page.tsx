@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SpeakingExerciseScreen } from "@/features/speaking/SpeakingExerciseScreen";
 import { useSpeakingExercise } from "@/hooks/useSpeaking";
 import { useLanguageStore } from "@/store/languageStore";
+import { useProgressStore } from "@/store/progressStore";
 import { LocalizedString, SpeakingExercise } from "@/types/learning";
 
 type LearningLanguage = "am" | "ao";
@@ -84,6 +85,7 @@ export default function SpeakingExercisePage() {
   const queryClient = useQueryClient();
 
   const language = useLanguageStore((state) => state.lang);
+  const markCompleted = useProgressStore((state) => state.markCompleted);
   const nativeLanguage: LearningLanguage = language === "ao" ? "ao" : "am";
   const localizedPageText = pageText[nativeLanguage];
 
@@ -123,6 +125,10 @@ export default function SpeakingExercisePage() {
   };
 
   const handleComplete = async () => {
+    if (exercise?._id) {
+      markCompleted(exercise._id);
+    }
+    
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),

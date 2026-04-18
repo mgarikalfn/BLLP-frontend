@@ -22,7 +22,9 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
     icon = <Shield className="w-6 h-6" />;
   }
 
-  const { completedLessons, totalLessons, percentage } = topic.progress || { completedLessons: 0, totalLessons: 0, percentage: 0 };
+  const completedCount = topic.progress?.completedCount ?? topic.progress?.completedLessons ?? 0;
+  const totalCount = topic.progress?.totalCount ?? topic.progress?.totalLessons ?? 0;
+  const percentage = topic.progress?.percentage ?? 0;
   const amharicTitle = topic.title?.am || "Topic";
 
   return (
@@ -39,7 +41,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
         </div>
         <div className="flex flex-col gap-2 items-end min-w-30">
           <span className="text-sm font-bold whitespace-nowrap">
-            {completedLessons} / {totalLessons} Lessons
+            {completedCount} / {totalCount} Lessons
           </span>
           <Progress value={percentage} className="w-full h-2 rounded-full" />
         </div>
@@ -48,10 +50,8 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
       <div className="pt-10 px-4">
         <LessonPathContainer
           topicId={topic._id}
-          lessons={topic.lessons || []}
-          dialogues={topic.dialogues || []}
-          writingExercises={topic.writingExercises || topic.writings || []}
-          speakingExercises={topic.speakingExercises || []}
+          pathNodes={topic.pathNodes || []}
+          topicTest={topic.topicTest}
         />
       </div>
     </section>

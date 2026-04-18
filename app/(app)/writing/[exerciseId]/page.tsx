@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useWritingExercise } from "@/hooks/useWriting";
 import { WritingExerciseScreen } from "@/features/writing/components/WritingExerciseScreen";
+import { useProgressStore } from "@/store/progressStore";
 
 export default function WritingExercisePage() {
   const params = useParams<{ exerciseId: string }>();
@@ -16,6 +17,8 @@ export default function WritingExercisePage() {
 
   const exerciseId = Array.isArray(params.exerciseId) ? params.exerciseId[0] : params.exerciseId;
   const topicIdFromQuery = searchParams.get("topicId");
+
+  const markCompleted = useProgressStore((state) => state.markCompleted);
 
   const {
     data: exercise,
@@ -37,6 +40,10 @@ export default function WritingExercisePage() {
   };
 
   const handleComplete = async () => {
+    if (exercise?._id) {
+      markCompleted(exercise._id);
+    }
+    
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),

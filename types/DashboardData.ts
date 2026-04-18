@@ -1,3 +1,17 @@
+import { LocalizedString } from "./learning";
+
+interface DashboardLessonRef {
+  id: string;
+  title: LocalizedString;
+  order?: number;
+  topicId?: string;
+  topic?: {
+    id: string;
+    title: LocalizedString;
+    level: string;
+  };
+}
+
 export interface DashboardData {
   user: {
     xp: number
@@ -7,19 +21,12 @@ export interface DashboardData {
   }
 
   actions: {
-    dueReviews: number
+    dueCount: number
+    isReviewPriority: boolean
+    reviewUrgency: "none" | "low" | "medium" | "high" | "critical"
 
-    recommendedLesson?: {
-      id: string
-      title: string
-      topicId: string
-    }
-
-    continueLesson?: {
-      id: string
-      title: string
-      topicId: string
-    }
+    recommendedLesson?: DashboardLessonRef
+    continueLesson?: DashboardLessonRef
   }
 
   insights: {
@@ -34,5 +41,7 @@ export interface DashboardData {
   activity: {
     lessonsToday: number
     reviewsToday: number
+    dailyGoal: number
+    todayCount: number
   }
 }

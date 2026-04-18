@@ -73,7 +73,7 @@ export default function LessonPage() {
   }
 
   if (engine.status === "celebration") {
-    return <CelebrationScreen xpEarned={10} totalXP={100} />; // TODO: get real values from API
+    return <CelebrationScreen xpEarned={10} totalXP={100} debugError={engine.completionError} />; // TODO: get real values from API
   }
 
   const { currentSlide, currentIndex, slides, status } = engine;
@@ -107,41 +107,49 @@ export default function LessonPage() {
   }
 
   return (
-    <LessonLayout 
-      currentIndex={currentIndex} 
-      totalSlides={slides.length} 
-      topicId={lesson.topicId}
-      footer={
-        <LessonFooter
-          status={status}
-          isLearningSlide={isLearningSlide}
-          disabled={!isLearningSlide}
-          onCheck={engine.checkAnswer}
-          onContinue={engine.nextSlide}
-          correctAnswerText={correctAnswerText}
-        />
-      }
-    >
-      {currentSlide.type === "study" && (
-        <StudyMomentCard
-          key={`study-${currentIndex}`}
-          grammarNotes={currentSlide.data.grammarNotes}
-          dialogue={currentSlide.data.dialogue}
-        />
-      )}
+    <>
+      {engine.completionError ? (
+        <div className="fixed top-4 left-1/2 z-[60] w-[92%] max-w-2xl -translate-x-1/2 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 shadow-lg">
+          Progress save failed: {engine.completionError}
+        </div>
+      ) : null}
 
-      {currentSlide.type === "learning" && (
-        <VocabCard key={`vocab-${currentIndex}`} vocab={currentSlide.data} />
-      )}
-      
-      {currentSlide.type === "quiz" && (
-        <QuestionHost
-          key={`quiz-${currentIndex}`} // Force re-mount on slide change so animations replay
-          question={currentSlide.data}
-          onComplete={engine.completeQuestion}
-          disabled={status !== "idle"}
-        />
-      )}
-    </LessonLayout>
+      <LessonLayout 
+        currentIndex={currentIndex} 
+        totalSlides={slides.length} 
+        topicId={lesson.topicId}
+        footer={
+          <LessonFooter
+            status={status}
+            isLearningSlide={isLearningSlide}
+            disabled={!isLearningSlide}
+            onCheck={engine.checkAnswer}
+            onContinue={engine.nextSlide}
+            correctAnswerText={correctAnswerText}
+          />
+        }
+      >
+        {currentSlide.type === "study" && (
+          <StudyMomentCard
+            key={`study-${currentIndex}`}
+            grammarNotes={currentSlide.data.grammarNotes}
+            dialogue={currentSlide.data.dialogue}
+          />
+        )}
+
+        {currentSlide.type === "learning" && (
+          <VocabCard key={`vocab-${currentIndex}`} vocab={currentSlide.data} />
+        )}
+        
+        {currentSlide.type === "quiz" && (
+          <QuestionHost
+            key={`quiz-${currentIndex}`} // Force re-mount on slide change so animations replay
+            question={currentSlide.data}
+            onComplete={engine.completeQuestion}
+            disabled={status !== "idle"}
+          />
+        )}
+      </LessonLayout>
+    </>
   );
 }

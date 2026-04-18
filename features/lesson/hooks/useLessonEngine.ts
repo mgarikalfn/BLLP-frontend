@@ -16,6 +16,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<LessonStatus>('idle');
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
   // Initialize slides when lesson loads
   useEffect(() => {
@@ -38,6 +39,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
       setSlides([...studySlides, ...vocabSlides, ...quizSlides]);
       setCurrentIndex(0);
       setStatus('idle');
+      setCompletionError(null);
     }
   }, [lesson]);
 
@@ -67,9 +69,21 @@ export const useLessonEngine = (lesson?: Lesson) => {
     if (currentIndex + 1 >= slides.length) {
       if (lesson?._id) {
         try {
-          await api.post('/learn/complete', { lessonId: lesson._id });
+          await api.post('/learn/complete', {
+            lessonId: lesson._id,
+            contentId: lesson._id,
+            contentType: 'LESSON',
+          });
+          setCompletionError(null);
           queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] });
-        } catch (e) {
+        } catch (e: unknown) {
+          const errorMessage =
+            typeof e === 'object' && e !== null && 'response' in e
+              ? ((e as { response?: { data?: { message?: string } } }).response?.data?.message || 'Lesson completion request failed')
+              : e instanceof Error
+                ? e.message
+                : 'Lesson completion request failed';
+          setCompletionError(errorMessage);
           console.error("Failed to complete lesson", e);
         }
       }
@@ -85,6 +99,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
     currentIndex,
     currentSlide,
     status,
+    completionError,
     checkAnswer,
     completeQuestion,
     nextSlide
