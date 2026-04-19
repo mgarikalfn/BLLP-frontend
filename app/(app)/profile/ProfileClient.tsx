@@ -33,7 +33,7 @@ export default function ProfileClient() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center gap-3 text-gray-600">
-        <Loader2 className="animate-spin" size={24} />
+        <Loader2  className="animate-spin" size={24} />
         <span className="font-semibold">{text.loading}</span>
       </div>
     );
