@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
@@ -70,7 +70,11 @@ export default function  Sidebar  ({ className }: Props)  {
 
       </div>
       <div className="p-4">
-       profileIcon
+        <SidebarItem
+          label="Profile"
+          href="/profile"
+          icon={UserCircle2}
+        />
       </div>
     </div>
   );
