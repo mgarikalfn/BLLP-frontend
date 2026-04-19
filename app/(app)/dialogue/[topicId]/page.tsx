@@ -11,6 +11,7 @@ import { LessonLayout } from "@/features/lesson/components/LessonLayout";
 import { LessonFooter } from "@/features/lesson/components/LessonFooter";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { useLanguageStore } from "@/store/languageStore";
 
 type DialogueStatus = "idle" | "correct" | "incorrect" | "completed";
 
@@ -22,6 +23,32 @@ type DialogueSlide = {
   speakerAvatarUrl?: string;
   line: Dialogue["lines"][number];
 };
+
+type LearningLanguage = "am" | "ao";
+
+const getLocalizedText = (
+  value: { am: string; ao: string } | undefined,
+  primaryLanguage: LearningLanguage,
+  fallbackLanguage: LearningLanguage
+) => {
+  if (!value) return "";
+  return value[primaryLanguage] || value[fallbackLanguage] || value.am || value.ao || "";
+};
+
+const dialogueUiText = {
+  am: {
+    scenario: "ሁኔታ",
+    speaker: "ተናጋሪ",
+    yourResponse: "የእርስዎ ምላሽ",
+    chooseBestResponse: "በጣም ተገቢውን ምላሽ ይምረጡ",
+  },
+  ao: {
+    scenario: "Haala",
+    speaker: "Dubbataa",
+    yourResponse: "Deebii Kee",
+    chooseBestResponse: "Deebii gaarii ta'e filadhu",
+  },
+} as const;
 
 const normalizeAvatarPath = (avatarPath?: string) => {
   if (!avatarPath) return null;
@@ -51,6 +78,9 @@ export default function DialoguePage() {
   const topicId = Array.isArray(params.topicId) ? params.topicId[0] : params.topicId;
   const dialogueId = searchParams.get("dialogueId");
   const hasDialogueId = Boolean(dialogueId);
+  const nativeLanguage = useLanguageStore((state) => state.lang);
+  const targetLanguage = useLanguageStore((state) => state.targetLang);
+  const uiText = dialogueUiText[nativeLanguage];
 
   const {
     data: dialogueById,
@@ -126,7 +156,7 @@ export default function DialoguePage() {
 
   const correctAnswerText =
     status === "incorrect" && isInteractive && correctAnswerIndex >= 0
-      ? options[correctAnswerIndex]?.am
+      ? getLocalizedText(options[correctAnswerIndex], targetLanguage, nativeLanguage)
       : undefined;
 
   const handleSelectOption = (index: number) => {
@@ -283,9 +313,9 @@ export default function DialoguePage() {
     >
       <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
         <div className="rounded-2xl border-2 border-sky-100 bg-sky-50/80 p-4">
-          <p className="text-xs font-black uppercase tracking-wide text-sky-600">Scenario</p>
-          <p className="mt-2 text-lg font-bold text-gray-800">{currentSlide.scenario.am}</p>
-          <p className="text-sm text-gray-500">{currentSlide.scenario.ao}</p>
+          <p className="text-xs font-black uppercase tracking-wide text-sky-600">{uiText.scenario}</p>
+          <p className="mt-2 text-lg font-bold text-gray-800">{getLocalizedText(currentSlide.scenario, targetLanguage, nativeLanguage)}</p>
+          <p className="text-sm text-gray-500">{getLocalizedText(currentSlide.scenario, nativeLanguage, targetLanguage)}</p>
         </div>
 
         <div className="rounded-2xl border-2 border-gray-200 bg-white p-5">
@@ -308,23 +338,23 @@ export default function DialoguePage() {
             />
 
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-gray-400">Speaker</p>
+              <p className="text-xs font-black uppercase tracking-wide text-gray-400">{uiText.speaker}</p>
               <p className="text-lg font-black text-gray-800">{currentSlide.speakerName}</p>
             </div>
           </div>
 
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{currentSlide.line.content.am}</p>
-          <p className="mt-2 text-lg font-medium text-gray-500">{currentSlide.line.content.ao}</p>
+          <p className="text-2xl font-bold text-gray-900 leading-tight">{getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}</p>
+          <p className="mt-2 text-lg font-medium text-gray-500">{getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}</p>
         </div>
 
         {isInteractive && (
           <div className="rounded-2xl border-2 border-orange-100 bg-orange-50/60 p-5">
-            <p className="text-xs font-black uppercase tracking-wide text-orange-500">Your Response</p>
+            <p className="text-xs font-black uppercase tracking-wide text-orange-500">{uiText.yourResponse}</p>
             <h2 className="mt-2 text-xl font-black text-gray-800">
-              {currentSlide.line.question?.am || "Choose the best response"}
+              {getLocalizedText(currentSlide.line.question, nativeLanguage, targetLanguage) || uiText.chooseBestResponse}
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              {currentSlide.line.question?.ao || "Deebii sirrii filadhu"}
+              {getLocalizedText(currentSlide.line.question, targetLanguage, nativeLanguage)}
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
@@ -351,8 +381,8 @@ export default function DialoguePage() {
                       showCorrect && "border-green-500 bg-green-50 text-green-700"
                     )}
                   >
-                    <span className="block text-lg font-bold">{option.am}</span>
-                    <span className="block text-sm font-medium opacity-80">{option.ao}</span>
+                    <span className="block text-lg font-bold">{getLocalizedText(option, targetLanguage, nativeLanguage)}</span>
+                    <span className="block text-sm font-medium opacity-80">{getLocalizedText(option, nativeLanguage, targetLanguage)}</span>
                   </button>
                 );
               })}

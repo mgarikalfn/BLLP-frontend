@@ -12,7 +12,7 @@ interface EditProfileModalProps {
     targetLanguage: ProfileData["learningSettings"]["targetLanguage"];
     learningDirection: ProfileData["learningSettings"]["learningDirection"];
   };
-  onSave: (payload: UpdateProfilePayload) => Promise<void>;
+  onSave: (payload: UpdateProfilePayload) => Promise<unknown>;
 }
 
 export function EditProfileModal({ open, onClose, initialValues, onSave }: EditProfileModalProps) {

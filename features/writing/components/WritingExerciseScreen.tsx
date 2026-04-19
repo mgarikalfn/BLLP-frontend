@@ -16,6 +16,15 @@ interface WritingExerciseScreenProps {
 
 type LearningLanguage = "am" | "ao";
 
+const getLocalizedText = (
+  value: { am: string; ao: string } | undefined,
+  primaryLanguage: LearningLanguage,
+  fallbackLanguage: LearningLanguage
+) => {
+  if (!value) return "";
+  return value[primaryLanguage] || value[fallbackLanguage] || value.am || value.ao || "";
+};
+
 const writingUiText = {
   am: {
     fallbackInstruction: {
@@ -73,31 +82,41 @@ const playSuccessTone = () => {
 };
 
 export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseScreenProps) => {
-  const preferredTargetLanguage = useLanguageStore((state) => (state.lang === "ao" ? "ao" : "am"));
+  const learningDirection = useLanguageStore((state) => state.learningDirection);
+  const nativeUiLanguage = useLanguageStore((state) => state.lang);
+  const preferredTargetLanguage = useLanguageStore((state) => state.targetLang);
   const submitMutation = useSubmitWritingExercise();
 
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackResult, setFeedbackResult] = useState<WritingFeedbackResult | null>(null);
 
+  const derivedNativeLanguage: LearningLanguage = learningDirection
+    ? learningDirection === "AM_TO_OR"
+      ? "am"
+      : "ao"
+    : nativeUiLanguage;
+  const derivedTargetLanguage: LearningLanguage = learningDirection
+    ? learningDirection === "AM_TO_OR"
+      ? "ao"
+      : "am"
+    : preferredTargetLanguage;
+
   const targetLanguage: LearningLanguage =
-    exercise.targetLanguage || preferredTargetLanguage;
+    exercise.targetLanguage || derivedTargetLanguage;
   const nativeLanguage: LearningLanguage =
-    exercise.nativeLanguage || (targetLanguage === "am" ? "ao" : "am");
-  const uiText = writingUiText[targetLanguage];
+    exercise.nativeLanguage || derivedNativeLanguage;
+  const uiText = writingUiText[nativeLanguage];
 
   // Opposite mode: display target language as primary with native helper translation.
   const promptDisplayLanguage: LearningLanguage = targetLanguage;
   const promptHelperLanguage: LearningLanguage =
     promptDisplayLanguage === "am" ? "ao" : "am";
 
-  const promptText =
-    exercise.prompt[promptDisplayLanguage] ||
-    exercise.prompt[promptHelperLanguage] ||
-    exercise.prompt.am;
-  const promptTranslation = exercise.prompt[promptHelperLanguage] || undefined;
+  const promptText = getLocalizedText(exercise.prompt, promptDisplayLanguage, promptHelperLanguage);
+  const promptTranslation = getLocalizedText(exercise.prompt, promptHelperLanguage, promptDisplayLanguage) || undefined;
   const instructionText =
-    exercise.instruction?.[targetLanguage] ||
+    getLocalizedText(exercise.instruction, nativeLanguage, targetLanguage) ||
     uiText.fallbackInstruction[exercise.type];
 
   const isPassingResult = useMemo(() => {
@@ -122,9 +141,8 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
 
     setIsLoading(true);
 
-    // Opposite expectation mode: evaluate answers in the reverse language direction.
-    const submissionTargetLanguage: LearningLanguage = nativeLanguage;
-    const submissionNativeLanguage: LearningLanguage = targetLanguage;
+    const submissionTargetLanguage: LearningLanguage = targetLanguage;
+    const submissionNativeLanguage: LearningLanguage = nativeLanguage;
 
     const payload: WritingSubmitPayload = {
       exerciseId: exercise._id,
@@ -178,7 +196,7 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
           />
         </section>
 
-        {feedbackResult ? <FeedbackCard result={feedbackResult} nativeLanguage={targetLanguage} /> : null}
+        {feedbackResult ? <FeedbackCard result={feedbackResult} nativeLanguage={nativeLanguage} /> : null}
 
         <Button
           type="button"

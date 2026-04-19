@@ -22,10 +22,10 @@ export default function ProfileClient() {
 
   const initialValues = useMemo(
     () => ({
-      avatarUrl: data?.identity.avatarUrl || "",
-      bio: data?.identity.bio || "",
-      targetLanguage: data?.learningSettings.targetLanguage || "AMHARIC",
-      learningDirection: data?.learningSettings.learningDirection || "AM_TO_OR",
+      avatarUrl: data?.identity?.avatarUrl || "",
+      bio: data?.identity?.bio || "",
+      targetLanguage: data?.learningSettings?.targetLanguage || "AMHARIC",
+      learningDirection: data?.learningSettings?.learningDirection || "AM_TO_OR",
     }),
     [data]
   );
