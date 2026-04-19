@@ -16,9 +16,23 @@ export const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  type ApiErrorShape = {
+    response?: {
+      data?: {
+        message?: unknown;
+        error?: unknown;
+      } | unknown;
+    };
+  };
+
   const getErrorMessage = (error: unknown) => {
-    const responseData = (error as any)?.response?.data;
-    const message = responseData?.message ?? responseData?.error ?? responseData;
+    const responseData = (error as ApiErrorShape)?.response?.data;
+    const message =
+      responseData && typeof responseData === "object"
+        ? (responseData as { message?: unknown; error?: unknown }).message ??
+          (responseData as { message?: unknown; error?: unknown }).error ??
+          responseData
+        : responseData;
 
     if (typeof message === "string") return message;
     if (Array.isArray(message)) return message.join(", ");
@@ -36,19 +50,25 @@ export const SignupForm = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignupInput>({
-     resolver: zodResolver(signupSchema) as any,
+      resolver: zodResolver(signupSchema),
   });
 
   const onSubmit = async (values: SignupInput) => {
     setServerError("");
     try {
+      const avatarUrl = values.avatarUrl?.trim() || undefined;
+      const bio = values.bio?.trim() || undefined;
+
       const endpoint = "/auth/register";
       await api.post(endpoint, {
         username: values.username,
         email: values.email,
         password: values.password,
-        targetLang: values.targetLang,
-        proficiency: values.proficiency,
+        targetLanguage: values.targetLanguage,
+        proficiencyLevel: values.proficiencyLevel,
+        learningDirection: values.learningDirection,
+        avatarUrl,
+        bio,
       });
       
       router.push("/login");
@@ -124,29 +144,61 @@ export const SignupForm = () => {
 
         <div>
           <select
-            {...register("targetLang")}
+            {...register("targetLanguage")}
             defaultValue=""
-            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.targetLang ? 'border-red-500' : 'border-slate-200'}`}
+            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.targetLanguage ? 'border-red-500' : 'border-slate-200'}`}
           >
             <option value="" disabled>የቋንቋ ይምረጡ (Select Target Language)</option>
             <option value="AMHARIC">Amharic (Amharic)</option>
             <option value="OROMO">Oromo (Oromo)</option>
           </select>
-          {errors.targetLang && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.targetLang.message}</p>}
+          {errors.targetLanguage && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.targetLanguage.message}</p>}
         </div>
 
         <div>
           <select
-            {...register("proficiency")}
+            {...register("proficiencyLevel")}
             defaultValue=""
-            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.proficiency ? 'border-red-500' : 'border-slate-200'}`}
+            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.proficiencyLevel ? 'border-red-500' : 'border-slate-200'}`}
           >
             <option value="" disabled>የቋንቋ ደረጃ ይምረጡ (Select Proficiency Level)</option>
             <option value="BEGINNER">ጀማሪ (Beginner)</option>
             <option value="INTERMEDIATE">መካከለኛ (Intermediate)</option>
             <option value="ADVANCED">የላቀ (Advanced)</option>
           </select>
-          {errors.proficiency && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.proficiency.message}</p>}
+          {errors.proficiencyLevel && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.proficiencyLevel.message}</p>}
+        </div>
+
+        <div>
+          <select
+            {...register("learningDirection")}
+            defaultValue=""
+            className={`flex h-14 w-full min-w-0 rounded-2xl border-2 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pt-0 pb-0 items-center justify-center ${errors.learningDirection ? 'border-red-500' : 'border-slate-200'}`}
+          >
+            <option value="" disabled>የመማር አቅጣጫ ይምረጡ (Select Learning Direction)</option>
+            <option value="AM_TO_OR">Amharic to Oromo</option>
+            <option value="OR_TO_AM">Oromo to Amharic</option>
+          </select>
+          {errors.learningDirection && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.learningDirection.message}</p>}
+        </div>
+
+        <div>
+          <Input
+            {...register("avatarUrl")}
+            placeholder="የፕሮፋይል ምስል አድራሻ (Avatar URL) - Optional"
+            className={`h-14 rounded-2xl border-2 ${errors.avatarUrl ? 'border-red-500' : 'border-slate-200'}`}
+          />
+          {errors.avatarUrl && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.avatarUrl.message}</p>}
+        </div>
+
+        <div>
+          <textarea
+            {...register("bio")}
+            rows={3}
+            placeholder="አጭር ማብራሪያ (Bio) - Optional"
+            className={`w-full rounded-2xl border-2 px-3 py-2 text-sm outline-none ${errors.bio ? 'border-red-500' : 'border-slate-200'}`}
+          />
+          {errors.bio && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.bio.message}</p>}
         </div>
       </div>
 
