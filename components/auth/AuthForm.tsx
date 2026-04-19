@@ -4,15 +4,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AxiosError } from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginSchema, signupSchema, LoginInput, SignupInput } from "@/lib/validations/auth";
+import { loginSchema, signupSchema, SignupInput } from "@/lib/validations/auth";
+import type { LearningDirection } from "@/types/ProfileData";
 
 export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
+  const initializeFromProfile = useLanguageStore((s) => s.initializeFromProfile);
   const [serverError, setServerError] = useState("");
   const isLogin = type === "login";
 
@@ -22,7 +26,7 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignupInput>({
-     resolver: zodResolver(isLogin ? loginSchema : signupSchema) as any,
+     resolver: zodResolver(isLogin ? loginSchema : signupSchema),
   });
 
   const onSubmit = async (values: SignupInput) => {
@@ -30,13 +34,27 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
       const res = await api.post(endpoint, values);
-      
-      const { user, token } = res.data;
-      login(user, token); // Update your Zustand store
+
+      if (isLogin) {
+        const { token, id, username, role, learningDirection } = res.data as {
+          token: string;
+          id: string;
+          username: string;
+          role: string;
+          learningDirection?: LearningDirection;
+        };
+
+        login({ id, username, role, learningDirection }, token);
+
+        if (learningDirection) {
+          initializeFromProfile(learningDirection);
+        }
+      }
       
       router.push("/dashboard");
-    } catch (err: any) {
-      setServerError(err.response?.data?.message || "Something went wrong");
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>;
+      setServerError(axiosError.response?.data?.message || "Something went wrong");
     }
   };
 

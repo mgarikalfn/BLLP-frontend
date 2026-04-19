@@ -7,28 +7,28 @@ interface VocabCardProps {
 }
 
 export const VocabCard = ({ vocab }: VocabCardProps) => {
-  const targetLanguage = useLanguageStore((state) => state.lang);
-  const helperLanguage = targetLanguage === "am" ? "ao" : "am";
+  const nativeLanguage = useLanguageStore((state) => state.lang);
+  const targetLanguage = useLanguageStore((state) => state.targetLang);
 
   const primaryWord = vocab[targetLanguage];
-  const secondaryWord = vocab[helperLanguage];
+  const secondaryWord = vocab[nativeLanguage];
   const primaryAudio = vocab.audioUrl?.[targetLanguage];
-  const secondaryAudio = vocab.audioUrl?.[helperLanguage];
+  const secondaryAudio = vocab.audioUrl?.[nativeLanguage];
 
   const primaryAudioLabel =
     targetLanguage === "am" ? "Play Amharic audio" : "Play Afan Oromo audio";
   const secondaryAudioLabel =
-    helperLanguage === "am" ? "Play Amharic audio" : "Play Afan Oromo audio";
+    nativeLanguage === "am" ? "Play Amharic audio" : "Play Afan Oromo audio";
 
   const examplePrimaryText = vocab.example?.[targetLanguage];
-  const exampleSecondaryText = vocab.example?.[helperLanguage];
+  const exampleSecondaryText = vocab.example?.[nativeLanguage];
   const examplePrimaryAudio = vocab.example?.audioUrl?.[targetLanguage];
-  const exampleSecondaryAudio = vocab.example?.audioUrl?.[helperLanguage];
+  const exampleSecondaryAudio = vocab.example?.audioUrl?.[nativeLanguage];
 
   const examplePrimaryLabel =
     targetLanguage === "am" ? "Play example Amharic audio" : "Play example Afan Oromo audio";
   const exampleSecondaryLabel =
-    helperLanguage === "am" ? "Play example Amharic audio" : "Play example Afan Oromo audio";
+    nativeLanguage === "am" ? "Play example Amharic audio" : "Play example Afan Oromo audio";
 
   const exampleContextTitle = targetLanguage === "am" ? "የአጠቃቀም ምሳሌ" : "Fakkeenya Haala Itti Fayyadamaa";
 

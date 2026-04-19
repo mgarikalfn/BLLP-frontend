@@ -108,15 +108,28 @@ export const SpeakingExerciseScreen = ({
   onComplete,
 }: SpeakingExerciseScreenProps) => {
   const authToken = useAuthStore((state) => state.token);
-  const nativeLanguage = useLanguageStore((state) => (state.lang === "ao" ? "ao" : "am"));
+  const learningDirection = useLanguageStore((state) => state.learningDirection);
+  const storeNativeLanguage = useLanguageStore((state) => state.lang);
+  const storeTargetLanguage = useLanguageStore((state) => state.targetLang);
+
+  const nativeLanguage: TargetLanguage = learningDirection
+    ? learningDirection === "AM_TO_OR"
+      ? "am"
+      : "ao"
+    : storeNativeLanguage;
+  const effectiveTargetLanguage: TargetLanguage = learningDirection
+    ? learningDirection === "AM_TO_OR"
+      ? "ao"
+      : "am"
+    : storeTargetLanguage || targetLang;
   const uiText = speakingUiText[nativeLanguage];
 
   const targetLanguageLabel =
     nativeLanguage === "am"
-      ? targetLang === "am"
+      ? effectiveTargetLanguage === "am"
         ? "አማርኛ"
         : "አፋን ኦሮሞ"
-      : targetLang === "am"
+      : effectiveTargetLanguage === "am"
         ? "Afaan Amaaraa"
         : "Afaan Oromoo";
 
@@ -264,7 +277,7 @@ export const SpeakingExerciseScreen = ({
       })
     );
     formData.append("expectedText", expectedText);
-    formData.append("targetLang", targetLang);
+    formData.append("targetLang", effectiveTargetLanguage);
     formData.append("exerciseId", exerciseId);
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";

@@ -5,15 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { AxiosError } from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { useLanguageStore } from "@/store/languageStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginSchema, LoginInput } from "@/lib/validations/auth";
+import type { LearningDirection } from "@/types/ProfileData";
 
 export const LoginForm = () => {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
+  const initializeFromProfile = useLanguageStore((s) => s.initializeFromProfile);
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -25,7 +29,7 @@ export const LoginForm = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
-     resolver: zodResolver(loginSchema) as any,
+     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (values: LoginInput) => {
@@ -33,13 +37,25 @@ export const LoginForm = () => {
     try {
       const endpoint = "/auth/login";
       const res = await api.post(endpoint, values);
-      
-      const { user, token } = res.data;
-      login(user, token); // Update your Zustand store
+
+      const { token, id, username, role, learningDirection } = res.data as {
+        token: string;
+        id: string;
+        username: string;
+        role: string;
+        learningDirection?: LearningDirection;
+      };
+
+      login({ id, username, role, learningDirection }, token);
+
+      if (learningDirection) {
+        initializeFromProfile(learningDirection);
+      }
       
       router.push("/dashboard");
-    } catch (err: any) {
-      setServerError(err.response?.data?.message || "Something went wrong");
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>;
+      setServerError(axiosError.response?.data?.message || "Something went wrong");
     }
   };
 
