@@ -60,7 +60,7 @@ export function PracticeCard({ actions }: { actions: DashboardData["actions"] })
           </div>
         </div>
 
-        <Link href="/review" className="w-full sm:w-auto">
+        <Link href="/study" className="w-full sm:w-auto">
           <Button className="w-full rounded-xl border-b-4 border-blue-700 bg-blue-600 px-6 py-5 text-base font-black text-white hover:bg-blue-700 sm:w-auto">
             {text.start}
           </Button>

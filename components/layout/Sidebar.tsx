@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy, UserCircle2 } from "lucide-react";
+import { Brain, Trophy, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
@@ -45,13 +45,14 @@ export default function  Sidebar  ({ className }: Props)  {
           href="/leaderboard"
           icon={Trophy}
         />
-       
-        {/* <SidebarItem
+
+        <SidebarItem
           label="Study"
           href="/study"
           icon={Brain}
         />
-        <SidebarItem 
+       
+        {/* <SidebarItem 
           label="Learn" 
           href="/learn"
           iconSrc="/learn.svg"
