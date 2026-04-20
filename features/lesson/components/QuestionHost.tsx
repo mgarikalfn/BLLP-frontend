@@ -38,14 +38,16 @@ export const normalizeQuestion = (question: LessonQuestion | LegacyQuizQuestion)
 };
 
 export const QuestionHost = ({ question, onComplete, disabled = false }: QuestionHostProps) => {
-  const lang = useLanguageStore((state) => state.lang);
+  const nativeLanguage = useLanguageStore((state) => state.lang);
+  const targetLanguage = useLanguageStore((state) => state.targetLang);
 
   switch (question.type) {
     case "MULTIPLE_CHOICE":
       return (
         <MultipleChoice
           content={question.content as MultipleChoiceQuestionContent}
-          language={lang}
+          nativeLanguage={nativeLanguage}
+          targetLanguage={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
         />
@@ -55,7 +57,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
       return (
         <MatchingGame
           content={question.content as MatchingQuestionContent}
-          language={lang}
+          language={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
         />
@@ -66,7 +68,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
         <SentenceScramble
           key={question._id || JSON.stringify(question.content)}
           content={question.content as ScrambleQuestionContent}
-          language={lang}
+          language={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
         />
@@ -76,7 +78,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
       return (
         <ClozeTest
           content={question.content as ClozeQuestionContent}
-          language={lang}
+          language={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
         />

@@ -265,6 +265,21 @@ export interface WorkspaceSpeakingExercise {
   topicId?: string;
 }
 
+export type WorkspacePathNodeType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING";
+
+export interface WorkspacePathNode {
+  _id: string;
+  title?: LocalizedString | string;
+  type: WorkspacePathNodeType;
+  status: WorkspaceNodeStatus;
+  topicId?: string;
+}
+
+export interface WorkspaceTopicTest {
+  title?: LocalizedString | string;
+  status: WorkspaceNodeStatus;
+}
+
 export type WorkspaceActivityType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING";
 
 export interface WorkspaceActivity {
@@ -284,18 +299,22 @@ export interface WorkspaceTopic {
   _id: string;
   title: LocalizedString;
   level: string;
-  lessons: WorkspaceLesson[];
+  pathNodes?: WorkspacePathNode[];
+  topicTest?: WorkspaceTopicTest;
+  lessons?: WorkspaceLesson[];
   dialogues?: WorkspaceDialogue[];
   writingExercises?: WorkspaceWritingExercise[];
   speakingExercises?: WorkspaceSpeakingExercise[];
   writings?: WorkspaceWritingExercise[];
   activities?: WorkspaceActivity[];
   progress: {
-    completedLessons: number;
-    totalLessons: number;
+    completedCount?: number;
+    totalCount?: number;
+    completedLessons?: number;
+    totalLessons?: number;
     percentage: number;
   };
-  isCompleted: boolean;
+  isCompleted?: boolean;
 }
 
 export interface TopicWorkspaceResponse {

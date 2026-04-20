@@ -5,24 +5,33 @@ import { toDisplayText } from "../QuestionHost";
 
 interface MultipleChoiceProps {
   content: MultipleChoiceQuestionContent;
-  language: "am" | "ao";
+  nativeLanguage: "am" | "ao";
+  targetLanguage: "am" | "ao";
   onComplete: (isCorrect: boolean) => void;
   disabled?: boolean;
 }
 
-export const MultipleChoice = ({ content, language, onComplete, disabled = false }: MultipleChoiceProps) => {
-  const prompt = toDisplayText(content.question ?? content.prompt, language);
+export const MultipleChoice = ({
+  content,
+  nativeLanguage,
+  targetLanguage,
+  onComplete,
+  disabled = false,
+}: MultipleChoiceProps) => {
+  const instructionLabel = nativeLanguage === "am" ? "ትክክለኛውን ምርጫ ይምረጡ" : "Filannoo sirrii filadhu";
+  const prompt = toDisplayText(content.question ?? content.prompt, nativeLanguage);
   const correctIndex = content.correctIndex ?? content.correctAnswerIndex ?? -1;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIsCorrect, setSelectedIsCorrect] = useState<boolean | null>(null);
 
   return (
     <div className="flex w-full animate-in slide-in-from-bottom-4 flex-col items-center justify-center duration-300">
+      <p className="mb-2 self-start pl-1 text-xs font-black uppercase tracking-wider text-slate-500">{instructionLabel}</p>
       <h2 className="mb-8 self-start pl-1 text-2xl font-bold text-gray-800 sm:text-3xl">{prompt}</h2>
 
       <div className="grid w-full grid-cols-1 gap-4">
         {(content.options ?? []).map((option, index) => {
-          const optionText = toDisplayText(option, language);
+          const optionText = toDisplayText(option, targetLanguage);
 
           return (
             <button

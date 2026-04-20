@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SpeakingExerciseScreen } from "@/features/speaking/SpeakingExerciseScreen";
 import { useSpeakingExercise } from "@/hooks/useSpeaking";
 import { useLanguageStore } from "@/store/languageStore";
+import { useProgressStore } from "@/store/progressStore";
 import { LocalizedString, SpeakingExercise } from "@/types/learning";
 
 type LearningLanguage = "am" | "ao";
@@ -84,6 +85,9 @@ export default function SpeakingExercisePage() {
   const queryClient = useQueryClient();
 
   const language = useLanguageStore((state) => state.lang);
+  const learningDirection = useLanguageStore((state) => state.learningDirection);
+  const preferredTargetLanguage = useLanguageStore((state) => state.targetLang);
+  const markCompleted = useProgressStore((state) => state.markCompleted);
   const nativeLanguage: LearningLanguage = language === "ao" ? "ao" : "am";
   const localizedPageText = pageText[nativeLanguage];
 
@@ -101,9 +105,13 @@ export default function SpeakingExercisePage() {
   }, [exercise?.topicId, topicIdFromQuery]);
 
   const targetLanguage = useMemo<LearningLanguage>(() => {
-    const fallbackLanguage: LearningLanguage = nativeLanguage === "am" ? "ao" : "am";
+    const fallbackLanguage: LearningLanguage = learningDirection
+      ? preferredTargetLanguage
+      : nativeLanguage === "am"
+        ? "ao"
+        : "am";
     return resolveTargetLanguage(exercise?.targetLang || exercise?.targetLanguage, fallbackLanguage);
-  }, [exercise?.targetLang, exercise?.targetLanguage, nativeLanguage]);
+  }, [exercise?.targetLang, exercise?.targetLanguage, learningDirection, preferredTargetLanguage, nativeLanguage]);
 
   const expectedText = useMemo(() => {
     if (!exercise) {
@@ -123,6 +131,10 @@ export default function SpeakingExercisePage() {
   };
 
   const handleComplete = async () => {
+    if (exercise?._id) {
+      markCompleted(exercise._id);
+    }
+    
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),

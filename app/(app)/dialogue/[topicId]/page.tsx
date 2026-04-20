@@ -3,12 +3,15 @@
 import { useMemo, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useDialogueById, useDialoguesByTopic } from "@/hooks/useDialogue";
 import { Dialogue } from "@/types/learning";
 import { LessonLayout } from "@/features/lesson/components/LessonLayout";
 import { LessonFooter } from "@/features/lesson/components/LessonFooter";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useLanguageStore } from "@/store/languageStore";
 
 type DialogueStatus = "idle" | "correct" | "incorrect" | "completed";
 
@@ -20,6 +23,32 @@ type DialogueSlide = {
   speakerAvatarUrl?: string;
   line: Dialogue["lines"][number];
 };
+
+type LearningLanguage = "am" | "ao";
+
+const getLocalizedText = (
+  value: { am: string; ao: string } | undefined,
+  primaryLanguage: LearningLanguage,
+  fallbackLanguage: LearningLanguage
+) => {
+  if (!value) return "";
+  return value[primaryLanguage] || value[fallbackLanguage] || value.am || value.ao || "";
+};
+
+const dialogueUiText = {
+  am: {
+    scenario: "ሁኔታ",
+    speaker: "ተናጋሪ",
+    yourResponse: "የእርስዎ ምላሽ",
+    chooseBestResponse: "በጣም ተገቢውን ምላሽ ይምረጡ",
+  },
+  ao: {
+    scenario: "Haala",
+    speaker: "Dubbataa",
+    yourResponse: "Deebii Kee",
+    chooseBestResponse: "Deebii gaarii ta'e filadhu",
+  },
+} as const;
 
 const normalizeAvatarPath = (avatarPath?: string) => {
   if (!avatarPath) return null;
@@ -45,9 +74,13 @@ export default function DialoguePage() {
   const params = useParams<{ topicId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const topicId = Array.isArray(params.topicId) ? params.topicId[0] : params.topicId;
   const dialogueId = searchParams.get("dialogueId");
   const hasDialogueId = Boolean(dialogueId);
+  const nativeLanguage = useLanguageStore((state) => state.lang);
+  const targetLanguage = useLanguageStore((state) => state.targetLang);
+  const uiText = dialogueUiText[nativeLanguage];
 
   const {
     data: dialogueById,
@@ -67,6 +100,9 @@ export default function DialoguePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [status, setStatus] = useState<DialogueStatus>("idle");
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionMeta, setCompletionMeta] = useState<{ xpEarned?: number; totalXP?: number } | null>(null);
 
   const selectedDialogue = useMemo(() => {
     if (dialogueById) {
@@ -120,7 +156,7 @@ export default function DialoguePage() {
 
   const correctAnswerText =
     status === "incorrect" && isInteractive && correctAnswerIndex >= 0
-      ? options[correctAnswerIndex]?.am
+      ? getLocalizedText(options[correctAnswerIndex], targetLanguage, nativeLanguage)
       : undefined;
 
   const handleSelectOption = (index: number) => {
@@ -133,8 +169,46 @@ export default function DialoguePage() {
     setStatus(selectedOption === correctAnswerIndex ? "correct" : "incorrect");
   };
 
-  const handleContinue = () => {
+  const submitDialogueCompletion = async () => {
+    if (!selectedDialogue?._id || isCompleting) return;
+
+    setIsCompleting(true);
+    setCompletionError(null);
+
+    try {
+      const res = await api.post(`/dialogues/${selectedDialogue._id}/complete`);
+      const payload =
+        res.data && typeof res.data === "object" && "data" in res.data
+          ? (res.data as { data?: { xpEarned?: number; totalXP?: number } }).data
+          : (res.data as { xpEarned?: number; totalXP?: number });
+
+      setCompletionMeta({
+        xpEarned: payload?.xpEarned,
+        totalXP: payload?.totalXP,
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
+        queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),
+      ]);
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" && error !== null && "response" in error
+          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to sync dialogue completion")
+          : error instanceof Error
+            ? error.message
+            : "Failed to sync dialogue completion";
+
+      setCompletionError(message);
+      console.error("Failed to complete dialogue", error);
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const handleContinue = async () => {
     if (currentIndex + 1 >= slides.length) {
+      await submitDialogueCompletion();
       setStatus("completed");
       return;
     }
@@ -199,6 +273,20 @@ export default function DialoguePage() {
         <div className="w-full max-w-md rounded-2xl border-2 border-green-200 bg-green-50 p-8 text-center">
           <h1 className="text-3xl font-black text-green-600">Dialogue Completed</h1>
           <p className="mt-3 text-gray-600">Great job progressing through the conversation.</p>
+          {completionMeta?.xpEarned !== undefined ? (
+            <p className="mt-2 text-sm font-semibold text-green-700">
+              XP Earned: +{completionMeta.xpEarned}
+              {completionMeta.totalXP !== undefined ? ` | Total XP: ${completionMeta.totalXP}` : ""}
+            </p>
+          ) : null}
+          {completionError ? (
+            <div className="mt-4 rounded-xl border-2 border-red-300 bg-red-50 p-3 text-left text-sm font-semibold text-red-700">
+              Progress sync failed: {completionError}
+              <Button className="mt-3 w-full" variant="secondary" size="lg" onClick={submitDialogueCompletion} disabled={isCompleting}>
+                {isCompleting ? "Retrying..." : "Retry Sync"}
+              </Button>
+            </div>
+          ) : null}
           <Button className="mt-6 w-full" variant="secondary" size="lg" onClick={() => router.push(`/topics/${topicId}`)}>
             Return To Topic
           </Button>
@@ -225,9 +313,9 @@ export default function DialoguePage() {
     >
       <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
         <div className="rounded-2xl border-2 border-sky-100 bg-sky-50/80 p-4">
-          <p className="text-xs font-black uppercase tracking-wide text-sky-600">Scenario</p>
-          <p className="mt-2 text-lg font-bold text-gray-800">{currentSlide.scenario.am}</p>
-          <p className="text-sm text-gray-500">{currentSlide.scenario.ao}</p>
+          <p className="text-xs font-black uppercase tracking-wide text-sky-600">{uiText.scenario}</p>
+          <p className="mt-2 text-lg font-bold text-gray-800">{getLocalizedText(currentSlide.scenario, targetLanguage, nativeLanguage)}</p>
+          <p className="text-sm text-gray-500">{getLocalizedText(currentSlide.scenario, nativeLanguage, targetLanguage)}</p>
         </div>
 
         <div className="rounded-2xl border-2 border-gray-200 bg-white p-5">
@@ -250,23 +338,23 @@ export default function DialoguePage() {
             />
 
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-gray-400">Speaker</p>
+              <p className="text-xs font-black uppercase tracking-wide text-gray-400">{uiText.speaker}</p>
               <p className="text-lg font-black text-gray-800">{currentSlide.speakerName}</p>
             </div>
           </div>
 
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{currentSlide.line.content.am}</p>
-          <p className="mt-2 text-lg font-medium text-gray-500">{currentSlide.line.content.ao}</p>
+          <p className="text-2xl font-bold text-gray-900 leading-tight">{getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}</p>
+          <p className="mt-2 text-lg font-medium text-gray-500">{getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}</p>
         </div>
 
         {isInteractive && (
           <div className="rounded-2xl border-2 border-orange-100 bg-orange-50/60 p-5">
-            <p className="text-xs font-black uppercase tracking-wide text-orange-500">Your Response</p>
+            <p className="text-xs font-black uppercase tracking-wide text-orange-500">{uiText.yourResponse}</p>
             <h2 className="mt-2 text-xl font-black text-gray-800">
-              {currentSlide.line.question?.am || "Choose the best response"}
+              {getLocalizedText(currentSlide.line.question, nativeLanguage, targetLanguage) || uiText.chooseBestResponse}
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              {currentSlide.line.question?.ao || "Deebii sirrii filadhu"}
+              {getLocalizedText(currentSlide.line.question, targetLanguage, nativeLanguage)}
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
@@ -293,8 +381,8 @@ export default function DialoguePage() {
                       showCorrect && "border-green-500 bg-green-50 text-green-700"
                     )}
                   >
-                    <span className="block text-lg font-bold">{option.am}</span>
-                    <span className="block text-sm font-medium opacity-80">{option.ao}</span>
+                    <span className="block text-lg font-bold">{getLocalizedText(option, targetLanguage, nativeLanguage)}</span>
+                    <span className="block text-sm font-medium opacity-80">{getLocalizedText(option, nativeLanguage, targetLanguage)}</span>
                   </button>
                 );
               })}
