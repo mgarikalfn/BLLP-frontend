@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Brain, Trophy, UserCircle2 } from "lucide-react";
+import { Bell, Brain, Trophy, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useEffect } from "react";
 
 
 
@@ -14,6 +16,13 @@ type Props = {
 };
 
 export default function  Sidebar  ({ className }: Props)  {
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
+
+  useEffect(() => {
+    void fetchNotifications();
+  }, [fetchNotifications]);
+
   return (
     <div className={cn(
       "flex h-full lg:w-[256px] lg:fixed left-0 top-0 px-4 border-r-2 flex-col",
@@ -50,6 +59,13 @@ export default function  Sidebar  ({ className }: Props)  {
           label="Study"
           href="/study"
           icon={Brain}
+        />
+
+        <SidebarItem
+          label="ACTIVITY"
+          href="/activity"
+          icon={Bell}
+          showIndicator={unreadCount > 0}
         />
        
         {/* <SidebarItem 

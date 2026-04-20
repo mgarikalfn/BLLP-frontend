@@ -12,6 +12,7 @@ type Props = {
   iconSrc?: string;
   icon?: ElementType;
   href: string;
+  showIndicator?: boolean;
 };
 
 export const SidebarItem = ({
@@ -19,6 +20,7 @@ export const SidebarItem = ({
   iconSrc,
   icon: Icon,
   href,
+  showIndicator = false,
 }: Props) => {
   const pathname = usePathname();
   const active = pathname === href;
@@ -41,6 +43,7 @@ export const SidebarItem = ({
         )}
         {Icon && <Icon className="mr-5 h-8 w-8" />}
         {label}
+        {showIndicator ? <span className="ml-auto h-2.5 w-2.5 rounded-full bg-rose-500" /> : null}
       </Link>
     </Button>
   );
