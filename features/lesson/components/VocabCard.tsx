@@ -1,14 +1,17 @@
 import { Volume2 } from "lucide-react";
 import { VocabularyItem } from "@/types/learning";
 import { useLanguageStore } from "@/store/languageStore";
+import { useDictionaryStore } from "@/store/useDictionaryStore";
 
 interface VocabCardProps {
   vocab: VocabularyItem;
+  topicId?: string;
 }
 
-export const VocabCard = ({ vocab }: VocabCardProps) => {
+export const VocabCard = ({ vocab, topicId }: VocabCardProps) => {
   const nativeLanguage = useLanguageStore((state) => state.lang);
   const targetLanguage = useLanguageStore((state) => state.targetLang);
+  const openDictionary = useDictionaryStore((state) => state.openDictionary);
 
   const primaryWord = vocab[targetLanguage];
   const secondaryWord = vocab[nativeLanguage];
@@ -53,7 +56,18 @@ export const VocabCard = ({ vocab }: VocabCardProps) => {
     <div className="flex flex-col items-center justify-center w-full animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="text-center mb-8">
         <h1 className="text-5xl sm:text-6xl font-black text-gray-800 mb-4 flex items-center justify-center gap-4">
-          {primaryWord}
+          <button
+            type="button"
+            onClick={() => {
+              if (primaryWord) {
+                void openDictionary(primaryWord, topicId);
+              }
+            }}
+            className="rounded-md border-b-2 border-dotted border-sky-400 px-1 text-left text-sky-700 decoration-sky-400 underline-offset-4 transition hover:bg-sky-100/70"
+            title={targetLanguage === "am" ? "Open dictionary" : "Galmee jechootaa bani"}
+          >
+            {primaryWord}
+          </button>
           {primaryAudio && (
             <button 
               onClick={() => playAudio(primaryAudio)} 
