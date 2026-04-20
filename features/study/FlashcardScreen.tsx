@@ -98,7 +98,7 @@ export function FlashcardScreen() {
       </div>
 
       {queue.length > 0 ? (
-        <Flashcard card={queue[0]} onRated={handleRated} />
+        <Flashcard key={queue[0].id} card={queue[0]} onRated={handleRated} />
       ) : (
         <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-10 text-center">
           <h2 className="text-2xl font-black text-emerald-700">{text.doneTitle}</h2>

@@ -42,7 +42,12 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
   const [pendingQuality, setPendingQuality] = useState<ReviewQuality | null>(null);
 
   const reviewMutation = useMutation({
-    mutationFn: (quality: ReviewQuality) => submitStudyReview({ vocabId: card.id, quality }),
+    mutationFn: (quality: ReviewQuality) =>
+      submitStudyReview({
+        targetId: card.targetId,
+        type: "VOCABULARY",
+        quality,
+      }),
     onSuccess: (_, quality) => {
       setPendingQuality(quality);
       setIsLeaving(true);
