@@ -5,6 +5,20 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useLanguageStore } from "@/store/languageStore";
 import { useDictionaryStore } from "@/store/useDictionaryStore";
 
+const parseUsageExample = (usage: string) => {
+  const trimmed = usage.trim();
+  const match = trimmed.match(/^(.*)\((.*)\)\s*$/);
+
+  if (!match) {
+    return { target: trimmed, native: "" };
+  }
+
+  return {
+    target: match[1]?.trim() || "",
+    native: match[2]?.trim() || "",
+  };
+};
+
 const normalizeResult = (result: Record<string, unknown> | null) => {
   if (!result) {
     return {
@@ -22,17 +36,32 @@ const normalizeResult = (result: Record<string, unknown> | null) => {
       ? (result.usageExample as Record<string, unknown>)
       : {};
 
+  const usageExampleString =
+    typeof result.usage_example === "string"
+      ? result.usage_example
+      : typeof result.usageExample === "string"
+        ? result.usageExample
+        : "";
+
+  const parsedUsage = usageExampleString ? parseUsageExample(usageExampleString) : { target: "", native: "" };
+
   return {
     word: typeof result.word === "string" ? result.word : "",
     translation: typeof result.translation === "string" ? result.translation : "",
-    pronunciationHint: typeof result.pronunciationHint === "string" ? result.pronunciationHint : "",
+    pronunciationHint:
+      (typeof result.pronunciation_hint === "string" ? result.pronunciation_hint : "") ||
+      (typeof result.pronunciationHint === "string" ? result.pronunciationHint : ""),
     usageTarget:
+      parsedUsage.target ||
       (typeof usageExample.target === "string" ? usageExample.target : "") ||
       (typeof result.exampleTarget === "string" ? result.exampleTarget : ""),
     usageNative:
+      parsedUsage.native ||
       (typeof usageExample.native === "string" ? usageExample.native : "") ||
       (typeof result.exampleNative === "string" ? result.exampleNative : ""),
-    tutorTip: typeof result.tutorTip === "string" ? result.tutorTip : "",
+    tutorTip:
+      (typeof result.tip === "string" ? result.tip : "") ||
+      (typeof result.tutorTip === "string" ? result.tutorTip : ""),
   };
 };
 

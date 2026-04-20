@@ -6,8 +6,11 @@ import type { LearningDirection } from "@/types/ProfileData";
 export interface DictionaryResult {
   word?: string;
   translation?: string;
+  pronunciation_hint?: string;
+  usage_example?: string;
+  tip?: string;
   pronunciationHint?: string;
-  usageExample?: {
+  usageExample?: string | {
     target?: string;
     native?: string;
   };

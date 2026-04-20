@@ -3,6 +3,7 @@
 import MobileHeader from "./mobile-header";
 import Sidebar from "./Sidebar";
 import { DictionaryDrawer } from "@/features/ai/DictionaryDrawer";
+import { TutorChat } from "@/features/ai/TutorChat";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
 
@@ -16,6 +17,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </main>
       <DictionaryDrawer />
+      <TutorChat />
     </>
   );
 }
