@@ -1,9 +1,8 @@
 "use client";
 
-import Header from "./Header";
-import GlobalModals from "./GlobalModals";
 import MobileHeader from "./mobile-header";
 import Sidebar from "./Sidebar";
+import { DictionaryDrawer } from "@/features/ai/DictionaryDrawer";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
 
@@ -16,6 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <DictionaryDrawer />
     </>
   );
 }
