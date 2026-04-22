@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Lesson, VocabularyItem, LessonQuestion } from '@/types/learning';
 import { normalizeQuestion } from '@/features/lesson/components/QuestionHost';
 import { api } from '@/lib/api';
+import { useEconomyStore } from '@/store/useEconomyStore';
 
 export type Slide = 
   | { type: 'study'; data: { grammarNotes?: Lesson['grammarNotes']; dialogue?: Lesson['dialogue'] } }
@@ -60,6 +61,7 @@ export const useLessonEngine = (lesson?: Lesson) => {
     setStatus(isCorrect ? 'correct' : 'incorrect');
 
     if (!isCorrect) {
+      void useEconomyStore.getState().deductHeart();
       // Push a copy to the end of the line so they must do it again
       setSlides(prev => [...prev, currentSlide]);
     }

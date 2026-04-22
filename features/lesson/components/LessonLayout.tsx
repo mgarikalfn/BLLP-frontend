@@ -1,7 +1,10 @@
-import { X } from "lucide-react";
+"use client";
+
+import { Heart, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useEconomyStore } from "@/store/useEconomyStore";
 
 interface LessonLayoutProps {
   currentIndex: number;
@@ -11,8 +14,15 @@ interface LessonLayoutProps {
   topicId?: string;
 }
 
-export const LessonLayout = ({ currentIndex, totalSlides, children, footer, topicId }: LessonLayoutProps) => {
+export const LessonLayout = ({ currentIndex, totalSlides, children, footer }: LessonLayoutProps) => {
   const progressPercentage = totalSlides === 0 ? 0 : (currentIndex / totalSlides) * 100;
+  const hearts = useEconomyStore((state) => state.hearts);
+  const fetchEconomyStatus = useEconomyStore((state) => state.fetchEconomyStatus);
+
+  useEffect(() => {
+    void fetchEconomyStatus();
+  }, [fetchEconomyStatus]);
+
   // Fallback to /learn if no topicId is provided
   const exitLink =   "/topics";
 
@@ -29,8 +39,18 @@ export const LessonLayout = ({ currentIndex, totalSlides, children, footer, topi
         </Link>
         <Progress 
           value={progressPercentage} 
-          className="h-4 bg-[#E5E5E5] [&>div]:bg-green-500" 
+          className="h-4 flex-1 bg-[#E5E5E5] [&>div]:bg-green-500" 
         />
+        <div
+          className={`inline-flex min-w-[70px] items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-sm font-black ${
+            hearts > 0
+              ? "border-rose-200 bg-white text-rose-700"
+              : "border-rose-100 bg-rose-50 text-rose-300"
+          }`}
+        >
+          <Heart size={16} className={hearts > 0 ? "text-rose-500" : "text-rose-300"} />
+          <span>{hearts}</span>
+        </div>
       </header>
 
       {/* Main Content Area */}

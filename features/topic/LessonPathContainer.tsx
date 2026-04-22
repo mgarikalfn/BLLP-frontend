@@ -3,10 +3,11 @@
 import React from "react";
 import { WorkspacePathNode, WorkspaceTopicTest } from "@/types/learning";
 import { useLanguageStore } from "@/store/languageStore";
-import Link from "next/link";
 import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import { BossBattleCard } from "./BossBattleCard";
 import { NodeStatus } from "./PathNode";
+import { useLessonGuard } from "@/hooks/useLessonGuard";
+import { OutOfHeartsModal } from "@/features/economy/OutOfHeartsModal";
 
 interface LessonPathContainerProps {
   topicId: string;
@@ -20,6 +21,16 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   topicTest,
 }) => {
   const lang = useLanguageStore((state) => state.lang);
+  const {
+    gems,
+    error,
+    isOutOfHeartsOpen,
+    isRefilling,
+    guardedNavigate,
+    closeOutOfHearts,
+    handleRefill,
+    handlePractice,
+  } = useLessonGuard();
   const testNodeStatus: NodeStatus = topicTest?.status || "locked";
   const testNodeLabel = lang === "am" ? "የመጨረሻ ግምገማ" : "Final Review";
 
@@ -87,9 +98,13 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
               {isLocked ? (
                 <div className="opacity-70 cursor-not-allowed">{renderNode}</div>
               ) : (
-                <Link href={`/lessons/${node._id}`} className="hover:scale-105 duration-200">
+                <button
+                  type="button"
+                  onClick={() => guardedNavigate(`/lessons/${node._id}`)}
+                  className="hover:scale-105 duration-200"
+                >
                   {renderNode}
-                </Link>
+                </button>
               )}
 
               <div
@@ -148,6 +163,16 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
           label={testNodeLabel}
         />
       </div>
+
+      <OutOfHeartsModal
+        open={isOutOfHeartsOpen}
+        gems={gems}
+        isRefilling={isRefilling}
+        error={error}
+        onClose={closeOutOfHearts}
+        onRefill={handleRefill}
+        onPractice={handlePractice}
+      />
     </div>
   );
 };

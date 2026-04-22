@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { ProfileHeader } from "@/features/profile/ProfileHeader";
 import { StatisticsGrid } from "@/features/profile/StatisticsGrid";
-import { AchievementsList } from "@/features/profile/AchievementsList";
+import { AchievementsWall } from "@/features/profile/AchievementsWall";
 import { EditProfileModal } from "@/features/profile/EditProfileModal";
 import { useLanguageStore } from "@/store/languageStore";
 
@@ -52,7 +52,7 @@ export default function ProfileClient() {
       <main className="mx-auto w-full max-w-3xl space-y-5">
         <ProfileHeader identity={data.identity} onEdit={() => setIsModalOpen(true)} />
         <StatisticsGrid stats={data.stats} />
-        <AchievementsList achievements={data.achievements} />
+        <AchievementsWall />
       </main>
 
       <EditProfileModal
