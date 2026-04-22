@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguageStore } from "@/store/languageStore";
+import { useLessonGuard } from "@/hooks/useLessonGuard";
 import { DashboardData } from "@/types/DashboardData";
 
 type HeroLesson = NonNullable<DashboardData["actions"]["recommendedLesson"]>;
@@ -32,6 +32,7 @@ const toLocalizedText = (
 export function LessonHeroCard({ actions }: { actions: DashboardData["actions"] }) {
   const lang = useLanguageStore((state) => state.lang);
   const text = heroText[lang];
+  const { startLesson } = useLessonGuard();
   const helperLang: "am" | "ao" = lang === "am" ? "ao" : "am";
 
   const lesson: HeroLesson | undefined = actions.continueLesson || actions.recommendedLesson;
@@ -44,7 +45,6 @@ export function LessonHeroCard({ actions }: { actions: DashboardData["actions"] 
   const levelLabel = topic?.level || "BEGINNER";
   const unitOrder = actions.recommendedLesson?.order || 1;
 
-  const lessonHref = lesson?.id ? `/lessons/${lesson.id}` : "#";
   const isDisabled = !lesson?.id;
 
   return (
@@ -62,15 +62,14 @@ export function LessonHeroCard({ actions }: { actions: DashboardData["actions"] 
         </div>
 
         <div className="pt-1">
-          <Link href={lessonHref} aria-disabled={isDisabled} className={isDisabled ? "pointer-events-none" : ""}>
-            <Button
-              className="w-full rounded-2xl border-2 border-b-4 border-white/70 bg-white px-8 py-6 text-lg font-black text-green-700 hover:bg-green-50 sm:w-auto"
-              disabled={isDisabled}
-            >
-              {text.continue}
-              <ChevronRight className="ml-2" size={22} strokeWidth={3} />
-            </Button>
-          </Link>
+          <Button
+            onClick={() => lesson?.id && startLesson(lesson.id)}
+            className="w-full rounded-2xl border-2 border-b-4 border-white/70 bg-white px-8 py-6 text-lg font-black text-green-700 hover:bg-green-50 sm:w-auto"
+            disabled={isDisabled}
+          >
+            {text.continue}
+            <ChevronRight className="ml-2" size={22} strokeWidth={3} />
+          </Button>
         </div>
       </div>
     </section>

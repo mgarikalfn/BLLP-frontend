@@ -1,17 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, RefreshCw } from "lucide-react";
 import { getStudySession, type StudyFlashcardItem } from "@/api/study.api";
 import { useLanguageStore } from "@/store/languageStore";
+import { useEconomyStore } from "@/store/useEconomyStore";
 import { Flashcard } from "./Flashcard";
 
 type ReviewQuality = 1 | 3 | 4 | 5;
 
 export function FlashcardScreen() {
   const nativeLanguage = useLanguageStore((state) => state.lang);
+  const earnHeart = useEconomyStore((state) => state.earnHeart);
   const [reviewedIds, setReviewedIds] = useState<string[]>([]);
+  const [hasEarnedHeart, setHasEarnedHeart] = useState(false);
 
   const sessionQuery = useQuery({
     queryKey: ["study", "session"],
@@ -43,6 +46,13 @@ export function FlashcardScreen() {
   const totalCount = sessionQuery.data?.length ?? queue.length;
   const completedCount = Math.max(0, totalCount - queue.length);
   const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+  useEffect(() => {
+    if (queue.length === 0 && reviewedIds.length > 0 && !hasEarnedHeart) {
+      setHasEarnedHeart(true);
+      void earnHeart();
+    }
+  }, [queue.length, reviewedIds.length, hasEarnedHeart, earnHeart]);
 
   const handleRated = (cardId: string, quality: ReviewQuality) => {
     void quality;
@@ -97,12 +107,22 @@ export function FlashcardScreen() {
         </div>
       </div>
 
-      {queue.length > 0 ? (
+    {queue.length > 0 ? (
         <Flashcard key={queue[0].id} card={queue[0]} onRated={handleRated} />
       ) : (
         <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-10 text-center">
+          <div className="mb-4 text-6xl">🎉</div>
           <h2 className="text-2xl font-black text-emerald-700">{text.doneTitle}</h2>
           <p className="mt-2 font-medium text-emerald-800">{text.doneSubtitle}</p>
+          
+          <div className="mt-8 flex justify-center">
+            <a 
+              href="/" 
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-emerald-600 px-8 text-base font-black text-white border-b-4 border-emerald-800 hover:bg-emerald-700 active:border-b-0"
+            >
+              {nativeLanguage === "am" ? "ወደ ዋና ገጽ ተመለስ" : "Gara Fuula Duraatti Deebi'i"}
+            </a>
+          </div>
         </div>
       )}
     </section>

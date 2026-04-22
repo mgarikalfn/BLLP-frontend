@@ -63,7 +63,7 @@ const postChat = async (payload: {
   learningDirection: LearningDirection;
 }) => {
   try {
-    return await api.post<ChatResponse>("/api/ai/chat", payload);
+    return await api.post<ChatResponse>("/ai/chat", payload);
   } catch (error: unknown) {
     const status =
       typeof error === "object" && error !== null && "response" in error

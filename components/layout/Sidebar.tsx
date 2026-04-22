@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Brain, Trophy, UserCircle2 } from "lucide-react";
+import { Bell, Brain, ShoppingCart, Target, Trophy, UserCircle2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
@@ -59,6 +59,24 @@ export default function  Sidebar  ({ className }: Props)  {
           label="Study"
           href="/study"
           icon={Brain}
+        />
+
+        <SidebarItem
+          label="Quests"
+          href="/quests"
+          icon={Target}
+        />
+
+        <SidebarItem
+          label="Shop"
+          href="/shop"
+          icon={ShoppingCart}
+        />
+
+        <SidebarItem
+          label="Chat"
+          href="/chat"
+          icon={MessageCircle}
         />
 
         <SidebarItem
