@@ -117,7 +117,7 @@ export function FlashcardScreen() {
           
           <div className="mt-8 flex justify-center">
             <a 
-              href="/" 
+              href="/dashboard" 
               className="inline-flex h-12 items-center justify-center rounded-2xl bg-emerald-600 px-8 text-base font-black text-white border-b-4 border-emerald-800 hover:bg-emerald-700 active:border-b-0"
             >
               {nativeLanguage === "am" ? "ወደ ዋና ገጽ ተመለስ" : "Gara Fuula Duraatti Deebi'i"}

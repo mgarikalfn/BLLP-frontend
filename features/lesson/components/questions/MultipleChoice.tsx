@@ -31,7 +31,7 @@ export const MultipleChoice = ({
 
       <div className="grid w-full grid-cols-1 gap-4">
         {(content.options ?? []).map((option, index) => {
-          const optionText = toDisplayText(option, targetLanguage);
+          const optionText = toDisplayText(option, nativeLanguage);
 
           return (
             <button

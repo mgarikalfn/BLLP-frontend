@@ -57,7 +57,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
       return (
         <MatchingGame
           content={question.content as MatchingQuestionContent}
-          language={targetLanguage}
+          language={nativeLanguage}
           onComplete={onComplete}
           disabled={disabled}
         />

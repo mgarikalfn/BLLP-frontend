@@ -39,7 +39,7 @@ export default function ProfileClient() {
     );
   }
 
-  if (isError || !data) {
+  if (isError || !data || !data.identity) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-center">
         <p className="text-lg font-black text-red-500">{text.failed}</p>
