@@ -28,6 +28,8 @@ export function ProfileHeader({ identity, onEdit }: ProfileHeaderProps) {
   const lang = useLanguageStore((state) => state.lang);
   const text = headerText[lang];
 
+  if (!identity) return null;
+
   return (
     <section className="rounded-2xl border-2 border-gray-200 bg-white p-5 shadow-sm md:p-7">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">

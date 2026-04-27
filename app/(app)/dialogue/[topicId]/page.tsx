@@ -41,12 +41,18 @@ const dialogueUiText = {
     speaker: "ተናጋሪ",
     yourResponse: "የእርስዎ ምላሽ",
     chooseBestResponse: "በጣም ተገቢውን ምላሽ ይምረጡ",
+    dialogueCompleted: "ውይይቱ ተጠናቋል",
+    greatJob: "በውይይቱ ውስጥ በማለፍዎ ጥሩ ስራ ሰርተዋል!",
+    returnToTopic: "ወደ ርዕስ ተመለስ",
   },
   ao: {
     scenario: "Haala",
     speaker: "Dubbataa",
     yourResponse: "Deebii Kee",
     chooseBestResponse: "Deebii gaarii ta'e filadhu",
+    dialogueCompleted: "Mariin xumurameera",
+    greatJob: "Marii kana keessa darbuu keetiif hojii gaarii hojjetteetta!",
+    returnToTopic: "Gara mata dureetti deebi'i",
   },
 } as const;
 
@@ -271,8 +277,8 @@ export default function DialoguePage() {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white px-4">
         <div className="w-full max-w-md rounded-2xl border-2 border-green-200 bg-green-50 p-8 text-center">
-          <h1 className="text-3xl font-black text-green-600">Dialogue Completed</h1>
-          <p className="mt-3 text-gray-600">Great job progressing through the conversation.</p>
+          <h1 className="text-3xl font-black text-green-600">{uiText.dialogueCompleted}</h1>
+          <p className="mt-3 text-gray-600">{uiText.greatJob}</p>
           {completionMeta?.xpEarned !== undefined ? (
             <p className="mt-2 text-sm font-semibold text-green-700">
               XP Earned: +{completionMeta.xpEarned}
@@ -288,7 +294,7 @@ export default function DialoguePage() {
             </div>
           ) : null}
           <Button className="mt-6 w-full" variant="secondary" size="lg" onClick={() => router.push(`/topics/${topicId}`)}>
-            Return To Topic
+            {uiText.returnToTopic}
           </Button>
         </div>
       </div>

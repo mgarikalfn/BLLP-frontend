@@ -14,11 +14,11 @@ interface FlashcardProps {
   onRated: (cardId: string, quality: ReviewQuality) => void;
 }
 
-const ratingConfig: Array<{ quality: ReviewQuality; label: string; className: string }> = [
-  { quality: 1, label: "Again / Fail", className: "bg-rose-500 hover:bg-rose-600" },
-  { quality: 3, label: "Hard", className: "bg-orange-500 hover:bg-orange-600" },
-  { quality: 4, label: "Good", className: "bg-emerald-500 hover:bg-emerald-600" },
-  { quality: 5, label: "Easy", className: "bg-sky-500 hover:bg-sky-600" },
+const ratingConfig: Array<{ quality: ReviewQuality; className: string }> = [
+  { quality: 1, className: "bg-rose-500 hover:bg-rose-600" },
+  { quality: 3, className: "bg-orange-500 hover:bg-orange-600" },
+  { quality: 4, className: "bg-emerald-500 hover:bg-emerald-600" },
+  { quality: 5, className: "bg-sky-500 hover:bg-sky-600" },
 ];
 
 export function Flashcard({ card, onRated }: FlashcardProps) {
@@ -69,6 +69,12 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
       example: nativeLanguage === "am" ? "ምሳሌ" : "Fakkeenya",
       saving: nativeLanguage === "am" ? "በማስቀመጥ ላይ..." : "Olkaa'aa jira...",
       submitError: nativeLanguage === "am" ? "ውጤቱን ማስቀመጥ አልተቻለም።" : "Bu'aa olkaa'uu hin dandeenye.",
+      ratings: {
+        1: nativeLanguage === "am" ? "እንደገና / አልተሳካም" : "Ammas / Kufe",
+        3: nativeLanguage === "am" ? "ከባድ" : "Ulfaataa",
+        4: nativeLanguage === "am" ? "ጥሩ" : "Gaarii",
+        5: nativeLanguage === "am" ? "ቀላል" : "Salphaa",
+      },
     }),
     [nativeLanguage]
   );
@@ -137,7 +143,7 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
                     disabled={reviewMutation.isPending || isLeaving}
                     className={`${item.className} h-11 rounded-xl px-2 text-xs font-black uppercase tracking-wider text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60`}
                   >
-                    {item.label}
+                    {uiText.ratings[item.quality]}
                   </button>
                 ))}
               </div>
