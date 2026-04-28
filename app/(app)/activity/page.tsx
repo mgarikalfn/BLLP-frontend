@@ -4,6 +4,32 @@ import { useEffect, useMemo } from "react";
 import { Flame, Trophy, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotificationStore, type AppNotification } from "@/store/useNotificationStore";
+import { useLanguageStore } from "@/store/languageStore";
+
+const uiText = {
+  am: {
+    activity: "እንቅስቃሴ",
+    markAllRead: "ሁሉንም እንደተነበበ ምልክት አድርግ",
+    today: "ዛሬ",
+    yesterday: "ትናንት",
+    earlier: "ቀደም ብሎ",
+    noActivity: "እስካሁን ምንም እንቅስቃሴ የለም።",
+    mAgo: "ደቂቃዎች በፊት",
+    hAgo: "ሰዓታት በፊት",
+    dAgo: "ቀናት በፊት"
+  },
+  ao: {
+    activity: "Sochii",
+    markAllRead: "Sana hundaa dubbifamee godhi",
+    today: "HAR'A",
+    yesterday: "KALEESSA",
+    earlier: "DURAAN",
+    noActivity: "Hanga ammaatti sochiin hin jiru.",
+    mAgo: "Daqiqa dura",
+    hAgo: "Sa'aati dura",
+    dAgo: "Guyyaa dura"
+  }
+} as const;
 
 const startOfToday = () => {
   const now = new Date();
@@ -46,15 +72,15 @@ const groupNotifications = (notifications: AppNotification[]) => {
   return grouped;
 };
 
-const relativeTime = (createdAt: string) => {
+const relativeTime = (createdAt: string, t: typeof uiText[keyof typeof uiText]) => {
   const diffMs = Date.now() - new Date(createdAt).getTime();
   const minutes = Math.max(1, Math.floor(diffMs / 60000));
 
-  if (minutes < 60) return `${minutes}M AGO`;
+  if (minutes < 60) return `${minutes} ${t.mAgo}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}H AGO`;
+  if (hours < 24) return `${hours} ${t.hAgo}`;
   const days = Math.floor(hours / 24);
-  return `${days}D AGO`;
+  return `${days} ${t.dAgo}`;
 };
 
 const iconByType = (type: string) => {
@@ -100,6 +126,9 @@ export default function ActivityPage() {
   const markAsRead = useNotificationStore((state) => state.markAsRead);
   const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
 
+  const lang = useLanguageStore((state) => state.lang);
+  const t = uiText[lang];
+
   useEffect(() => {
     void fetchNotifications();
   }, [fetchNotifications]);
@@ -109,7 +138,7 @@ export default function ActivityPage() {
   return (
     <section className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6 md:py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-black text-slate-900">Activity</h1>
+        <h1 className="text-3xl font-black text-slate-900">{t.activity}</h1>
         <button
           type="button"
           onClick={() => {
@@ -117,7 +146,7 @@ export default function ActivityPage() {
           }}
           className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-slate-50"
         >
-          Mark All Read
+          {t.markAllRead}
         </button>
       </div>
 
@@ -134,12 +163,18 @@ export default function ActivityPage() {
           {(["TODAY", "YESTERDAY", "EARLIER"] as const).map((groupKey) => {
             const items = groups[groupKey];
             if (items.length === 0) return null;
+            
+            const titleMap = {
+              "TODAY": t.today,
+              "YESTERDAY": t.yesterday,
+              "EARLIER": t.earlier
+            };
 
             return (
               <div key={groupKey} className="mb-7">
                 <div className="relative mb-3">
                   <span className="absolute -left-[27px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-slate-300 bg-white" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{groupKey}</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{titleMap[groupKey]}</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -174,7 +209,7 @@ export default function ActivityPage() {
                             </div>
                           </div>
                           <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-                            {relativeTime(notification.createdAt)}
+                            {relativeTime(notification.createdAt, t)}
                           </span>
                         </div>
                       </button>
@@ -187,7 +222,7 @@ export default function ActivityPage() {
 
           {notifications.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm font-semibold text-slate-500">
-              No activity yet.
+              {t.noActivity}
             </div>
           ) : null}
         </div>

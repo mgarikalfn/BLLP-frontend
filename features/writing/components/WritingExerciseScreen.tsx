@@ -108,13 +108,11 @@ export const WritingExerciseScreen = ({ exercise, onComplete }: WritingExerciseS
     exercise.nativeLanguage || derivedNativeLanguage;
   const uiText = writingUiText[nativeLanguage];
 
-  // Opposite mode: display target language as primary with native helper translation.
-  const promptDisplayLanguage: LearningLanguage = targetLanguage;
-  const promptHelperLanguage: LearningLanguage =
-    promptDisplayLanguage === "am" ? "ao" : "am";
+  // Display native language as the prompt so the user can translate into the target language.
+  const promptDisplayLanguage: LearningLanguage = nativeLanguage;
 
-  const promptText = getLocalizedText(exercise.prompt, promptDisplayLanguage, promptHelperLanguage);
-  const promptTranslation = getLocalizedText(exercise.prompt, promptHelperLanguage, promptDisplayLanguage) || undefined;
+  const promptText = getLocalizedText(exercise.prompt, promptDisplayLanguage, targetLanguage);
+  const promptTranslation = undefined; // Do not show translation as it would reveal the answer
   const instructionText =
     getLocalizedText(exercise.instruction, nativeLanguage, targetLanguage) ||
     uiText.fallbackInstruction[exercise.type];

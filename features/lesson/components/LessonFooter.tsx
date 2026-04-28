@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguageStore } from "@/store/languageStore";
 
 interface LessonFooterProps {
   status: "idle" | "checking" | "correct" | "incorrect" | "completed";
@@ -11,6 +12,25 @@ interface LessonFooterProps {
   correctAnswerText?: string;
 }
 
+const uiText = {
+  am: {
+    correct: "ትክክል!",
+    continue: "ቀጥል",
+    incorrect: "ትክክል አይደለም",
+    correctAnswer: "ትክክለኛው መልስ፡",
+    gotIt: "ገብቶኛል",
+    check: "ማረጋገጫ",
+  },
+  ao: {
+    correct: "Sirriidha!",
+    continue: "Itti fufi",
+    incorrect: "Sirrii Miti",
+    correctAnswer: "Deebii sirrii:",
+    gotIt: "Hubadheera",
+    check: "Mirkaneessi",
+  },
+} as const;
+
 export const LessonFooter = ({
   status,
   onCheck,
@@ -19,6 +39,8 @@ export const LessonFooter = ({
   isLearningSlide,
   correctAnswerText,
 }: LessonFooterProps) => {
+  const lang = useLanguageStore((state) => state.lang);
+  const t = uiText[lang];
 
   if (!isLearningSlide && status === "idle" && disabled) {
     return <div className="w-full border-t-2 border-gray-200 bg-white p-4 sm:p-6 md:px-8" />;
@@ -32,14 +54,14 @@ export const LessonFooter = ({
             <div className="bg-white text-green-500 p-2 rounded-full shadow-sm">
               <Check size={24} strokeWidth={3} />
             </div>
-            Correct!
+            {t.correct}
           </div>
           <Button 
             size="lg" 
             className="w-full sm:w-48 bg-green-500 hover:bg-green-600 text-white font-bold text-lg rounded-xl shadow-sm hover:shadow-md h-12 transition-all active:translate-y-1"
             onClick={onContinue}
           >
-            Continue
+            {t.continue}
           </Button>
         </div>
       </div>
@@ -55,10 +77,10 @@ export const LessonFooter = ({
               <X size={24} strokeWidth={3} />
             </div>
             <div className="flex flex-col">
-              <span className="text-red-500">Incorrect</span>
+              <span className="text-red-500">{t.incorrect}</span>
               {correctAnswerText && (
                 <span className="text-base text-red-400 mt-1 font-medium leading-tight">
-                  Correct answer: <span className="font-bold">{correctAnswerText}</span>
+                  {t.correctAnswer} <span className="font-bold">{correctAnswerText}</span>
                 </span>
               )}
             </div>
@@ -68,7 +90,7 @@ export const LessonFooter = ({
             className="w-full sm:w-48 bg-red-500 hover:bg-red-600 text-white font-bold text-lg rounded-xl shadow-sm hover:shadow-md h-12 transition-all active:translate-y-1"
             onClick={onContinue}
           >
-            Got it
+            {t.gotIt}
           </Button>
         </div>
       </div>
@@ -92,7 +114,7 @@ export const LessonFooter = ({
               : "bg-green-500 hover:bg-green-600 text-white hover:shadow-md border-b-4 border-green-600 active:border-b-0 active:translate-y-1"
           )}
         >
-          {isLearningSlide ? "Continue" : "Check"}
+          {isLearningSlide ? t.continue : t.check}
         </Button>
       </div>
     </div>
