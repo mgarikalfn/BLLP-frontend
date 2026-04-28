@@ -36,9 +36,10 @@ export const SidebarItem = ({
           <Image
             src={iconSrc}
             alt={label}
-            className="mr-5"
+            className="mr-5 object-contain"
             height={32}
             width={32}
+            unoptimized
           />
         )}
         {Icon && <Icon className="mr-5 h-8 w-8" />}
