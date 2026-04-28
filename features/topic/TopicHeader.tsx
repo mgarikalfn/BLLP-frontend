@@ -14,7 +14,7 @@ interface TopicHeaderProps {
 
 export const TopicHeader = ({ title, progress, colorClass = "bg-blue-500" }: TopicHeaderProps) => {
   return (
-    <header className={cn("sticky top-0 z-50 text-white shadow-md transition-all", colorClass)}>
+    <header className={cn("sticky top-16 z-40 text-white shadow-md transition-all", colorClass)}>
       {/* Top utility bar */}
       <div className="w-full flex items-center px-4 py-3 md:py-4 max-w-3xl mx-auto lg:px-8">
         <Link href="/dashboard" className="text-white hover:opacity-80 transition-opacity p-2 -ml-2 rounded-full">

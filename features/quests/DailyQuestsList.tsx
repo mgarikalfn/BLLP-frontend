@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Gift } from "lucide-react";
 import { useEconomyStore, type DailyQuest } from "@/store/useEconomyStore";
 import { useLanguageStore } from "@/store/languageStore";
+import { getLocalizedTier } from "@/lib/tierTranslations";
 import { cn } from "@/lib/utils";
 
 const getTierStyle = (rewardGems: number) => {
@@ -114,7 +115,7 @@ export function DailyQuestsList() {
                        {/* Note: quest.description is assumed to be string but can be localized dynamically if updated later */}
                       <p className="truncate text-sm font-black text-slate-800">{quest.description}</p>
                       <span className="shrink-0 text-xs font-black uppercase tracking-wide text-slate-500">
-                        {tier.tier} • +{quest.rewardGems} {t.gem}
+                        {getLocalizedTier(tier.tier, lang)} • +{quest.rewardGems} {t.gem}
                       </span>
                     </div>
 

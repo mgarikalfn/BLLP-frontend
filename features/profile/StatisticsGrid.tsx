@@ -1,6 +1,7 @@
 import { Flame, Shield, Zap } from "lucide-react";
 import { ProfileData } from "@/types/ProfileData";
 import { useLanguageStore } from "@/store/languageStore";
+import { getLocalizedTier } from "@/lib/tierTranslations";
 
 interface StatisticsGridProps {
   stats: ProfileData["stats"];
@@ -50,7 +51,7 @@ export function StatisticsGrid({ stats }: StatisticsGridProps) {
         />
         <StatCard
           icon={<Shield className="text-yellow-500" size={20} />}
-          value={stats.tier}
+          value={getLocalizedTier(stats.tier, lang)}
           label={text.currentLeague}
         />
       </div>
