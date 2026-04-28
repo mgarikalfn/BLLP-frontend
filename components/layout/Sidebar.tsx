@@ -46,43 +46,43 @@ export default function  Sidebar  ({ className }: Props)  {
          <SidebarItem
           label="learn"
           href="/topics"
-          iconSrc="/topic.jpg"
+          iconSrc="/learnn.jpg"
         />
 
         <SidebarItem
           label="Leaderboard"
           href="/leaderboard"
-          icon={Trophy}
+          iconSrc="/trophy.png"
         />
 
         <SidebarItem
           label="Study"
           href="/study"
-          icon={Brain}
+          iconSrc="/reading.png"
         />
 
         <SidebarItem
           label="Quests"
           href="/quests"
-          icon={Target}
+          iconSrc="/quests.png"
         />
 
         <SidebarItem
           label="Shop"
           href="/shop"
-          icon={ShoppingCart}
+          iconSrc="/shop.png"
         />
 
         <SidebarItem
           label="Chat"
           href="/chat"
-          icon={MessageCircle}
+          iconSrc="/chat.png"
         />
 
         <SidebarItem
           label="ACTIVITY"
           href="/activity"
-          icon={Bell}
+          iconSrc="/activity.png"
           showIndicator={unreadCount > 0}
         />
        
