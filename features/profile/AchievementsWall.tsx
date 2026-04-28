@@ -5,26 +5,50 @@ import { Gem } from "lucide-react";
 import { BadgeComponent } from "@/components/ui/BadgeComponent";
 import { cn } from "@/lib/utils";
 import { useEconomyStore, type Achievement } from "@/store/useEconomyStore";
+import { useLanguageStore } from "@/store/languageStore";
 
-const majorConfigs: Record<string, { title: string; description: string; uiType: "STREAK" | "XP" | "TOPICS" }> = {
+const wallText = {
+  am: {
+    title: "የስኬት ግድግዳ",
+    lifetime: "በህይወት ዘመን",
+    progress: "ቀጣዩን ደረጃ ለመክፈት እድገት",
+    achievement: "ስኬት",
+    lv: "ደረጃ",
+    claim: "ሽልማት ይጠይቁ",
+    achievements: {
+      STREAK: { title: "ሰደድ እሳት", description: "የ30-ቀን ተከታታይ ደረጃ ላይ መድረስ" },
+      TOTAL_XP: { title: "ምሁሩ", description: "በጣም ብዙ አጠቃላይ XP ያግኙ" },
+      XP: { title: "የXP ጌታ", description: "የXP ትርፍ ደረጃዎችን መሰብሰብዎን ይቀጥሉ" },
+      TOPICS: { title: "የርዕስ ታይታን", description: "የርዕስ ትርፍ ደረጃዎችን ያጠናቅቁ" }
+    }
+  },
+  ao: {
+    title: "Gidaara Milkaa'inaa",
+    lifetime: "Jireenya guutuu",
+    progress: "Sadarkaa itti aanu banuuf qarqara",
+    achievement: "Milkaa'ina",
+    lv: "Sadarkaa",
+    claim: "Badhaasa gaafadhu",
+    achievements: {
+      STREAK: { title: "Ibidda bosonaa", description: "Sadarkaa guyyoota 30 ga'i" },
+      TOTAL_XP: { title: "Hayyuu", description: "XP walii galaa guddaa argadhu" },
+      XP: { title: "Goota XP", description: "Milkoomina XP walitti qabuu itti fufi" },
+      TOPICS: { title: "Mata duree Titan", description: "Milkoomina mata duree xumuri" }
+    }
+  }
+};
+
+const majorConfigs: Record<string, { uiType: "STREAK" | "XP" | "TOPICS" }> = {
   STREAK: {
-    title: "Wildfire",
-    description: "Reach a 30-day streak",
     uiType: "STREAK",
   },
   TOTAL_XP: {
-    title: "The Scholar",
-    description: "Earn massive total XP",
     uiType: "XP",
   },
   XP: {
-    title: "XP Master",
-    description: "Keep collecting XP milestones",
     uiType: "XP",
   },
   TOPICS: {
-    title: "Topic Titan",
-    description: "Complete topic milestones",
     uiType: "TOPICS",
   },
 };
@@ -41,6 +65,9 @@ const toUiLevel = (level: number): 1 | 2 | 3 | 4 => {
 };
 
 export function AchievementsWall() {
+  const lang = useLanguageStore((state) => state.lang);
+  const t = wallText[lang as keyof typeof wallText] || wallText.am;
+
   const achievements = useEconomyStore((state) => state.achievements);
   const isLoading = useEconomyStore((state) => state.isLoading);
   const isClaimingReward = useEconomyStore((state) => state.isClaimingReward);
@@ -96,8 +123,8 @@ export function AchievementsWall() {
   return (
     <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-slate-900">Achievements Wall</h2>
-        <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Lifetime</span>
+        <h2 className="text-xl font-black text-slate-900">{t.title}</h2>
+        <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">{t.lifetime}</span>
       </div>
 
       {isLoading && achievements.length === 0 ? (
@@ -109,10 +136,10 @@ export function AchievementsWall() {
       ) : (
         <div className="space-y-3">
           {wallItems.map((item) => {
-            const fallback = majorConfigs[item.type] || {
-              title: item.title || "Achievement",
-              description: "Progress to unlock next level",
-              uiType: "XP" as const,
+            const config = majorConfigs[item.type] || { uiType: "XP" as const };
+            const textConfig = t.achievements[item.type as keyof typeof t.achievements] || {
+              title: item.title || t.achievement,
+              description: t.progress
             };
 
             const p = progressPercent(item);
@@ -122,7 +149,7 @@ export function AchievementsWall() {
               <article key={item._id} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
                 <div className="flex items-start gap-3">
                   <BadgeComponent
-                    type={fallback.uiType}
+                    type={config.uiType}
                     level={toUiLevel(item.level)}
                     isUnlocked={item.currentProgress > 0 || claimable || item.isClaimed}
                   />
@@ -130,11 +157,11 @@ export function AchievementsWall() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="text-sm font-black text-slate-900">{item.title || fallback.title}</h3>
-                        <p className="mt-0.5 text-xs font-medium text-slate-500">{fallback.description}</p>
+                        <h3 className="text-sm font-black text-slate-900">{textConfig.title}</h3>
+                        <p className="mt-0.5 text-xs font-medium text-slate-500">{textConfig.description}</p>
                       </div>
                       <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                        Lv {item.level}
+                        {t.lv} {item.level}
                       </span>
                     </div>
 
@@ -157,7 +184,7 @@ export function AchievementsWall() {
                         className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl border-b-4 border-yellow-600 bg-yellow-500 px-4 text-xs font-black uppercase tracking-wider text-white transition hover:bg-yellow-600"
                       >
                         <Gem size={14} />
-                        CLAIM REWARD (+{item.rewardGems} 💎)
+                        {t.claim} (+{item.rewardGems} 💎)
                       </button>
                     ) : null}
                   </div>

@@ -2,26 +2,25 @@ import { useEffect, useMemo, useState } from "react";
 import { Trophy, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeaderboardData } from "@/types/LeaderboardData";
-import { useLanguageStore } from "@/store/languageStore";
-
+import { useLanguageStore } from "@/store/languageStore";import { getLocalizedTier } from "@/lib/tierTranslations";
 const headerText = {
   am: {
-    currentLeague: "የአሁኑ ሊግ",
+    currentLeague: "የአሁኑ ምድብ",
     yourRank: "የእርስዎ ደረጃ",
     endsIn: "ይዘጋል በ",
     inPromotion: "በማሻሻያ ዞን ውስጥ",
     inDemotion: "በመውረድ ዞን ውስጥ",
     safe: "ደህንነት ዞን",
-    league: "ሊግ",
+    league: "ምድብ",
   },
   ao: {
-    currentLeague: "LIIGII AMMA",
+    currentLeague: "GAREE AMMA",
     yourRank: "SADARKAA KEE",
     endsIn: "Ni xumurama",
     inPromotion: "NAANNOO OLGUDDINA KEESSA JIRTA",
     inDemotion: "NAANNOO GAD-BU'AA KEESSA JIRTA",
     safe: "NAANNOO NAGEENYAA",
-    league: "League",
+    league: "GAREE",
   },
 } as const;
 
@@ -80,7 +79,7 @@ export function LeagueHeaderCards({ data }: { data: LeaderboardData }) {
         <div className="mt-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-black text-gray-800">
-              {data.pagination.tier} {text.league}
+              {getLocalizedTier(data.pagination.tier, lang)} {text.league}
             </h2>
             <p className="mt-1 text-sm font-bold text-gray-600">
               {text.endsIn} {countdown}

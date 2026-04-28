@@ -7,6 +7,8 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { MobileSidebar } from "./mobile-sidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
+import { useLanguageStore } from "@/store/languageStore";
+import { getLocalizedTier } from "@/lib/tierTranslations";
 
 const Pill = ({
   icon,
@@ -37,6 +39,7 @@ export function TopNavbar() {
   const gems = useEconomyStore((state) => state.gems);
   const hearts = useEconomyStore((state) => state.hearts);
   const fetchEconomyStatus = useEconomyStore((state) => state.fetchEconomyStatus);
+  const lang = useLanguageStore((state) => state.lang);
 
   const { data } = useDashboard();
   const streak = data?.user?.streak ?? 0;
@@ -97,7 +100,9 @@ export function TopNavbar() {
 
         <div className="hidden sm:flex items-center gap-3 pl-2 border-l-2 border-slate-200">
           <div className="flex flex-col items-end">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400">{tier} League</span>
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+              {getLocalizedTier(tier, lang)} {lang === "am" ? "ምድብ" : "Garee"}
+            </span>
           </div>
           <div className="h-10 w-10 cursor-pointer rounded-full border-b-4 border-indigo-700 bg-indigo-500 hover:bg-indigo-400 transition" />
         </div>

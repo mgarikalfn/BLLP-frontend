@@ -1,6 +1,7 @@
 import { Flame, Star } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import { DashboardData } from "@/types/DashboardData";
+import { getLocalizedTier } from "@/lib/tierTranslations";
 
 const headerText = {
   am: {
@@ -34,7 +35,7 @@ export function ProgressHeader({ user }: { user: DashboardData["user"] }) {
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden md:block font-black text-[#afafaf] uppercase text-xs tracking-tighter">
-            {user.tier} {text.league}
+            {getLocalizedTier(user.tier, lang)} {text.league}
           </span>
           <div className="w-10 h-10 rounded-full bg-[#ce82ff] border-b-4 border-[#a556d8]" />
         </div>

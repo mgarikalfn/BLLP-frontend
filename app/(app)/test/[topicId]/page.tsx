@@ -11,8 +11,64 @@ import { cn } from "@/lib/utils";
 import { LocalizedOrString, MatchingQuestionContent, TopicTestClozeContent, TopicTestQuestion } from "@/types/learning";
 
 type LearningLanguage = "am" | "ao";
+type UiLanguage = LearningLanguage;
 
 const PASS_THRESHOLD = 80;
+
+const pageText = {
+  am: {
+    mode: "የምዘና ሁነታ",
+    title: "የርዕስ ፈተና",
+    subtitle: "የሚቀጥለውን ደረጃ ለመክፈት ይህን ፈተና ያልፉ።",
+    progressLabel: "እድገት",
+    stepLabel: "ጥያቄ",
+    invalidTopic: "የርዕስ መለያው ትክክል አይደለም።",
+    loading: "የፈተናው መረጃ በመጫን ላይ...",
+    failed: "የርዕስ ፈተናውን መጫን አልተቻለም",
+    noQuestions: "እስካሁን የፈተና ጥያቄዎች የሉም።",
+    backToTopic: "ወደ ርዕሱ ተመለስ",
+    finishedTitlePass: "ርዕሱን በትክክል ተማርክ",
+    finishedTitleRetry: "በጣም ተቃርበሃል",
+    score: "ውጤት",
+    passedBody: "በጣም ጥሩ ስራ። ይህን መፈተኛ አልፈዋል እና ወደ ቀጣዩ ደረጃ መቀጠል ይችላሉ።",
+    failedBody: "ተቃርበዋል። ይህን ርዕስ እንደገና ይድገሙ እና ቀጣዩን መደበኛ ለመክፈት ይሞክሩ።",
+    reviewTopic: "ርዕሱን ይድገሙ",
+    continue: "ቀጥል",
+    tryAgainLater: "በኋላ ደግመህ ሞክር",
+    correct: "ትክክል ነው። ቀጥል።",
+    incorrect: "ትክክል አይደለም። ከዚህ በኋላ ርዕሱን ይድገሙ።",
+    fillBlank: "ባዶውን ሙላ",
+    typeAnswer: "መልስህን ጻፍ",
+    check: "አረጋግጥ",
+  },
+  ao: {
+    mode: "Haala Qormaataa",
+    title: "Qormaata Mata Duree",
+    subtitle: "Sadarkaa itti aanu banuuf qormaata kana darbii.",
+    progressLabel: "Jijjiirama",
+    stepLabel: "Gaaffii",
+    invalidTopic: "Akkamtaa mata duree sirrii miti.",
+    loading: "Deetaan qormaataa fe'amaa jira...",
+    failed: "Qormaata mata duree fe'uu hin dandeenye",
+    noQuestions: "Ammaaf gaaffileen qormaataa hin jiranu.",
+    backToTopic: "Gara mata dureetti deebi'i",
+    finishedTitlePass: "Mata duree kana sirriitti baratte",
+    finishedTitleRetry: "Baay'ee dhiyaatteetta",
+    score: "Qabxii",
+    passedBody: "Hojiin kee gaarii dha. Qormaata kana darbiteetta, gara sadarkaa itti aanuutti deemuu dandeessa.",
+    failedBody: "Dhiyaatteetta. Mata duree kana irra deebi'iitii sadarkaa itti aanu banuuf yaali.",
+    reviewTopic: "Mata duree ilaali",
+    continue: "Itti fufi",
+    tryAgainLater: "Booda irra deebi'i",
+    correct: "Sirrii dha. Itti fufi.",
+    incorrect: "Sirrii miti. Kana booda mata duree ilaali.",
+    fillBlank: "Bana keessaa guuti",
+    typeAnswer: "Deebii kee barreessi",
+    check: "Mirkaneessi",
+  },
+} as const;
+
+const getPageText = (lang: UiLanguage) => pageText[lang];
 
 const getLocalizedText = (
   value: LocalizedOrString | undefined,
@@ -34,6 +90,7 @@ const normalizeCompareValue = (value: string) => {
 
 interface MatchingQuestionProps {
   question: TopicTestQuestion;
+  uiLanguage: UiLanguage;
   targetLanguage: LearningLanguage;
   fallbackLanguage: LearningLanguage;
   onAnswered: (isCorrect: boolean) => void;
@@ -42,6 +99,7 @@ interface MatchingQuestionProps {
 
 const MatchingQuestion = ({
   question,
+  uiLanguage,
   targetLanguage,
   fallbackLanguage,
   onAnswered,
@@ -49,6 +107,7 @@ const MatchingQuestion = ({
 }: MatchingQuestionProps) => {
   const content = question.content as MatchingQuestionContent;
   const prompt = getLocalizedText(content.prompt, targetLanguage, fallbackLanguage);
+  const text = getPageText(uiLanguage);
 
   const sourcePairs = useMemo(
     () =>
@@ -117,7 +176,12 @@ const MatchingQuestion = ({
 
   return (
     <div className="w-full animate-in slide-in-from-bottom-4 duration-300">
-      {prompt ? <h2 className="mb-6 text-2xl font-black text-slate-800">{prompt}</h2> : null}
+      {prompt ? (
+        <div className="mb-6 rounded-2xl border-2 border-green-100 bg-green-50/70 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">{text.mode}</p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-slate-900">{prompt}</h2>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
         <div className="space-y-3">
@@ -168,6 +232,7 @@ const MatchingQuestion = ({
 
 interface ClozeQuestionProps {
   question: TopicTestQuestion;
+  uiLanguage: UiLanguage;
   targetLanguage: LearningLanguage;
   fallbackLanguage: LearningLanguage;
   onAnswered: (isCorrect: boolean) => void;
@@ -176,6 +241,7 @@ interface ClozeQuestionProps {
 
 const ClozeQuestion = ({
   question,
+  uiLanguage,
   targetLanguage,
   fallbackLanguage,
   onAnswered,
@@ -185,6 +251,7 @@ const ClozeQuestion = ({
   const sentence = getLocalizedText(content.sentence, targetLanguage, fallbackLanguage);
   const translation = getLocalizedText(content.sentence, fallbackLanguage, targetLanguage);
   const answer = getLocalizedText(content.answer, targetLanguage, fallbackLanguage);
+  const text = getPageText(uiLanguage);
 
   const [input, setInput] = useState("");
 
@@ -196,7 +263,7 @@ const ClozeQuestion = ({
   return (
     <div className="w-full animate-in slide-in-from-bottom-4 duration-300">
       <div className="rounded-2xl border-2 border-violet-100 bg-violet-50/60 p-5">
-        <p className="text-xs font-black uppercase tracking-widest text-violet-600">Fill The Blank</p>
+        <p className="text-xs font-black uppercase tracking-widest text-violet-600">{text.fillBlank}</p>
         <p className="mt-2 text-xl font-black leading-relaxed text-slate-800">{sentence}</p>
         {translation && translation !== sentence ? (
           <p className="mt-1 text-sm font-medium text-slate-500">{translation}</p>
@@ -208,7 +275,7 @@ const ClozeQuestion = ({
           value={input}
           onChange={(event) => setInput(event.target.value)}
           disabled={disabled}
-          placeholder={targetLanguage === "am" ? "Type your answer" : "Deebii kee barreessi"}
+          placeholder={text.typeAnswer}
           className="h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-4 text-lg font-semibold text-slate-800 outline-none focus:border-violet-400 disabled:opacity-70"
         />
         <button
@@ -222,7 +289,7 @@ const ClozeQuestion = ({
               : "border-violet-700 bg-violet-600 hover:bg-violet-700"
           )}
         >
-          Check
+          {text.check}
         </button>
       </div>
     </div>
@@ -232,8 +299,10 @@ const ClozeQuestion = ({
 export default function TopicTestPage() {
   const params = useParams<{ topicId: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();    const markCompleted = useProgressStore((state) => state.markCompleted);
+  const queryClient = useQueryClient();
+  const markCompleted = useProgressStore((state) => state.markCompleted);
   const lang = useLanguageStore((state) => state.lang);
+  const uiText = getPageText(lang);
   const targetLanguage: LearningLanguage = lang === "ao" ? "ao" : "am";
   const helperLanguage: LearningLanguage = targetLanguage === "am" ? "ao" : "am";
 
@@ -312,7 +381,7 @@ export default function TopicTestPage() {
 
   const completeAndGoTopics = async () => {
     if (passed && topicId) {
-      markCompleted(topicId + "_test");
+      markCompleted(`${topicId}_test`);
     }
 
     await Promise.all([
@@ -325,31 +394,32 @@ export default function TopicTestPage() {
 
   if (!topicId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white px-4 text-center">
-        <p className="text-lg font-semibold text-rose-500">Invalid topic id.</p>
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_65%)] px-4 text-center">
+        <p className="text-lg font-semibold text-rose-500">{uiText.invalidTopic}</p>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-violet-500" size={48} />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_65%)] px-4 text-center">
+        <Loader2 className="animate-spin text-green-600" size={48} />
+        <p className="text-sm font-semibold text-slate-500">{uiText.loading}</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-4 text-center">
-        <h2 className="text-xl font-black text-slate-700">Failed to load topic test</h2>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_65%)] px-4 text-center">
+        <h2 className="text-xl font-black text-slate-700">{uiText.failed}</h2>
         <p className="text-sm font-medium text-slate-500">{error.message}</p>
         <button
           type="button"
           onClick={() => router.push(`/topics/${topicId}`)}
-          className="rounded-xl border-b-4 border-slate-600 bg-slate-500 px-6 py-3 font-black text-white"
+          className="rounded-xl border-b-4 border-green-700 bg-green-600 px-6 py-3 font-black text-white hover:bg-green-700"
         >
-          Back To Topic
+          {uiText.backToTopic}
         </button>
       </div>
     );
@@ -357,14 +427,14 @@ export default function TopicTestPage() {
 
   if (!questions.length) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-4 text-center">
-        <h2 className="text-xl font-black text-slate-700">No test questions available yet.</h2>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_65%)] px-4 text-center">
+        <h2 className="text-xl font-black text-slate-700">{uiText.noQuestions}</h2>
         <button
           type="button"
           onClick={() => router.push(`/topics/${topicId}`)}
-          className="rounded-xl border-b-4 border-slate-600 bg-slate-500 px-6 py-3 font-black text-white"
+          className="rounded-xl border-b-4 border-green-700 bg-green-600 px-6 py-3 font-black text-white hover:bg-green-700"
         >
-          Back To Topic
+          {uiText.backToTopic}
         </button>
       </div>
     );
@@ -373,27 +443,34 @@ export default function TopicTestPage() {
   if (finished) {
     return (
       <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_65%)] px-4 py-10">
-        <div className="mx-auto w-full max-w-2xl rounded-3xl border-2 border-slate-200 bg-white p-6 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:p-8">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-b-8 border-amber-600 bg-amber-400 text-white">
+        <div className="mx-auto w-full max-w-2xl rounded-3xl border-2 border-green-100 bg-white p-6 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:p-8">
+          <div
+            className={cn(
+              "mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-b-8 text-white",
+              passed ? "border-green-700 bg-green-500" : "border-amber-600 bg-amber-400"
+            )}
+          >
             {passed ? <Trophy size={40} /> : <Shield size={40} />}
           </div>
 
-          <h1 className="mt-5 text-3xl font-black text-slate-800">{passed ? "Topic Mastered" : "Almost There"}</h1>
-          <p className="mt-2 text-lg font-semibold text-slate-600">Score: {score}%</p>
+          <h1 className="mt-5 text-3xl font-black text-slate-800">
+            {passed ? uiText.finishedTitlePass : uiText.finishedTitleRetry}
+          </h1>
+          <p className="mt-2 text-lg font-semibold text-slate-600">
+            {uiText.score}: {score}%
+          </p>
 
           <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-relaxed text-slate-500">
-            {passed
-              ? "Excellent work. You passed the gatekeeper test and can move forward to the next challenge."
-              : "You are close. Review this topic once more and try again to unlock the next milestone."}
+            {passed ? uiText.passedBody : uiText.failedBody}
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => router.push(`/topics/${topicId}`)}
-              className="rounded-xl border-b-4 border-slate-600 bg-slate-500 px-5 py-3 font-black text-white"
+              className="rounded-xl border-b-4 border-slate-600 bg-slate-500 px-5 py-3 font-black text-white hover:bg-slate-600"
             >
-              Review Topic
+              {uiText.reviewTopic}
             </button>
             <button
               type="button"
@@ -403,7 +480,7 @@ export default function TopicTestPage() {
                 passed ? "border-emerald-700 bg-emerald-600" : "border-violet-700 bg-violet-600"
               )}
             >
-              {passed ? "Continue" : "Try Again Later"}
+              {passed ? uiText.continue : uiText.tryAgainLater}
             </button>
           </div>
         </div>
@@ -416,22 +493,29 @@ export default function TopicTestPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f5f3ff_0%,#ffffff_60%)] px-4 pb-8 pt-6">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="mb-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-violet-600">Test Mode</p>
-              <h1 className="text-2xl font-black text-slate-800">Topic Gatekeeper</h1>
+        <header className="mb-6 rounded-3xl border-2 border-green-100 bg-white/95 p-5 shadow-[0_16px_50px_rgba(15,23,42,0.10)] backdrop-blur sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-green-600">{uiText.mode}</p>
+              <h1 className="text-2xl font-black text-slate-900 sm:text-3xl">{uiText.title}</h1>
+              <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500">{uiText.subtitle}</p>
             </div>
-            <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-black text-violet-700">
-              {currentIndex + 1} / {questions.length}
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-black text-green-700">
+              {uiText.stepLabel} {currentIndex + 1} / {questions.length}
             </div>
           </div>
 
-          <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full bg-linear-to-r from-violet-500 to-amber-400 transition-all"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="mt-5 space-y-2">
+            <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+              <span>{uiText.progressLabel}</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-linear-to-r from-green-500 via-lime-500 to-amber-400 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </header>
 
@@ -440,6 +524,7 @@ export default function TopicTestPage() {
             <MatchingQuestion
               key={currentQuestion._id}
               question={currentQuestion}
+              uiLanguage={lang}
               targetLanguage={targetLanguage}
               fallbackLanguage={helperLanguage}
               onAnswered={onAnswered}
@@ -449,6 +534,7 @@ export default function TopicTestPage() {
             <ClozeQuestion
               key={currentQuestion._id}
               question={currentQuestion}
+              uiLanguage={lang}
               targetLanguage={targetLanguage}
               fallbackLanguage={helperLanguage}
               onAnswered={onAnswered}
@@ -465,9 +551,7 @@ export default function TopicTestPage() {
                   : "border-rose-200 bg-rose-50 text-rose-700"
               )}
             >
-              {currentAnswered
-                ? "Correct. Keep going."
-                : "Not quite. Keep moving and review after this test."}
+              {currentAnswered ? uiText.correct : uiText.incorrect}
             </div>
           ) : null}
 
@@ -483,7 +567,7 @@ export default function TopicTestPage() {
                   : "border-violet-700 bg-violet-600 hover:bg-violet-700"
               )}
             >
-              Continue
+              {uiText.continue}
             </button>
           </div>
         </section>
