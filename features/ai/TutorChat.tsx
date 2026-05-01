@@ -49,7 +49,7 @@ export function TutorChat() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const text = {
-    title: "LingoQuest AI Tutor",
+    title: "Afaan-ልሳን AI Tutor",
     placeholder: nativeLanguage === "am" ? "ጥያቄዎን ይጻፉ..." : "Gaaffii kee barreessi...",
     clear: nativeLanguage === "am" ? "ውይይቱን አጥፋ" : "Mari'ii qulqulleessi",
     close: nativeLanguage === "am" ? "ዝጋ" : "Cufi",
