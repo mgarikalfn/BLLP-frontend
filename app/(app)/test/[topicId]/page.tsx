@@ -5,6 +5,7 @@ import { Loader2, Shield, Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTopicTest } from "@/hooks/useTopicTest";
+import { submitTopicTestResult } from "@/api/topicTest.api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useProgressStore } from "@/store/progressStore";
 import { cn } from "@/lib/utils";
@@ -382,6 +383,12 @@ export default function TopicTestPage() {
   const completeAndGoTopics = async () => {
     if (passed && topicId) {
       markCompleted(`${topicId}_test`);
+      
+      try {
+        await submitTopicTestResult(topicId, true, score);
+      } catch (err) {
+        console.error("Failed to submit topic test result", err);
+      }
     }
 
     await Promise.all([

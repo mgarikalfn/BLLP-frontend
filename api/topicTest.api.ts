@@ -37,3 +37,8 @@ export const getTopicTest = async (topicId: string, size?: number): Promise<Topi
 
   throw new Error("Failed to fetch topic test");
 };
+
+export const submitTopicTestResult = async (topicId: string, passed: boolean, score: number): Promise<{ success: boolean; message?: string }> => {
+  const res = await api.post(`/topics/${topicId}/test/submit`, { passed, score });
+  return res.data;
+};
