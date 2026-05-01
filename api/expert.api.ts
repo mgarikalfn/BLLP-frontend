@@ -23,3 +23,29 @@ export const generateContent = (data: { type: string; topicId: string; level: st
 
 // Fetch all topics (reuse existing endpoint)
 export const getTopics = () => api.get("/topics");
+
+// Update lesson content (replaces lesson + quiz)
+export const updateLesson = (
+  lessonId: string,
+  payload: {
+    title: { am: string; ao: string };
+    grammarNotes?: { am: string; ao: string };
+    vocabulary?: Array<Record<string, unknown>>;
+    dialogue?: Array<Record<string, unknown>>;
+    quiz?: Array<Record<string, unknown>>;
+  }
+) => api.put(`/lessons/${lessonId}`, payload);
+
+// Fetch lesson with populated quiz
+export const getLessonById = (lessonId: string) => api.get(`/lessons/${lessonId}`);
+
+// Generate questions for a topic
+export const generateQuestions = (topicId: string) =>
+  api.post("/expert/generate", { type: "QUESTION", topicId });
+
+// Update expert content by type
+export const updateExpertContent = (
+  type: string,
+  id: string,
+  payload: Record<string, unknown>
+) => api.put(`/expert/content/${type}/${id}`, payload);

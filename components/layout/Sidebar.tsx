@@ -9,6 +9,8 @@ import { useNotificationStore } from "@/store/useNotificationStore";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect, useState } from "react";
 
+type SidebarMode = "LEARNER" | "EXPERT";
+
 
 
 
@@ -21,6 +23,26 @@ export default function  Sidebar  ({ className }: Props)  {
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
   const [role, setRole] = useState<string | null>(user?.role ?? null);
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("LEARNER");
+
+  // Initialize mode based on role
+  useEffect(() => {
+    if (role === "EXPERT" || role === "ADMIN") {
+      const savedMode = localStorage.getItem("sidebarMode") as SidebarMode;
+      if (savedMode === "LEARNER" || savedMode === "EXPERT") {
+        setSidebarMode(savedMode);
+      } else {
+        setSidebarMode("EXPERT"); // Default to Expert if they have the role
+      }
+    } else {
+      setSidebarMode("LEARNER");
+    }
+  }, [role]);
+
+  const handleModeChange = (mode: SidebarMode) => {
+    setSidebarMode(mode);
+    localStorage.setItem("sidebarMode", mode);
+  };
 
   useEffect(() => {
     void fetchNotifications();
@@ -59,8 +81,34 @@ export default function  Sidebar  ({ className }: Props)  {
           </h1>
         </div>
       </Link>
+
+      {(role === "EXPERT" || role === "ADMIN") && (
+        <div className="px-4 mb-4">
+          <div className="bg-slate-100 p-1 rounded-xl flex items-center justify-between">
+            <button
+              onClick={() => handleModeChange("EXPERT")}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                sidebarMode === "EXPERT" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Expert
+            </button>
+            <button
+              onClick={() => handleModeChange("LEARNER")}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                sidebarMode === "LEARNER" ? "bg-white text-green-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Learner
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-y-2 flex-1">
-        {(role === "EXPERT" || role === "ADMIN") && (
+        {(role === "EXPERT" || role === "ADMIN") && sidebarMode === "EXPERT" ? (
           <>
             <div className="sidebar-section-label px-4 pt-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
               Expert Tools
@@ -70,55 +118,58 @@ export default function  Sidebar  ({ className }: Props)  {
             <SidebarItem href="/expert/generate" icon={Sparkles} label="Generate Content" />
             <hr className="sidebar-divider my-2 border-slate-200" />
           </>
+        ) : (
+          <>
+             <SidebarItem
+              label="Dashboard"
+              href="/dashboard"
+              iconSrc="/learn.svg"
+            />
+
+             <SidebarItem
+              label="learn"
+              href="/topics"
+              iconSrc="/learnn.jpg"
+            />
+
+            <SidebarItem
+              label="Leaderboard"
+              href="/leaderboard"
+              iconSrc="/trophy.png"
+            />
+
+            <SidebarItem
+              label="Study"
+              href="/study"
+              iconSrc="/reading.png"
+            />
+
+            <SidebarItem
+              label="Quests"
+              href="/quests"
+              iconSrc="/quests.png"
+            />
+
+            <SidebarItem
+              label="Shop"
+              href="/shop"
+              iconSrc="/shop.png"
+            />
+
+            <SidebarItem
+              label="Chat"
+              href="/chat"
+              iconSrc="/chat.png"
+            />
+
+            <SidebarItem
+              label="ACTIVITY"
+              href="/activity"
+              iconSrc="/activity.png"
+              showIndicator={unreadCount > 0}
+            />
+          </>
         )}
-         <SidebarItem
-          label="Dashboard"
-          href="/dashboard"
-          iconSrc="/learn.svg"
-        />
-
-         <SidebarItem
-          label="learn"
-          href="/topics"
-          iconSrc="/learnn.jpg"
-        />
-
-        <SidebarItem
-          label="Leaderboard"
-          href="/leaderboard"
-          iconSrc="/trophy.png"
-        />
-
-        <SidebarItem
-          label="Study"
-          href="/study"
-          iconSrc="/reading.png"
-        />
-
-        <SidebarItem
-          label="Quests"
-          href="/quests"
-          iconSrc="/quests.png"
-        />
-
-        <SidebarItem
-          label="Shop"
-          href="/shop"
-          iconSrc="/shop.png"
-        />
-
-        <SidebarItem
-          label="Chat"
-          href="/chat"
-          iconSrc="/chat.png"
-        />
-
-        <SidebarItem
-          label="ACTIVITY"
-          href="/activity"
-          iconSrc="/activity.png"
-          showIndicator={unreadCount > 0}
-        />
        
         {/* <SidebarItem 
           label="Learn" 
