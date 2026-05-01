@@ -353,3 +353,28 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+// Expert Dashboard Types
+export type ContentStatus = "DRAFT" | "NEEDS_REVIEW" | "PUBLISHED";
+export type ExpertContentType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING" | "QUESTION";
+
+export interface ExpertContentItem {
+  _id: string;
+  _contentType: ExpertContentType;
+  _title: string;
+  topicId: string;
+  status?: ContentStatus;
+  isVerified: boolean;
+  generatedByAI?: boolean;
+  authorId?: string;
+  level?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExpertDashboardStats {
+  totals: Record<string, number>;
+  pending: Record<string, number>;
+  published: Record<string, number>;
+  topicCount: number;
+}

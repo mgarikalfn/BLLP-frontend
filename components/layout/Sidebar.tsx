@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Brain, ShoppingCart, Target, Trophy, UserCircle2, MessageCircle } from "lucide-react";
+import { Bell, Brain, ClipboardCheck, LayoutDashboard, MessageCircle, ShoppingCart, Sparkles, Target, Trophy, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
 import Image from "next/image";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import { useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { useEffect, useState } from "react";
 
 
 
@@ -16,12 +17,34 @@ type Props = {
 };
 
 export default function  Sidebar  ({ className }: Props)  {
+  const user = useAuthStore((state) => state.user);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
+  const [role, setRole] = useState<string | null>(user?.role ?? null);
 
   useEffect(() => {
     void fetchNotifications();
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (user?.role) {
+      setRole(user.role);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setRole(null);
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setRole(typeof payload.role === "string" ? payload.role : null);
+    } catch {
+      setRole(null);
+    }
+  }, [user?.role]);
 
   return (
     <div className={cn(
@@ -37,6 +60,17 @@ export default function  Sidebar  ({ className }: Props)  {
         </div>
       </Link>
       <div className="flex flex-col gap-y-2 flex-1">
+        {(role === "EXPERT" || role === "ADMIN") && (
+          <>
+            <div className="sidebar-section-label px-4 pt-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+              Expert Tools
+            </div>
+            <SidebarItem href="/expert" icon={LayoutDashboard} label="Expert Dashboard" />
+            <SidebarItem href="/expert/review" icon={ClipboardCheck} label="Review Queue" />
+            <SidebarItem href="/expert/generate" icon={Sparkles} label="Generate Content" />
+            <hr className="sidebar-divider my-2 border-slate-200" />
+          </>
+        )}
          <SidebarItem
           label="Dashboard"
           href="/dashboard"
