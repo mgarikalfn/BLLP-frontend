@@ -3,7 +3,7 @@
 import React from "react";
 import { WorkspacePathNode, WorkspaceTopicTest } from "@/types/learning";
 import { useLanguageStore } from "@/store/languageStore";
-import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
+import { CheckCircle2, Lock, PlayCircle, Video } from "lucide-react";
 import { BossBattleCard } from "./BossBattleCard";
 import { NodeStatus } from "./PathNode";
 import { useLessonGuard } from "@/hooks/useLessonGuard";
@@ -13,12 +13,14 @@ interface LessonPathContainerProps {
   topicId: string;
   pathNodes: WorkspacePathNode[];
   topicTest?: WorkspaceTopicTest;
+  topicTitle: string;
 }
 
 export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   topicId,
   pathNodes,
   topicTest,
+  topicTitle,
 }) => {
   const lang = useLanguageStore((state) => state.lang);
   const {
@@ -33,18 +35,26 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   } = useLessonGuard();
   const testNodeStatus: NodeStatus = topicTest?.status || "locked";
   const testNodeLabel = lang === "am" ? "የመጨረሻ ግምገማ" : "Final Review";
+  const amplitude = 90;
+  const videoXOffset = Math.sin((pathNodes.length / 2) * Math.PI) * amplitude;
+  const finalXOffset = Math.sin(((pathNodes.length + 1) / 2) * Math.PI) * amplitude;
+  const videoNodeLabel = lang === "am" ? "ተዛማጅ ቪዲዮዎች" : "Viidiyoo Walqabatu";
+  const videoTarget = `/videos?q=${encodeURIComponent(topicTitle)}`;
 
   return (
     <div className="relative flex flex-col items-center py-8 min-h-125">
       {pathNodes.map((node, index) => {
         // Calculate the S-Curve utilizing a sine wave
-        const amplitude = 90;
         const xOffset = Math.sin((index / 2) * Math.PI) * amplitude;
-        
-        const hasNext = index < pathNodes.length - 1;
+
+        const isLastNode = index === pathNodes.length - 1;
+        const hasNext = index < pathNodes.length - 1 || isLastNode;
         let nextXOffset = 0;
         if (hasNext) {
-          nextXOffset = Math.sin(((index + 1) / 2) * Math.PI) * amplitude;
+          nextXOffset =
+            index < pathNodes.length - 1
+              ? Math.sin(((index + 1) / 2) * Math.PI) * amplitude
+              : videoXOffset;
         }
         const nodeStatus: NodeStatus = node.status || "locked";
         const isCompleted = nodeStatus === "completed";
@@ -153,13 +163,56 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
         );
       })}
 
+      <div className="relative group w-full flex justify-center mb-16">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-75 h-35 -z-10 pointer-events-none">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 300 144"
+            preserveAspectRatio="none"
+          >
+            <path
+              d={`M ${150 + videoXOffset} 40 C ${150 + videoXOffset} 90, ${150 + finalXOffset} 54, ${150 + finalXOffset} 144`}
+              fill="none"
+              strokeWidth="8"
+              strokeLinecap="round"
+              className="stroke-red-300"
+            />
+          </svg>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => guardedNavigate(videoTarget)}
+          className="hover:scale-105 duration-200"
+        >
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center border-b-8 cursor-pointer transition-all hover:-translate-y-1 hover:brightness-110 bg-red-500 border-red-600 text-white shadow-lg shadow-red-500/40"
+            style={{ transform: `translateX(${videoXOffset}px)` }}
+            title={videoNodeLabel}
+          >
+            <Video size={30} />
+          </div>
+        </button>
+
+        <div
+          className={`absolute top-1/2 -translate-y-1/2 whitespace-nowrap bg-white px-3 py-1.5 rounded-lg shadow-md border border-gray-200 text-sm font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10
+            ${videoXOffset > 0 ? "left-[calc(50%+60px)] -translate-x-full" : "right-[calc(50%+60px)] translate-x-full"}
+          `}
+          style={{
+            [videoXOffset > 0 ? "marginRight" : "marginLeft"]: `${Math.abs(videoXOffset)}px`,
+          }}
+        >
+          {videoNodeLabel}
+        </div>
+      </div>
+
       <div className="relative w-full flex justify-center mt-2 mb-8">
         <BossBattleCard
           id={topicId}
           type="TEST"
           items={[{ topicId }]}
           status={testNodeStatus}
-          styleOffset={Math.sin((pathNodes.length / 2) * Math.PI) * 90}
+          styleOffset={finalXOffset}
           label={testNodeLabel}
         />
       </div>

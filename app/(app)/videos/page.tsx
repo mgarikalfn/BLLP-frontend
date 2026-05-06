@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { VideoCard, type VideoCardData } from "@/components/videos/VideoCard";
+import { useLanguageStore } from "@/store/languageStore";
 
 const resolvePayload = (payload: unknown) => {
   if (!payload || typeof payload !== "object") return payload;
@@ -101,14 +103,56 @@ const normalizeVideos = (payload: unknown): VideoCardData[] => {
     .filter((entry): entry is VideoCardData => !!entry && !!entry.title);
 };
 
-const suggestions = ["Greetings", "Travel phrases", "Daily routines", "Business basics", "Pronunciation"];
-
-export default function LearnerVideosPage() {
+const LearnerVideosPageContent = () => {
+  const searchParams = useSearchParams();
+  const lang = useLanguageStore((state) => state.lang);
   const [query, setQuery] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [videos, setVideos] = useState<VideoCardData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const text = useMemo(
+    () => ({
+      videoLibrary: lang === "am" ? "የቪዲዮ ማህደር" : "Kuusaa Viidiyoo",
+      title:
+        lang === "am"
+          ? "ለቋንቋ ተማሪዎች የተረጋገጡ ቪዲዮዎችን ይፈልጉ።"
+          : "Barattoota afaanii irratti qophaa'an viidiyoo mirkanaa'an barbaadi.",
+      subtitle:
+        lang === "am"
+          ? "ከትምህርቶችዎ ጋር የተመጣጠኑ አጭር የተመረጡ ክሊፖችን ያግኙ እና በራስዎ ፍጥነት ይለማመዱ።"
+          : "Kliipota gabaabaa filataman barnoota kee waliin walsiman argadhu; saffisa kee irratti shaakali.",
+      placeholder:
+        lang === "am"
+          ? "ርዕሶችን፣ ሀረጎችን ወይም ክህሎቶችን ፈልጉ"
+          : "Mata-duree, jechoota, yookaan dandeettii barbaadi",
+      search: lang === "am" ? "ፈልግ" : "Barbaadi",
+      searchingBadge: lang === "am" ? "በመፈለግ ላይ" : "Barbaadaa jira",
+      startTyping:
+        lang === "am"
+          ? "ለመጀመር ይጻፉ እና የተረጋገጡ ቪዲዮዎችን ያስሱ።"
+          : "Viidiyoo mirkanaa'an ilaaluuf barreessi.",
+      searchingClips:
+        lang === "am" ? "ምርጥ ክሊፖችን እየፈለግን ነው..." : "Kliipota gaarii barbaadaa jirra...",
+      noVideos:
+        lang === "am"
+          ? "ምንም ቪዲዮ አልተገኘም። ሌላ ቃል ይሞክሩ።"
+          : "Viidiyoo homtuu hin argamne. Gaaffii biraa yaali.",
+      resultSingle: lang === "am" ? "1 የተረጋገጠ ቪዲዮ ተገኘ።" : "1 viidiyoo mirkanaa'e argame.",
+      resultMultiple:
+        lang === "am" ? "{count} የተረጋገጡ ቪዲዮዎች ተገኙ።" : "{count} viidiyoo mirkanaa'an argaman.",
+      searchFailed:
+        lang === "am" ? "ፍለጋው አልተሳካም። ሌላ ጥያቄ ይሞክሩ።" : "Barbaadiin hin milkoofne. Gaaffii biraa yaali.",
+    }),
+    [lang]
+  );
+  const suggestions = useMemo(
+    () =>
+      lang === "am"
+        ? ["ሰላምታ", "የጉዞ ሀረጎች", "የዕለታዊ ስራዎች", "የንግድ መሠረታዊዎች", "ድምፅ አቀራረብ"]
+        : ["Nagaa-galeessa", "Jecha Imalaa", "Hojiilee guyyaa guyyaa", "Bu'uura Daldalaa", "Sagalee Dubbisuu"],
+    [lang]
+  );
 
   const runSearch = useCallback(async (term: string) => {
     if (!term) {
@@ -125,11 +169,11 @@ export default function LearnerVideosPage() {
       const resolved = resolvePayload(res.data);
       setVideos(normalizeVideos(resolved));
     } catch {
-      setError("Search failed. Please try another query.");
+      setError(text.searchFailed);
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [text.searchFailed]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -139,6 +183,15 @@ export default function LearnerVideosPage() {
 
     return () => clearTimeout(handler);
   }, [query]);
+
+  useEffect(() => {
+    const term = searchParams.get("q");
+    if (!term) return;
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setQuery(trimmed);
+    setSearchTerm((prev) => (prev === trimmed ? prev : trimmed));
+  }, [searchParams]);
 
   useEffect(() => {
     if (!searchTerm) {
@@ -156,11 +209,12 @@ export default function LearnerVideosPage() {
   };
 
   const resultsLabel = useMemo(() => {
-    if (!searchTerm) return "Start typing to explore verified videos.";
-    if (isSearching) return "Searching for the best clips...";
-    if (videos.length === 0) return "No videos found yet. Try another search.";
-    return `${videos.length} verified video${videos.length === 1 ? "" : "s"} found.`;
-  }, [searchTerm, isSearching, videos.length]);
+    if (!searchTerm) return text.startTyping;
+    if (isSearching) return text.searchingClips;
+    if (videos.length === 0) return text.noVideos;
+    if (videos.length === 1) return text.resultSingle;
+    return text.resultMultiple.replace("{count}", `${videos.length}`);
+  }, [searchTerm, isSearching, text, videos.length]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50">
@@ -176,13 +230,13 @@ export default function LearnerVideosPage() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-500 shadow-sm backdrop-blur">
             <Search className="size-4 text-emerald-500" />
-            Video library
+            {text.videoLibrary}
           </div>
           <h1 className="text-3xl font-black text-slate-900 md:text-4xl">
-            Search verified videos made for language learners.
+            {text.title}
           </h1>
           <p className="max-w-2xl text-sm font-semibold text-slate-600 md:text-base">
-            Find short, curated clips aligned with your lessons and practice at your own pace.
+            {text.subtitle}
           </p>
         </motion.div>
 
@@ -197,14 +251,14 @@ export default function LearnerVideosPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search for topics, phrases, or skills"
+            placeholder={text.placeholder}
             className="h-16 w-full rounded-3xl border border-white/70 bg-white/80 pl-14 pr-32 text-base font-semibold text-slate-700 shadow-[0_20px_55px_rgba(15,23,42,0.12)] outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-200"
           />
           <button
             type="submit"
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-2xl bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg transition hover:bg-emerald-400"
           >
-            Search
+            {text.search}
           </button>
         </motion.form>
 
@@ -229,7 +283,7 @@ export default function LearnerVideosPage() {
           {isSearching ? (
             <span className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
               <Loader2 className="size-4 animate-spin" />
-              Searching
+              {text.searchingBadge}
             </span>
           ) : null}
         </div>
@@ -254,5 +308,13 @@ export default function LearnerVideosPage() {
         </div>
       </div>
     </div>
+  );
+};
+
+export default function LearnerVideosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <LearnerVideosPageContent />
+    </Suspense>
   );
 }
