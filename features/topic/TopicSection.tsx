@@ -52,6 +52,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
           topicId={topic._id}
           pathNodes={topic.pathNodes || []}
           topicTest={topic.topicTest}
+          topicTitle={amharicTitle}
         />
       </div>
     </section>

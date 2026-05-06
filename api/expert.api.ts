@@ -21,8 +21,36 @@ export const rejectContent = (type: string, id: string) => api.patch(`/expert/co
 export const generateContent = (data: { type: string; topicId: string; level: string }) =>
   api.post("/expert/generate", data);
 
+// Generate AI topic
+export const generateTopic = (data: { theme: string; section: string; level: string }) =>
+  api.post("/expert/generate", { type: "TOPIC", ...data });
+
 // Fetch all topics (reuse existing endpoint)
 export const getTopics = () => api.get("/topics");
+
+// Fetch all topics
+export const getAllTopics = () => api.get("/topics");
+
+// Update topic
+export const updateTopic = (
+  id: string,
+  payload: {
+    title?: { am: string; ao: string };
+    description?: { am: string; ao: string };
+    tips?: { am: string; ao: string };
+    level?: string;
+    section?: string;
+    unitNumber?: number;
+    thumbnailUrl?: string;
+    isPublished?: boolean;
+  }
+) => api.put(`/topics/${id}`, payload);
+
+// Publish topic
+export const publishTopic = (id: string) => api.patch(`/topics/${id}/publish`);
+
+// Delete topic
+export const deleteTopic = (id: string) => api.delete(`/topics/${id}`);
 
 // Update lesson content (replaces lesson + quiz)
 export const updateLesson = (
