@@ -688,7 +688,7 @@ export default function ExpertReviewPage() {
       return;
     }
 
-    const baseDraft = buildLessonDraft(selectedItem as Record<string, unknown>);
+    const baseDraft = buildLessonDraft(selectedItem as unknown as Record<string, unknown>);
     setLessonDraft(baseDraft);
     setQuizDraft(baseDraft.quiz ?? []);
 

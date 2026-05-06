@@ -107,7 +107,7 @@ export default function  Sidebar  ({ className }: Props)  {
         </div>
       )}
 
-      <div className="flex flex-col gap-y-2 flex-1">
+      <div className="flex flex-col gap-y-2 flex-1 overflow-y-auto overflow-x-hidden">
         {(role === "EXPERT" || role === "ADMIN") && sidebarMode === "EXPERT" ? (
           <>
             <div className="sidebar-section-label px-4 pt-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">

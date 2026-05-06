@@ -47,5 +47,5 @@ export const generateQuestions = (topicId: string) =>
 export const updateExpertContent = (
   type: string,
   id: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown> | Array<Record<string, unknown>>
 ) => api.put(`/expert/content/${type}/${id}`, payload);
