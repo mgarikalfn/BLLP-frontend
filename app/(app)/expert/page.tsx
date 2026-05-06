@@ -37,6 +37,7 @@ const normalizeTypeKey = (key: string) => {
   if (upper === "SPEAKING" || upper === "SPEAKINGS" || upper === "SPEAKING_EXERCISE" || upper === "SPEAKING_EXERCISES") {
     return "SPEAKING";
   }
+  if (upper === "VIDEO" || upper === "VIDEOS" || upper === "YOUTUBE" || upper === "YOUTUBE_VIDEO") return "VIDEO";
   if (upper === "QUESTION" || upper === "QUESTIONS" || upper === "QUIZ" || upper === "QUIZZES") return "QUESTION";
 
   return upper;
@@ -340,6 +341,7 @@ export default function ExpertDashboardPage() {
     { label: "Dialogues", key: "DIALOGUE" },
     { label: "Writing", key: "WRITING" },
     { label: "Speaking", key: "SPEAKING" },
+    { label: "Videos", key: "VIDEO" },
     { label: "Questions", key: "QUESTION" },
   ];
 
@@ -467,6 +469,12 @@ export default function ExpertDashboardPage() {
           className="flex-1 rounded-xl border-b-4 border-emerald-600 bg-emerald-500 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.2em] text-white transition hover:translate-y-0.5 hover:border-b-2"
         >
           Generate Content
+        </Link>
+        <Link
+          href="/expert/videos/discover"
+          className="flex-1 rounded-xl border-b-4 border-rose-600 bg-rose-500 px-4 py-3 text-center text-sm font-black uppercase tracking-[0.2em] text-white transition hover:translate-y-0.5 hover:border-b-2"
+        >
+          Discover Videos
         </Link>
       </div>
 

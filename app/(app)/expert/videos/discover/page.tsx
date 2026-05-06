@@ -208,7 +208,7 @@ export default function ExpertVideoDiscoveryPage() {
     setVideos([]);
 
     try {
-      const res = await api.post("/expert/videos/discover", { topicId, level });
+      const res = await api.post("/youtube-videos/discover", { topicId, level });
       const resolved = resolvePayload(res.data);
       setVideos(normalizeVideos(resolved));
     } catch {

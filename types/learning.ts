@@ -299,6 +299,9 @@ export interface WorkspaceTopic {
   _id: string;
   title: LocalizedString;
   level: string;
+  section?: "INTRO" | "A1" | "A2" | "B1" | "B2";
+  unitNumber?: number;
+  tips?: { am?: string; ao?: string };
   pathNodes?: WorkspacePathNode[];
   topicTest?: WorkspaceTopicTest;
   lessons?: WorkspaceLesson[];
