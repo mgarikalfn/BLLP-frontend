@@ -39,6 +39,7 @@ export const SidebarItem = ({
             className="mr-5 object-contain"
             height={32}
             width={32}
+            style={{ width: "32px", height: "32px" }}
             unoptimized
           />
         )}
