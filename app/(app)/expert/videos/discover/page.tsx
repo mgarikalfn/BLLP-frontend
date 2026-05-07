@@ -117,13 +117,16 @@ const normalizeVideos = (payload: unknown): VideoCardData[] => {
         typeof entry.needsReview === "boolean"
           ? entry.needsReview
           : status === "NEEDS_REVIEW" || status === "DRAFT" || !status;
+      const isVerified = typeof entry.isVerified === "boolean" ? entry.isVerified : status === "PUBLISHED";
 
       return {
+        _id: typeof entry._id === "string" ? entry._id : undefined,
         youtubeId,
         title,
         thumbnailUrl,
         tags,
         needsReview,
+        isVerified,
       };
     })
     .filter((entry): entry is VideoCardData => !!entry && !!entry.title);
@@ -215,6 +218,17 @@ export default function ExpertVideoDiscoveryPage() {
       setError("Discovery failed. Please try again in a moment.");
     } finally {
       setIsDiscovering(false);
+    }
+  };
+
+  const handleVerifyVideo = async (id: string) => {
+    try {
+      await api.patch(`/youtube-videos/${id}/verify`);
+      setVideos((prev) =>
+        prev.map((video) => (video._id === id ? { ...video, isVerified: true, needsReview: false } : video))
+      );
+    } catch (error) {
+      console.error("Failed to verify video", error);
     }
   };
 
@@ -395,7 +409,7 @@ export default function ExpertVideoDiscoveryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: index * 0.05 }}
               >
-                <VideoCard video={video} />
+                <VideoCard video={video} onVerify={handleVerifyVideo} />
               </motion.div>
             ))}
           </div>

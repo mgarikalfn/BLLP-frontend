@@ -6,6 +6,7 @@ import { Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type VideoCardData = {
+  _id?: string;
   youtubeId: string;
   title: string;
   thumbnailUrl?: string;
@@ -17,6 +18,7 @@ export type VideoCardData = {
 interface VideoCardProps {
   video: VideoCardData;
   className?: string;
+  onVerify?: (id: string) => void;
 }
 
 const buildFallbackThumbnail = (youtubeId: string) =>
@@ -28,7 +30,7 @@ const compactTags = (tags: string[] = []) => {
   return { tags: cleaned.slice(0, 3), overflow: cleaned.length - 3 };
 };
 
-export function VideoCard({ video, className }: VideoCardProps) {
+export function VideoCard({ video, className, onVerify }: VideoCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const canPlay = Boolean(video.youtubeId);
   const title = video.title || "Untitled video";
@@ -175,6 +177,18 @@ export function VideoCard({ video, className }: VideoCardProps) {
                     <span className="rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
                       Verified
                     </span>
+                  ) : null}
+                  {!video.isVerified && onVerify && video._id ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onVerify(video._id!);
+                        setIsOpen(false);
+                      }}
+                      className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-1 text-xs font-black uppercase tracking-widest text-white transition shadow-sm"
+                    >
+                      Verify Video
+                    </button>
                   ) : null}
                 </div>
                 <h3 className="text-2xl font-black leading-tight">{title}</h3>
