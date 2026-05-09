@@ -193,7 +193,7 @@ export const updateUserRole = async (userId: string, role: string): Promise<Admi
       data: toUserAdminView(res.data.data),
     };
   } catch (error) {
-    return handleApiError(error, "Error updating user role");
+    return handleApiError(error, "Error updating role");
   }
 };
 
