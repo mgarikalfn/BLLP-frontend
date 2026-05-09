@@ -70,6 +70,13 @@ export const updateLesson = (
 // Fetch lesson with populated quiz
 export const getLessonById = (lessonId: string) => api.get(`/lessons/${lessonId}`);
 
+// Generate missing audio for a lesson
+export const generateLessonAudio = (lessonId: string) => api.put(`/lessons/${lessonId}/generate-audio`);
+
+// Regenerate specific audio clip
+export const regenerateAudio = (lessonId: string, data: { vocabIndex: number; isExample: boolean; language: "am" | "ao" }) => 
+  api.put(`/lessons/${lessonId}/regenerate-audio`, data);
+
 // Generate questions for a topic
 export const generateQuestions = (topicId: string) =>
   api.post("/expert/generate", { type: "QUESTION", topicId });

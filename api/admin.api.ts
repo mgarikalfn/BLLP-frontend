@@ -1,0 +1,165 @@
+import axios from "axios";
+import { api } from "@/lib/api";
+
+export interface UserAdminView {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  userStatus: string;
+  createdAt: string;
+}
+
+export interface ContentStatsView {
+  totalUsers: number;
+  totalExperts: number;
+  totalTopics: number;
+  totalLessons: number;
+  totalQuestions: number;
+  lessonsPendingReview: number;
+}
+
+export interface AdminPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  pages: number;
+}
+
+export interface AdminUsersResponse {
+  data: UserAdminView[];
+  pagination: AdminPagination;
+}
+
+export interface AdminUserActionResponse {
+  message: string;
+  data: UserAdminView;
+}
+
+type AdminUserPayload = {
+  _id: string;
+  username: string;
+  email: string;
+  role: string;
+  userStatus: string;
+  createdAt: string;
+};
+
+type AdminUsersPayload = {
+  data: AdminUserPayload[];
+  pagination: AdminPagination;
+};
+
+type AdminUserActionPayload = {
+  message: string;
+  data: AdminUserPayload;
+};
+
+type AdminStatsPayload = {
+  stats: ContentStatsView;
+};
+
+const toUserAdminView = (user: AdminUserPayload): UserAdminView => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  role: user.role,
+  userStatus: user.userStatus,
+  createdAt: user.createdAt,
+});
+
+const getAdminBasePath = () => {
+  const baseUrl = (api.defaults.baseURL || "").replace(/\/+$/, "");
+  return baseUrl.endsWith("/api") ? "/admin" : "/api/admin";
+};
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") return undefined;
+
+  const existing = api.defaults.headers.common?.Authorization;
+  if (existing) {
+    return { Authorization: String(existing) };
+  }
+
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
+};
+
+const getErrorMessage = (error: unknown, fallbackMessage: string) => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as { message?: string; error?: string } | undefined;
+    return data?.message || data?.error || error.message || fallbackMessage;
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallbackMessage;
+  }
+
+  return fallbackMessage;
+};
+
+const handleApiError = (error: unknown, fallbackMessage: string): never => {
+  throw new Error(getErrorMessage(error, fallbackMessage));
+};
+
+export const fetchUsers = async (page: number, search?: string): Promise<AdminUsersResponse> => {
+  try {
+    const res = await api.get<AdminUsersPayload>(`${getAdminBasePath()}/users`, {
+      params: search ? { page, search } : { page },
+      headers: getAuthHeaders(),
+    });
+
+    return {
+      data: res.data.data.map(toUserAdminView),
+      pagination: res.data.pagination,
+    };
+  } catch (error) {
+    handleApiError(error, "Error fetching users");
+  }
+};
+
+export const updateUserRole = async (userId: string, role: string): Promise<AdminUserActionResponse> => {
+  try {
+    const res = await api.patch<AdminUserActionPayload>(
+      `${getAdminBasePath()}/users/${userId}/role`,
+      { role },
+      { headers: getAuthHeaders() }
+    );
+
+    return {
+      message: res.data.message,
+      data: toUserAdminView(res.data.data),
+    };
+  } catch (error) {
+    handleApiError(error, "Error updating user role");
+  }
+};
+
+export const toggleUserStatus = async (userId: string): Promise<AdminUserActionResponse> => {
+  try {
+    const res = await api.patch<AdminUserActionPayload>(
+      `${getAdminBasePath()}/users/${userId}/status`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+
+    return {
+      message: res.data.message,
+      data: toUserAdminView(res.data.data),
+    };
+  } catch (error) {
+    handleApiError(error, "Error toggling user status");
+  }
+};
+
+export const fetchContentStats = async (): Promise<ContentStatsView> => {
+  try {
+    const res = await api.get<AdminStatsPayload>(`${getAdminBasePath()}/stats`, {
+      headers: getAuthHeaders(),
+    });
+
+    return res.data.stats;
+  } catch (error) {
+    handleApiError(error, "Error fetching content stats");
+  }
+};
