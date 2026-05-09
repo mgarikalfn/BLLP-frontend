@@ -61,8 +61,24 @@ const toLocalizedRecord = (value: unknown): LocalizedText => {
 };
 
 export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index, isEditing, onChange }) => {
-  const type = typeof question.type === "string" ? question.type : "MULTIPLE_CHOICE";
   const content = isRecord(question.content) ? question.content : {};
+  
+  let type = typeof question.type === "string" ? question.type.toUpperCase() : "";
+  
+  // Auto-detect type if it's missing or incorrectly defaulted to MULTIPLE_CHOICE
+  if (!type || type === "MULTIPLE_CHOICE" || type === "QUESTION") {
+    if (typeof content.type === "string") {
+      type = content.type.toUpperCase();
+    } else if (content.textBeforeBlank !== undefined || content.textWithBlank !== undefined) {
+      type = "CLOZE";
+    } else if (content.pairs !== undefined) {
+      type = "MATCHING";
+    } else if (content.scrambled !== undefined) {
+      type = "SCRAMBLE";
+    } else {
+      type = "MULTIPLE_CHOICE";
+    }
+  }
 
   // Prompt parsing
   const rawPrompt = content.prompt ?? content.question ?? question.prompt ?? question.question ?? "";
@@ -103,6 +119,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   if (type === "MULTIPLE_CHOICE" || type === "QUESTION") {
     const options = Array.isArray(content.options) ? content.options : Array.isArray(question.options) ? question.options : [];
     const source = Array.isArray(content.options) ? "content" : Array.isArray(question.options) ? "root" : "content";
+    const correctIndex = typeof content.correctIndex === "number" ? content.correctIndex : typeof question.correctIndex === "number" ? question.correctIndex : 0;
 
     const updateOption = (optIndex: number, lang: "am" | "ao", val: string) => {
       const nextOptions = [...options];
@@ -116,6 +133,14 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
       }
     };
 
+    const updateCorrectIndex = (newIndex: number) => {
+      if (source === "content") {
+        onChange(index, { ...question, content: { ...content, correctIndex: newIndex } });
+      } else {
+        onChange(index, { ...question, correctIndex: newIndex });
+      }
+    };
+
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
         <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
@@ -123,31 +148,46 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
           {type}
         </span>
         {renderPrompt()}
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-2">
           {options.length === 0 && !isEditing && (
             <p className="text-xs font-semibold text-slate-400">No options provided.</p>
           )}
           {options.map((opt, optIndex) => {
             const optLoc = toLocalizedRecord(opt);
+            const isCorrect = correctIndex === optIndex;
             return (
-              <div key={optIndex}>
+              <div key={optIndex} className={`flex items-start gap-2 p-2 rounded-lg border ${isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-slate-100 bg-slate-50'}`}>
                 {isEditing ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <input
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
-                      value={optLoc.am}
-                      onChange={(e) => updateOption(optIndex, "am", e.target.value)}
-                      placeholder="Option (Amharic)"
+                  <>
+                    <input 
+                      type="radio" 
+                      name={`question-${index}-correct`} 
+                      checked={isCorrect} 
+                      onChange={() => updateCorrectIndex(optIndex)}
+                      className="mt-2 h-4 w-4 text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
                     />
-                    <input
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
-                      value={optLoc.ao}
-                      onChange={(e) => updateOption(optIndex, "ao", e.target.value)}
-                      placeholder="Option (Afaan Oromoo)"
-                    />
-                  </div>
+                    <div className="flex-1 grid gap-2 sm:grid-cols-2">
+                      <input
+                        className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
+                        value={optLoc.am}
+                        onChange={(e) => updateOption(optIndex, "am", e.target.value)}
+                        placeholder="Option (Amharic)"
+                      />
+                      <input
+                        className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
+                        value={optLoc.ao}
+                        onChange={(e) => updateOption(optIndex, "ao", e.target.value)}
+                        placeholder="Option (Afaan Oromoo)"
+                      />
+                    </div>
+                  </>
                 ) : (
-                  <p className="text-xs font-semibold text-slate-600">{formatLocalized(opt)}</p>
+                  <>
+                    <div className={`mt-0.5 h-3 w-3 rounded-full ${isCorrect ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                    <p className={`text-xs font-semibold ${isCorrect ? 'text-emerald-800' : 'text-slate-600'}`}>
+                      {formatLocalized(opt)}
+                    </p>
+                  </>
                 )}
               </div>
             );
@@ -178,25 +218,26 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
             <p className="text-xs font-semibold text-slate-400">No pairs provided.</p>
           )}
           {pairs.map((pair, pIndex) => (
-            <div key={pIndex} className="rounded border border-slate-100 bg-slate-50 p-2">
+            <div key={pIndex} className="flex items-center gap-2 rounded border border-slate-100 bg-slate-50 p-2">
               {isEditing ? (
-                <div className="grid gap-2 sm:grid-cols-2">
+                <>
                   <input
                     className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
                     value={typeof pair.left === "string" ? pair.left : ""}
                     onChange={(e) => updatePair(pIndex, "left", e.target.value)}
-                    placeholder="Left pair"
+                    placeholder="Left pair (Target Language)"
                   />
+                  <span className="text-slate-400">↔</span>
                   <input
                     className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
                     value={typeof pair.right === "string" ? pair.right : ""}
                     onChange={(e) => updatePair(pIndex, "right", e.target.value)}
-                    placeholder="Right pair"
+                    placeholder="Right pair (Native Language)"
                   />
-                </div>
+                </>
               ) : (
                 <p className="text-xs font-semibold text-slate-600">
-                  {pair.left} ↔ {pair.right}
+                  {pair.left} <span className="text-slate-400 mx-2">↔</span> {pair.right}
                 </p>
               )}
             </div>
@@ -207,17 +248,36 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   }
 
   if (type === "SCRAMBLE") {
-    const scrambled = Array.isArray(content.scrambled) ? content.scrambled : [];
-    const answer = typeof content.answer === "string" ? content.answer : "";
-
-    const updateScrambled = (sIndex: number, val: string) => {
-      const nextS = [...scrambled];
-      nextS[sIndex] = val;
-      onChange(index, { ...question, content: { ...content, scrambled: nextS } });
+    // Scrambled expects: { am: ["word1", "word2"], ao: ["word1", "word2"] }
+    const rawScrambled = isRecord(content.scrambled) ? content.scrambled : { am: [], ao: [] };
+    const scrambled = {
+      am: Array.isArray(rawScrambled.am) ? rawScrambled.am : [],
+      ao: Array.isArray(rawScrambled.ao) ? rawScrambled.ao : []
     };
     
-    const updateAnswer = (val: string) => {
-      onChange(index, { ...question, content: { ...content, answer: val } });
+    // Answer expects: { am: "sentence", ao: "sentence" }
+    const answer = toLocalizedRecord(content.answer);
+
+    const updateScrambled = (lang: "am" | "ao", val: string) => {
+      // Split by comma for easy editing of arrays
+      const parts = val.split(",").map(s => s.trim()).filter(s => s.length > 0);
+      onChange(index, { 
+        ...question, 
+        content: { 
+          ...content, 
+          scrambled: { ...scrambled, [lang]: parts } 
+        } 
+      });
+    };
+    
+    const updateAnswer = (lang: "am" | "ao", val: string) => {
+      onChange(index, { 
+        ...question, 
+        content: { 
+          ...content, 
+          answer: { ...answer, [lang]: val } 
+        } 
+      });
     };
 
     return (
@@ -227,41 +287,63 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
           {type}
         </span>
         {renderPrompt()}
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-4">
           {isEditing ? (
             <>
-              <div>
-                <p className="mb-1 text-[10px] font-black uppercase text-slate-400">Scrambled Parts</p>
-                <div className="flex flex-wrap gap-2">
-                  {scrambled.map((s, sIndex) => (
-                    <input
-                      key={sIndex}
-                      className="w-32 rounded border border-slate-200 px-2 py-1 text-xs"
-                      value={typeof s === "string" ? s : ""}
-                      onChange={(e) => updateScrambled(sIndex, e.target.value)}
-                    />
-                  ))}
+              <div className="rounded bg-slate-50 p-2 border border-slate-100">
+                <p className="mb-2 text-[10px] font-black uppercase text-slate-400">Scrambled Parts (Comma Separated)</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                    value={scrambled.am.join(", ")}
+                    onChange={(e) => updateScrambled("am", e.target.value)}
+                    placeholder="e.g. ሰላም, ነው, እንዴት"
+                  />
+                  <input
+                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                    value={scrambled.ao.join(", ")}
+                    onChange={(e) => updateScrambled("ao", e.target.value)}
+                    placeholder="e.g. akkam, jirta, nagaa"
+                  />
                 </div>
               </div>
-              <div>
-                <p className="mb-1 text-[10px] font-black uppercase text-slate-400">Correct Answer</p>
-                <input
-                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                  value={answer}
-                  onChange={(e) => updateAnswer(e.target.value)}
-                />
+              <div className="rounded bg-slate-50 p-2 border border-slate-100">
+                <p className="mb-2 text-[10px] font-black uppercase text-slate-400">Correct Final Sentence</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                    value={answer.am}
+                    onChange={(e) => updateAnswer("am", e.target.value)}
+                    placeholder="Amharic Answer"
+                  />
+                  <input
+                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                    value={answer.ao}
+                    onChange={(e) => updateAnswer("ao", e.target.value)}
+                    placeholder="Afaan Oromoo Answer"
+                  />
+                </div>
               </div>
             </>
           ) : (
             <>
-              <div className="flex flex-wrap gap-1">
-                {scrambled.map((s, sIndex) => (
-                  <span key={sIndex} className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                    {typeof s === "string" ? s : ""}
-                  </span>
-                ))}
+              <div className="space-y-1">
+                <div className="flex flex-wrap gap-1">
+                  {scrambled.am.map((s, sIndex) => (
+                    <span key={`am-${sIndex}`} className="rounded bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600 border border-slate-200">
+                      {typeof s === "string" ? s : ""}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {scrambled.ao.map((s, sIndex) => (
+                    <span key={`ao-${sIndex}`} className="rounded bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600 border border-slate-200">
+                      {typeof s === "string" ? s : ""}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs font-semibold text-emerald-600">Answer: {answer}</p>
+              <p className="text-xs font-semibold text-emerald-600 bg-emerald-50 p-2 rounded">Answer: {formatLocalized(answer)}</p>
             </>
           )}
         </div>
@@ -270,15 +352,47 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   }
 
   if (type === "CLOZE") {
-    const sentence = toLocalizedRecord(content.sentence);
-    const answerLoc = toLocalizedRecord(content.answer);
+    // Schema uses textBeforeBlank, textAfterBlank, options, correctAnswer
+    const textBeforeBlank = toLocalizedRecord(content.textBeforeBlank);
+    const textAfterBlank = toLocalizedRecord(content.textAfterBlank);
+    const options = Array.isArray(content.options) ? content.options : [];
+    
+    // Fallback: Compute correctIndex from correctAnswer if correctIndex is missing
+    let correctIndex = 0;
+    if (content.correctAnswer && typeof content.correctAnswer === "object") {
+      const ansAm = content.correctAnswer.am || content.correctAnswer.word || "";
+      const idx = options.findIndex(opt => (opt.am || opt.word || opt) === ansAm);
+      if (idx !== -1) correctIndex = idx;
+    } else if (typeof content.correctIndex === "number") {
+      correctIndex = content.correctIndex;
+    }
 
-    const updateSentence = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, content: { ...content, sentence: { ...sentence, [lang]: val } } });
+    const updateTextBeforeBlank = (lang: "am" | "ao", val: string) => {
+      onChange(index, { ...question, content: { ...content, textBeforeBlank: { ...textBeforeBlank, [lang]: val } } });
     };
 
-    const updateClozeAnswer = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, content: { ...content, answer: { ...answerLoc, [lang]: val } } });
+    const updateTextAfterBlank = (lang: "am" | "ao", val: string) => {
+      onChange(index, { ...question, content: { ...content, textAfterBlank: { ...textAfterBlank, [lang]: val } } });
+    };
+
+    const updateClozeOption = (optIndex: number, lang: "am" | "ao", val: string) => {
+      const nextOptions = [...options];
+      const opt = toLocalizedRecord(nextOptions[optIndex]);
+      nextOptions[optIndex] = { ...opt, [lang]: val };
+      
+      // If we are editing the currently correct option, we MUST also update correctAnswer!
+      let nextCorrectAnswer = content.correctAnswer;
+      if (optIndex === correctIndex) {
+        nextCorrectAnswer = { ...toLocalizedRecord(nextCorrectAnswer), [lang]: val };
+      }
+      
+      onChange(index, { ...question, content: { ...content, options: nextOptions, correctAnswer: nextCorrectAnswer } });
+    };
+
+    const updateClozeCorrectIndex = (newIndex: number) => {
+      // Also update correctAnswer to reflect the new chosen option
+      const newCorrectAnswer = toLocalizedRecord(options[newIndex]);
+      onChange(index, { ...question, content: { ...content, correctIndex: newIndex, correctAnswer: newCorrectAnswer } });
     };
 
     return (
@@ -287,48 +401,98 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
         <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
           {type}
         </span>
-        <div className="mt-2 space-y-2">
+        {renderPrompt()}
+        <div className="mt-3 space-y-3">
           {isEditing ? (
             <>
-              <div>
-                <p className="mb-1 text-[10px] font-black uppercase text-slate-400">Sentence with Blank (_____)</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <input
-                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                    value={sentence.am}
-                    onChange={(e) => updateSentence("am", e.target.value)}
-                    placeholder="Amharic"
-                  />
-                  <input
-                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                    value={sentence.ao}
-                    onChange={(e) => updateSentence("ao", e.target.value)}
-                    placeholder="Afaan Oromoo"
-                  />
+              <div className="rounded bg-slate-50 p-2 border border-slate-100">
+                <p className="mb-2 text-[10px] font-black uppercase text-slate-400">Sentence Parts (Before & After Blank)</p>
+                <div className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                      value={textBeforeBlank.am}
+                      onChange={(e) => updateTextBeforeBlank("am", e.target.value)}
+                      placeholder="Amharic Before Blank"
+                    />
+                    <input
+                      className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                      value={textBeforeBlank.ao}
+                      onChange={(e) => updateTextBeforeBlank("ao", e.target.value)}
+                      placeholder="Oromo Before Blank"
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                      value={textAfterBlank.am}
+                      onChange={(e) => updateTextAfterBlank("am", e.target.value)}
+                      placeholder="Amharic After Blank"
+                    />
+                    <input
+                      className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                      value={textAfterBlank.ao}
+                      onChange={(e) => updateTextAfterBlank("ao", e.target.value)}
+                      placeholder="Oromo After Blank"
+                    />
+                  </div>
                 </div>
               </div>
-              <div>
-                <p className="mb-1 text-[10px] font-black uppercase text-slate-400">Correct Answer</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <input
-                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                    value={answerLoc.am}
-                    onChange={(e) => updateClozeAnswer("am", e.target.value)}
-                    placeholder="Amharic"
-                  />
-                  <input
-                    className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                    value={answerLoc.ao}
-                    onChange={(e) => updateClozeAnswer("ao", e.target.value)}
-                    placeholder="Afaan Oromoo"
-                  />
+              <div className="rounded bg-slate-50 p-2 border border-slate-100">
+                <p className="mb-2 text-[10px] font-black uppercase text-slate-400">Options & Correct Answer</p>
+                <div className="space-y-2">
+                  {options.map((opt, optIndex) => {
+                    const optLoc = toLocalizedRecord(opt);
+                    const isCorrect = correctIndex === optIndex;
+                    return (
+                      <div key={optIndex} className={`flex items-start gap-2 p-2 rounded-lg border ${isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
+                        <input 
+                          type="radio" 
+                          name={`cloze-${index}-correct`} 
+                          checked={isCorrect} 
+                          onChange={() => updateClozeCorrectIndex(optIndex)}
+                          className="mt-2 h-4 w-4 text-emerald-600 border-slate-300 cursor-pointer"
+                        />
+                        <div className="flex-1 grid gap-2 sm:grid-cols-2">
+                          <input
+                            className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                            value={optLoc.am}
+                            onChange={(e) => updateClozeOption(optIndex, "am", e.target.value)}
+                            placeholder="Option (Amharic)"
+                          />
+                          <input
+                            className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                            value={optLoc.ao}
+                            onChange={(e) => updateClozeOption(optIndex, "ao", e.target.value)}
+                            placeholder="Option (Afaan Oromoo)"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-slate-700">{formatLocalized(sentence)}</p>
-              <p className="text-xs font-semibold text-emerald-600">Answer: {formatLocalized(answerLoc)}</p>
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                <p className="text-sm font-semibold text-slate-800">
+                  {textBeforeBlank.am} <span className="inline-block w-16 border-b-2 border-slate-400"></span> {textAfterBlank.am}
+                </p>
+                <p className="text-sm font-semibold text-slate-600 mt-1">
+                  {textBeforeBlank.ao} <span className="inline-block w-16 border-b-2 border-slate-400"></span> {textAfterBlank.ao}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                {options.map((opt, optIndex) => {
+                  const isCorrect = correctIndex === optIndex;
+                  return (
+                    <span key={optIndex} className={`px-2 py-1 text-xs font-semibold rounded-full border ${isCorrect ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-white text-slate-600 border-slate-200'}`}>
+                      {formatLocalized(opt)} {isCorrect && "✓"}
+                    </span>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>

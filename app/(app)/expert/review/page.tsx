@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Loader2, X, XCircle } from "lucide-react";
-import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent } from "@/api/expert.api";
+import { AlertTriangle, CheckCircle2, Loader2, X, XCircle, Play, RefreshCw, Volume2 } from "lucide-react";
+import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio } from "@/api/expert.api";
 import { useAuthStore } from "@/store/authStore";
 import type { ExpertContentItem, ExpertContentType } from "@/types/learning";
 import { QuestionEditor, QuestionRecord } from "@/components/expert/QuestionEditor";
@@ -360,6 +360,8 @@ export default function ExpertReviewPage() {
   const [isLessonLoading, setIsLessonLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [regeneratingAudioFor, setRegeneratingAudioFor] = useState<{ vocabIndex: number; isExample: boolean; language: "am" | "ao" } | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
@@ -645,6 +647,55 @@ export default function ExpertReviewPage() {
     } finally {
       setIsGeneratingQuestions(false);
     }
+  };
+
+  const handleGenerateLessonAudio = async () => {
+    if (!selectedItem?._id) return;
+    setIsGeneratingAudio(true);
+    try {
+      const res = await generateLessonAudio(selectedItem._id);
+      showToast("success", "Missing audio generated successfully!");
+      
+      // Reload lesson to get new audio URLs
+      setIsLessonLoading(true);
+      const lessonRes = await getLessonById(selectedItem._id);
+      const resolved = resolveLessonPayload(lessonRes.data);
+      if (isRecord(resolved)) {
+        const nextDraft = buildLessonDraft(resolved);
+        setLessonDraft(nextDraft);
+      }
+    } catch (error) {
+      showToast("error", "Failed to generate audio. Make sure you haven't hit rate limits.");
+    } finally {
+      setIsGeneratingAudio(false);
+      setIsLessonLoading(false);
+    }
+  };
+
+  const handleRegenerateAudio = async (vocabIndex: number, isExample: boolean, language: "am" | "ao") => {
+    if (!selectedItem?._id) return;
+    setRegeneratingAudioFor({ vocabIndex, isExample, language });
+    try {
+      await regenerateAudio(selectedItem._id, { vocabIndex, isExample, language });
+      showToast("success", `Audio regenerated for ${language === 'am' ? 'Amharic' : 'Afaan Oromoo'}`);
+      
+      // Reload lesson to get new audio URLs
+      const lessonRes = await getLessonById(selectedItem._id);
+      const resolved = resolveLessonPayload(lessonRes.data);
+      if (isRecord(resolved)) {
+        const nextDraft = buildLessonDraft(resolved);
+        setLessonDraft(nextDraft);
+      }
+    } catch (error) {
+      showToast("error", "Failed to regenerate audio.");
+    } finally {
+      setRegeneratingAudioFor(null);
+    }
+  };
+
+  const playAudio = (url: string) => {
+    const audio = new Audio(url);
+    audio.play().catch(() => showToast("error", "Could not play audio. Check URL or permissions."));
   };
 
   const openModal = (item: ExpertContentItem, editMode: boolean = false) => {
@@ -996,40 +1047,97 @@ export default function ExpertReviewPage() {
                         )}
                       </div>
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Vocabulary</h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Vocabulary</h4>
+                          {isEditing && (
+                            <button
+                              type="button"
+                              onClick={handleGenerateLessonAudio}
+                              disabled={isGeneratingAudio || isLessonLoading}
+                              className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-purple-600 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1"
+                            >
+                              {isGeneratingAudio ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                              Generate Missing Audio
+                            </button>
+                          )}
+                        </div>
                         <div className="mt-2 grid gap-2">
                           {vocabulary.length === 0 ? (
                             <p className="text-sm font-semibold text-slate-500">No vocabulary returned.</p>
                           ) : (
-                            vocabulary.map((item, index) => (
-                              <div
-                                key={`${String((item as Record<string, unknown>)._id ?? index)}`}
-                                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-                              >
-                                {isEditing ? (
-                                  <div className="grid gap-2 sm:grid-cols-2">
-                                    <input
-                                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                      value={typeof (item as Record<string, unknown>).am === "string" ? (item as Record<string, unknown>).am as string : ""}
-                                      onChange={(event) => updateVocabularyField(index, "am", event.target.value)}
-                                      placeholder="Amharic"
-                                    />
-                                    <input
-                                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                      value={typeof (item as Record<string, unknown>).ao === "string" ? (item as Record<string, unknown>).ao as string : ""}
-                                      onChange={(event) => updateVocabularyField(index, "ao", event.target.value)}
-                                      placeholder="Afaan Oromoo"
-                                    />
-                                  </div>
-                                ) : (
-                                  <p className="text-sm font-semibold text-slate-800">
-                                    {formatLocalized(
-                                      (isRecord(item) ? item.word ?? item.text ?? item.content ?? item : item)
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                            ))
+                            vocabulary.map((item, index) => {
+                              const vItem = item as Record<string, any>;
+                              const audioUrl = vItem.audioUrl || {};
+                              const exAudioUrl = vItem.example?.audioUrl || {};
+                              
+                              return (
+                                <div
+                                  key={`${String(vItem._id ?? index)}`}
+                                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                                >
+                                  {isEditing ? (
+                                    <div className="space-y-3">
+                                      <div className="grid gap-2 sm:grid-cols-2">
+                                        <div>
+                                          <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase text-slate-400">Amharic Word</span>
+                                            <div className="flex items-center gap-1">
+                                              {audioUrl.am ? (
+                                                <>
+                                                  <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                  <button onClick={() => playAudio(audioUrl.am)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                  <button onClick={() => handleRegenerateAudio(index, false, "am")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'am' && !regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                </>
+                                              ) : (
+                                                <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <input
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                            value={typeof vItem.am === "string" ? vItem.am : ""}
+                                            onChange={(event) => updateVocabularyField(index, "am", event.target.value)}
+                                            placeholder="Amharic"
+                                          />
+                                        </div>
+                                        <div>
+                                          <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase text-slate-400">Afaan Oromoo Word</span>
+                                            <div className="flex items-center gap-1">
+                                              {audioUrl.ao ? (
+                                                <>
+                                                  <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                  <button onClick={() => playAudio(audioUrl.ao)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                  <button onClick={() => handleRegenerateAudio(index, false, "ao")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'ao' && !regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                </>
+                                              ) : (
+                                                <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <input
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                            value={typeof vItem.ao === "string" ? vItem.ao : ""}
+                                            onChange={(event) => updateVocabularyField(index, "ao", event.target.value)}
+                                            placeholder="Afaan Oromoo"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-sm font-semibold text-slate-800">
+                                        {formatLocalized(isRecord(vItem) ? vItem.word ?? vItem.text ?? vItem.content ?? vItem : vItem)}
+                                      </p>
+                                      <div className="flex gap-2">
+                                        {audioUrl.am && <button onClick={() => playAudio(audioUrl.am)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
+                                        {audioUrl.ao && <button onClick={() => playAudio(audioUrl.ao)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       </div>
