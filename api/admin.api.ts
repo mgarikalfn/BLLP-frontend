@@ -68,9 +68,42 @@ const toUserAdminView = (user: AdminUserPayload): UserAdminView => ({
   createdAt: user.createdAt,
 });
 
-const getAdminBasePath = () => {
+const getAdminBasePaths = () => {
   const baseUrl = (api.defaults.baseURL || "").replace(/\/+$/, "");
-  return baseUrl.endsWith("/api") ? "/admin" : "/api/admin";
+  const hasApiSuffix = baseUrl.endsWith("/api");
+
+  if (!baseUrl) {
+    return ["/api/admin"];
+  }
+
+  return hasApiSuffix ? ["/admin"] : ["/api/admin", "/admin"];
+};
+
+const buildAdminUrls = (path: string) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return getAdminBasePaths().map((base) => `${base}${normalizedPath}`);
+};
+
+const requestAdmin = async <T>(path: string, makeRequest: (url: string) => Promise<T>): Promise<T> => {
+  const urls = buildAdminUrls(path);
+  let lastError: unknown;
+
+  for (const url of urls) {
+    try {
+      return await makeRequest(url);
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      lastError = error;
+
+      if (status === 404 && url !== urls[urls.length - 1]) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError ?? new Error("Admin request failed");
 };
 
 const getAuthHeaders = () => {
@@ -104,26 +137,26 @@ const handleApiError = (error: unknown, fallbackMessage: string): never => {
 
 export const fetchUsers = async (page: number, search?: string): Promise<AdminUsersResponse> => {
   try {
-    const res = await api.get<AdminUsersPayload>(`${getAdminBasePath()}/users`, {
-      params: search ? { page, search } : { page },
-      headers: getAuthHeaders(),
-    });
+    const res = await requestAdmin("/users", (url) =>
+      api.get<AdminUsersPayload>(url, {
+        params: search ? { page, search } : { page },
+        headers: getAuthHeaders(),
+      })
+    );
 
     return {
       data: res.data.data.map(toUserAdminView),
       pagination: res.data.pagination,
     };
   } catch (error) {
-    handleApiError(error, "Error fetching users");
+    return handleApiError(error, "Error fetching users");
   }
 };
 
 export const updateUserRole = async (userId: string, role: string): Promise<AdminUserActionResponse> => {
   try {
-    const res = await api.patch<AdminUserActionPayload>(
-      `${getAdminBasePath()}/users/${userId}/role`,
-      { role },
-      { headers: getAuthHeaders() }
+    const res = await requestAdmin(`/users/${userId}/role`, (url) =>
+      api.patch<AdminUserActionPayload>(url, { role }, { headers: getAuthHeaders() })
     );
 
     return {
@@ -131,16 +164,14 @@ export const updateUserRole = async (userId: string, role: string): Promise<Admi
       data: toUserAdminView(res.data.data),
     };
   } catch (error) {
-    handleApiError(error, "Error updating user role");
+    return handleApiError(error, "Error updating user role");
   }
 };
 
 export const toggleUserStatus = async (userId: string): Promise<AdminUserActionResponse> => {
   try {
-    const res = await api.patch<AdminUserActionPayload>(
-      `${getAdminBasePath()}/users/${userId}/status`,
-      {},
-      { headers: getAuthHeaders() }
+    const res = await requestAdmin(`/users/${userId}/status`, (url) =>
+      api.patch<AdminUserActionPayload>(url, {}, { headers: getAuthHeaders() })
     );
 
     return {
@@ -148,18 +179,20 @@ export const toggleUserStatus = async (userId: string): Promise<AdminUserActionR
       data: toUserAdminView(res.data.data),
     };
   } catch (error) {
-    handleApiError(error, "Error toggling user status");
+    return handleApiError(error, "Error toggling user status");
   }
 };
 
 export const fetchContentStats = async (): Promise<ContentStatsView> => {
   try {
-    const res = await api.get<AdminStatsPayload>(`${getAdminBasePath()}/stats`, {
-      headers: getAuthHeaders(),
-    });
+    const res = await requestAdmin("/content-stats", (url) =>
+      api.get<AdminStatsPayload>(url, {
+        headers: getAuthHeaders(),
+      })
+    );
 
     return res.data.stats;
   } catch (error) {
-    handleApiError(error, "Error fetching content stats");
+    return handleApiError(error, "Error fetching content stats");
   }
 };

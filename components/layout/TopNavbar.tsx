@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Flame, Gem, Heart, Star } from "lucide-react";
 import { useEconomyStore } from "@/store/useEconomyStore";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -36,6 +37,11 @@ const Pill = ({
 };
 
 export function TopNavbar() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   const gems = useEconomyStore((state) => state.gems);
   const hearts = useEconomyStore((state) => state.hearts);
   const fetchEconomyStatus = useEconomyStore((state) => state.fetchEconomyStatus);
