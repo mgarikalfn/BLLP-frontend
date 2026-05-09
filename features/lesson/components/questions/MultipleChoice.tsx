@@ -18,8 +18,12 @@ export const MultipleChoice = ({
   onComplete,
   disabled = false,
 }: MultipleChoiceProps) => {
-  const instructionLabel = nativeLanguage === "am" ? "ትክክለኛውን ምርጫ ይምረጡ" : "Filannoo sirrii filadhu";
-  const prompt = toDisplayText(content.question ?? content.prompt, nativeLanguage);
+  const instructionLabel =
+    nativeLanguage === "am" ? "ትክክለኛውን ትርጉም ይምረጡ" : "Hiikkaa sirrii filadhu";
+
+  // Show the word/phrase in the TARGET language (what the learner is studying)
+  // so they must recognise it and pick its meaning in their NATIVE language.
+  const prompt = toDisplayText(content.question ?? content.prompt, targetLanguage);
   const correctIndex = content.correctIndex ?? content.correctAnswerIndex ?? -1;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIsCorrect, setSelectedIsCorrect] = useState<boolean | null>(null);
@@ -31,6 +35,7 @@ export const MultipleChoice = ({
 
       <div className="grid w-full grid-cols-1 gap-4">
         {(content.options ?? []).map((option, index) => {
+          // Show options in NATIVE language (what the learner understands)
           const optionText = toDisplayText(option, nativeLanguage);
 
           return (

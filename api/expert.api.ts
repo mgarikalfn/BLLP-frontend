@@ -17,8 +17,11 @@ export const verifyContent = (type: string, id: string) => api.patch(`/expert/co
 // Reject content (send back to draft)
 export const rejectContent = (type: string, id: string) => api.patch(`/expert/content/${type}/${id}/reject`);
 
+// Fetch lessons for a topic
+export const getLessonsByTopic = (topicId: string) => api.get(`/lessons/topic/${topicId}`);
+
 // Generate AI content
-export const generateContent = (data: { type: string; topicId: string; level: string }) =>
+export const generateContent = (data: { type: string; topicId: string; level: string; lessonId?: string }) =>
   api.post("/expert/generate", data);
 
 // Generate AI topic

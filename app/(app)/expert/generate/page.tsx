@@ -58,8 +58,10 @@ export default function ExpertGeneratePage() {
   const [isCheckingRole, setIsCheckingRole] = useState(true);
 
   const [topics, setTopics] = useState<TopicOption[]>([]);
+  const [lessons, setLessons] = useState<any[]>([]);
   const [contentType, setContentType] = useState<ExpertContentType>("LESSON");
   const [topicId, setTopicId] = useState<string>("");
+  const [lessonId, setLessonId] = useState<string>("");
   const [level, setLevel] = useState<string>("BEGINNER");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,28 @@ export default function ExpertGeneratePage() {
     void fetchTopics();
   }, [fetchTopics, isAllowed]);
 
+  const fetchLessons = useCallback(async (id: string) => {
+    if (!id) {
+      setLessons([]);
+      return;
+    }
+    try {
+      const { getLessonsByTopic } = await import("@/api/expert.api");
+      const res = await getLessonsByTopic(id);
+      const resolved = resolvePayload(res.data) as any[] | null;
+      setLessons(Array.isArray(resolved) ? resolved : []);
+    } catch {
+      console.error("Failed to load lessons");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (topicId) {
+      void fetchLessons(topicId);
+      setLessonId(""); // Reset lesson when topic changes
+    }
+  }, [topicId, fetchLessons]);
+
   const handleGenerate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!topicId) {
@@ -122,7 +146,7 @@ export default function ExpertGeneratePage() {
     setResult(null);
 
     try {
-      const res = await generateContent({ type: contentType, topicId, level });
+      const res = await generateContent({ type: contentType, topicId, level, lessonId });
       setResult(resolvePayload(res.data));
     } catch {
       setError("Generation failed. Please try again in a moment.");
@@ -339,6 +363,24 @@ export default function ExpertGeneratePage() {
                 ))}
               </select>
             </label>
+
+            {contentType === "QUESTION" && (
+              <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                Lesson (Optional)
+                <select
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                  value={lessonId}
+                  onChange={(event) => setLessonId(event.target.value)}
+                >
+                  <option value="">General Topic Question (Not in lesson)</option>
+                  {lessons.map((lesson) => (
+                    <option key={lesson._id} value={lesson._id}>
+                      Lesson {lesson.order}: {formatLocalized(lesson.title)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
               Level
