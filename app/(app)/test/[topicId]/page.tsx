@@ -3,13 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Shield, Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { useTopicTest } from "@/hooks/useTopicTest";
 import { submitTopicTestResult } from "@/api/topicTest.api";
+import { getTopicWorkspace } from "@/api/topicWorkspace.api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useProgressStore } from "@/store/progressStore";
 import { cn } from "@/lib/utils";
-import { LocalizedOrString, MatchingQuestionContent, TopicTestClozeContent, TopicTestQuestion } from "@/types/learning";
+import {
+  LocalizedOrString,
+  MatchingQuestionContent,
+  TopicTestClozeContent,
+  TopicTestQuestion,
+  TopicWorkspaceResponse,
+  WorkspaceTopic,
+} from "@/types/learning";
 
 type LearningLanguage = "am" | "ao";
 type UiLanguage = LearningLanguage;
@@ -133,16 +141,18 @@ const MatchingQuestion = ({
     const isCorrectPair = leftId === rightId;
 
     if (isCorrectPair) {
+      const isAlreadyMatched = matchedIds.has(leftId);
+      const newSize = isAlreadyMatched ? matchedIds.size : matchedIds.size + 1;
+
       setMatchedIds((prev) => {
         const next = new Set(prev);
         next.add(leftId);
-
-        if (next.size === sourcePairs.length) {
-          onAnswered(mistakes === 0);
-        }
-
         return next;
       });
+
+      if (newSize === sourcePairs.length) {
+        onAnswered(mistakes === 0);
+      }
     } else {
       setMistakes((prev) => prev + 1);
       setWrongPair({ left: leftId, right: rightId });
@@ -380,6 +390,47 @@ export default function TopicTestPage() {
     };
   }, [finished, passed]);
 
+  const getCachedTopics = (): WorkspaceTopic[] | null => {
+    const infiniteData = queryClient.getQueryData<InfiniteData<TopicWorkspaceResponse>>([
+      "topicWorkspace",
+      "infinite",
+    ]);
+
+    if (infiniteData?.pages?.length) {
+      return infiniteData.pages.flatMap((page) => page.topics || []);
+    }
+
+    const singlePage = queryClient.getQueryData<TopicWorkspaceResponse>(["topicWorkspace"]);
+    if (singlePage?.topics?.length) {
+      return singlePage.topics;
+    }
+
+    return null;
+  };
+
+  const resolveNextTopicHref = async () => {
+    let topics = getCachedTopics();
+
+    if (!topics) {
+      try {
+        const workspace = await getTopicWorkspace(1, 50);
+        topics = workspace.topics;
+      } catch (err) {
+        console.warn("Failed to fetch workspace for next topic", err);
+        return "/topics";
+      }
+    }
+
+    if (!topics || !topicId) {
+      return "/topics";
+    }
+
+    const currentIndex = topics.findIndex((topic) => topic._id === topicId);
+    const nextTopic = currentIndex >= 0 ? topics[currentIndex + 1] : null;
+
+    return nextTopic?._id ? `/topics/${nextTopic._id}` : "/topics";
+  };
+
   const completeAndGoTopics = async () => {
     if (passed && topicId) {
       markCompleted(`${topicId}_test`);
@@ -396,7 +447,8 @@ export default function TopicTestPage() {
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),
     ]);
 
-    router.push("/topics");
+    const nextHref = passed ? await resolveNextTopicHref() : "/topics";
+    router.push(nextHref);
   };
 
   if (!topicId) {

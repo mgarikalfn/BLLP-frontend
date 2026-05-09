@@ -27,6 +27,9 @@ const shuffle = <T,>(arr: T[]) => {
 export const MatchingGame = ({ content, language, onComplete, disabled = false }: MatchingGameProps) => {
   const prompt = toDisplayText(content.prompt, language);
 
+  // Left column = Amharic words, Right column = Oromo words.
+  // The AI generates pairs as { left: "Amharic", right: "Oromo" }.
+  // Both learner directions see the same matching exercise — it's inherently bidirectional.
   const leftItems = useMemo<SideItem[]>(
     () => shuffle((content.pairs ?? []).map((pair, idx) => ({ id: idx, text: pair.left }))),
     [content.pairs]
@@ -49,16 +52,21 @@ export const MatchingGame = ({ content, language, onComplete, disabled = false }
     if (leftId === undefined || rightId === undefined) return;
 
     if (leftId === rightId) {
+      const isAlreadyMatched = matchedIds.has(leftId);
+      const newSize = isAlreadyMatched ? matchedIds.size : matchedIds.size + 1;
+
       setMatchedIds((prev) => {
         const next = new Set(prev);
         next.add(leftId);
-        if (next.size === content.pairs.length) {
-          onComplete(true);
-        }
         return next;
       });
+
       setSelectedLeft(null);
       setSelectedRight(null);
+
+      if (newSize === (content.pairs?.length || 0)) {
+        onComplete(true);
+      }
       return;
     }
 
@@ -95,12 +103,18 @@ export const MatchingGame = ({ content, language, onComplete, disabled = false }
     setSelectedRight(index);
   };
 
+  // Column labels based on user language
+  const leftLabel = language === "am" ? "አማርኛ" : "Amaariffaa";
+  const rightLabel = language === "am" ? "ኦሮምኛ" : "Afaan Oromoo";
+
   return (
     <div className="w-full animate-in slide-in-from-bottom-4 duration-300">
       {prompt ? <h2 className="mb-6 text-2xl font-bold text-gray-800 sm:text-3xl">{prompt}</h2> : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5">
+        {/* Left column — Amharic words */}
         <div className="space-y-3">
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1 pl-1">{leftLabel}</p>
           {leftItems.map((item, index) => {
             const isMatched = matchedIds.has(item.id);
             const isSelected = selectedLeft === index;
@@ -127,7 +141,9 @@ export const MatchingGame = ({ content, language, onComplete, disabled = false }
           })}
         </div>
 
+        {/* Right column — Oromo words */}
         <div className="space-y-3">
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1 pl-1">{rightLabel}</p>
           {rightItems.map((item, index) => {
             const isMatched = matchedIds.has(item.id);
             const isSelected = selectedRight === index;
