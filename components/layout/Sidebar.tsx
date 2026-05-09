@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Brain, ClipboardCheck, LayoutDashboard, MessageCircle, ShoppingCart, Sparkles, Target, Trophy, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
@@ -19,6 +20,11 @@ type Props = {
 };
 
 export default function  Sidebar  ({ className }: Props)  {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   const user = useAuthStore((state) => state.user);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
