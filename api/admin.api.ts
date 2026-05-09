@@ -19,6 +19,19 @@ export interface ContentStatsView {
   lessonsPendingReview: number;
 }
 
+export interface WeakContentItem {
+  _id: string;
+  contentType: string;
+  averageEaseFactor: number;
+  numberOfReviews: number;
+}
+
+export interface AnalyticsView {
+  dailyActiveUsers: number;
+  usersJoinedToday: number;
+  weakContent: WeakContentItem[];
+}
+
 export interface AdminPagination {
   page: number;
   pageSize: number;
@@ -57,6 +70,22 @@ type AdminUserActionPayload = {
 
 type AdminStatsPayload = {
   stats: ContentStatsView;
+};
+
+type WeakContentPayload = {
+  contentId?: string;
+  _id?: string;
+  contentType: string;
+  averageEaseFactor: number;
+  numberOfReviews: number;
+};
+
+type AnalyticsPayload = {
+  analytics: {
+    dailyActiveUsers: number;
+    usersJoinedToday: number;
+    weakContent: WeakContentPayload[];
+  };
 };
 
 const toUserAdminView = (user: AdminUserPayload): UserAdminView => ({
@@ -194,5 +223,30 @@ export const fetchContentStats = async (): Promise<ContentStatsView> => {
     return res.data.stats;
   } catch (error) {
     return handleApiError(error, "Error fetching content stats");
+  }
+};
+
+export const fetchAnalytics = async (): Promise<AnalyticsView> => {
+  try {
+    const res = await requestAdmin("/analytics", (url) =>
+      api.get<AnalyticsPayload>(url, {
+        headers: getAuthHeaders(),
+      })
+    );
+
+    const analytics = res.data.analytics;
+
+    return {
+      dailyActiveUsers: analytics.dailyActiveUsers ?? 0,
+      usersJoinedToday: analytics.usersJoinedToday ?? 0,
+      weakContent: (analytics.weakContent ?? []).map((item) => ({
+        _id: item.contentId ?? item._id ?? "",
+        contentType: item.contentType,
+        averageEaseFactor: item.averageEaseFactor,
+        numberOfReviews: item.numberOfReviews,
+      })),
+    };
+  } catch (error) {
+    return handleApiError(error, "Error fetching analytics");
   }
 };
