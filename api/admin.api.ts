@@ -24,6 +24,7 @@ export interface WeakContentItem {
   contentType: string;
   averageEaseFactor: number;
   numberOfReviews: number;
+  preview?: string;
 }
 
 export interface AnalyticsView {
@@ -78,6 +79,8 @@ type WeakContentPayload = {
   contentType: string;
   averageEaseFactor: number;
   numberOfReviews: number;
+  preview?: string;
+  title?: string;
 };
 
 type AnalyticsPayload = {
@@ -244,6 +247,7 @@ export const fetchAnalytics = async (): Promise<AnalyticsView> => {
         contentType: item.contentType,
         averageEaseFactor: item.averageEaseFactor,
         numberOfReviews: item.numberOfReviews,
+        preview: item.preview ?? item.title,
       })),
     };
   } catch (error) {
