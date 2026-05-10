@@ -7,6 +7,7 @@ export interface ProfileIdentity {
   avatarUrl: string | null;
   bio: string | null;
   joinedAt: string;
+  hasPassword?: boolean;
 }
 
 export interface ProfileLearningSettings {

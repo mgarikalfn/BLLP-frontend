@@ -26,6 +26,7 @@ export default function ProfileClient() {
       bio: data?.identity?.bio || "",
       targetLanguage: data?.learningSettings?.targetLanguage || "AMHARIC",
       learningDirection: data?.learningSettings?.learningDirection || "AM_TO_OR",
+      hasPassword: data?.identity?.hasPassword ?? false,
     }),
     [data]
   );
