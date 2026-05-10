@@ -33,6 +33,14 @@ export interface AnalyticsView {
   weakContent: WeakContentItem[];
 }
 
+export interface SystemConfig {
+  _id: string;
+  isAIGenerationEnabled: boolean;
+  activeSeasonId: string | null;
+  maintenanceMode: boolean;
+  dailyXpCap: number;
+}
+
 export interface AdminPagination {
   page: number;
   pageSize: number;
@@ -90,6 +98,11 @@ type AnalyticsPayload = {
     weakContent: WeakContentPayload[];
   };
 };
+
+type SystemConfigResponse = {
+  config?: SystemConfig;
+  data?: SystemConfig;
+} & Partial<SystemConfig>;
 
 const toUserAdminView = (user: AdminUserPayload): UserAdminView => ({
   id: user._id,
@@ -165,6 +178,21 @@ const getErrorMessage = (error: unknown, fallbackMessage: string) => {
 
 const handleApiError = (error: unknown, fallbackMessage: string): never => {
   throw new Error(getErrorMessage(error, fallbackMessage));
+};
+
+const coerceSystemConfig = (input: Partial<SystemConfig> | null | undefined): SystemConfig => {
+  return {
+    _id: input?._id ?? "",
+    isAIGenerationEnabled: Boolean(input?.isAIGenerationEnabled),
+    activeSeasonId: input?.activeSeasonId ?? null,
+    maintenanceMode: Boolean(input?.maintenanceMode),
+    dailyXpCap: Number.isFinite(Number(input?.dailyXpCap)) ? Number(input?.dailyXpCap) : 0,
+  };
+};
+
+const resolveSystemConfig = (payload: SystemConfigResponse): SystemConfig => {
+  const config = payload.config ?? payload.data ?? payload;
+  return coerceSystemConfig(config);
 };
 
 export const fetchUsers = async (page: number, search?: string): Promise<AdminUsersResponse> => {
@@ -252,5 +280,33 @@ export const fetchAnalytics = async (): Promise<AnalyticsView> => {
     };
   } catch (error) {
     return handleApiError(error, "Error fetching analytics");
+  }
+};
+
+export const fetchSystemConfig = async (): Promise<SystemConfig> => {
+  try {
+    const res = await requestAdmin("/config", (url) =>
+      api.get<SystemConfigResponse>(url, {
+        headers: getAuthHeaders(),
+      })
+    );
+
+    return resolveSystemConfig(res.data);
+  } catch (error) {
+    return handleApiError(error, "Error fetching system config");
+  }
+};
+
+export const updateSystemConfig = async (data: Partial<SystemConfig>): Promise<SystemConfig> => {
+  try {
+    const res = await requestAdmin("/config", (url) =>
+      api.put<SystemConfigResponse>(url, data, {
+        headers: getAuthHeaders(),
+      })
+    );
+
+    return resolveSystemConfig(res.data);
+  } catch (error) {
+    return handleApiError(error, "Error updating system config");
   }
 };
