@@ -15,8 +15,6 @@ export const ClozeTest = ({ content, language, onComplete, disabled = false }: C
 
   // Also handle legacy "sentence" field that some old questions may have
   const legacySentence = (content as any)?.sentence;
-  const textWithBlankField = (content as any)?.textWithBlank;
-
   let textBefore = toDisplayText(content.textBeforeBlank, language);
   let textAfter = toDisplayText(content.textAfterBlank, language);
 
@@ -31,33 +29,11 @@ export const ClozeTest = ({ content, language, onComplete, disabled = false }: C
       textBefore = sentenceText;
       textAfter = "";
     }
-  } else if (!textBefore && textWithBlankField) {
-    // Fallback for AI generated textWithBlank
-    const sentenceText = toDisplayText(textWithBlankField, language);
-    const blankIndex7 = sentenceText.indexOf("_______");
-    const blankIndex5 = sentenceText.indexOf("_____");
-    
-    if (blankIndex7 >= 0) {
-      textBefore = sentenceText.substring(0, blankIndex7);
-      textAfter = sentenceText.substring(blankIndex7 + 7);
-    } else if (blankIndex5 >= 0) {
-      textBefore = sentenceText.substring(0, blankIndex5);
-      textAfter = sentenceText.substring(blankIndex5 + 5);
-    } else {
-      textBefore = sentenceText;
-      textAfter = "";
-    }
   }
 
   // Also handle legacy "answer" field (single correct answer, no options)
   const legacyAnswer = (content as any)?.answer;
-  let correctAnswer = toDisplayText(content.correctAnswer ?? legacyAnswer, language);
-
-  // Fallback for AI generated correctIndex
-  const correctIndex = (content as any)?.correctIndex;
-  if (!correctAnswer && correctIndex !== undefined && content.options && content.options.length > correctIndex) {
-    correctAnswer = toDisplayText(content.options[correctIndex], language);
-  }
+  const correctAnswer = toDisplayText(content.correctAnswer ?? legacyAnswer, language);
 
   const options = useMemo(() => {
     if (content.options && content.options.length > 0) {
