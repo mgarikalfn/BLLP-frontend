@@ -107,7 +107,7 @@ export const SpeakingExerciseScreen = ({
   exerciseId,
   onComplete,
 }: SpeakingExerciseScreenProps) => {
-  const authToken = useAuthStore((state) => state.token);
+  const authToken = useAuthStore((state) => state.accessToken);
   const learningDirection = useLanguageStore((state) => state.learningDirection);
   const storeNativeLanguage = useLanguageStore((state) => state.lang);
   const storeTargetLanguage = useLanguageStore((state) => state.targetLang);
@@ -257,7 +257,7 @@ export const SpeakingExerciseScreen = ({
   const handleSubmit = async () => {
     if (!audioBlob || isLoading || isRecording) return;
 
-    const token = authToken || window.localStorage.getItem("token");
+    const token = authToken || window.localStorage.getItem("accessToken");
 
     if (!token) {
       setError(uiText.errors.loginRequired);
@@ -285,6 +285,7 @@ export const SpeakingExerciseScreen = ({
     try {
       const response = await fetch(`${apiBase}/speaking/submit`, {
         method: "POST",
+        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
         },

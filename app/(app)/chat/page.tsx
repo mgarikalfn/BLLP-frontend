@@ -95,7 +95,7 @@ export default function ChatPage() {
     fetchConversations();
     
     // Fallback if useAuthStore user is not fully loaded immediately on mount
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (token && !user?.id) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));

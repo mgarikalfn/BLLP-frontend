@@ -38,15 +38,15 @@ export const LoginForm = () => {
       const endpoint = "/auth/login";
       const res = await api.post(endpoint, values);
 
-      const { token, id, username, role, learningDirection } = res.data as {
-        token: string;
+      const { accessToken, id, username, role, learningDirection } = res.data as {
+        accessToken: string;
         id: string;
         username: string;
         role: string;
         learningDirection?: LearningDirection;
       };
 
-      login({ id, username, role, learningDirection }, token);
+      login({ id, username, role, learningDirection }, accessToken);
 
       if (learningDirection) {
         initializeFromProfile(learningDirection);

@@ -365,7 +365,7 @@ export default function ExpertReviewPage() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     if (user?.role) {
       setRole(user.role);

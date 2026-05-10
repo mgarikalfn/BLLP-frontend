@@ -151,7 +151,7 @@ export default function ExpertVideoDiscoveryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     if (user?.role) {
       setRole(user.role);

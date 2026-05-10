@@ -68,7 +68,7 @@ export default function ExpertGeneratePage() {
   const [result, setResult] = useState<unknown>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     if (user?.role) {
       setRole(user.role);

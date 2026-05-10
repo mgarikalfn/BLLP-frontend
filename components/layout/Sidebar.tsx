@@ -60,7 +60,7 @@ export default function  Sidebar  ({ className }: Props)  {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       setRole(null);
       return;

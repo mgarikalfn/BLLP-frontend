@@ -57,7 +57,7 @@ export const useP2PChatStore = create<P2PChatState>((set, get) => ({
     const currentSocket = get().socket;
     if (currentSocket) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) return;
 
     const url = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
@@ -156,7 +156,7 @@ export const useP2PChatStore = create<P2PChatState>((set, get) => ({
 
   sendMessage: (text: string) => {
     const { socket, activeConversation } = get();
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     
     if (!socket || !activeConversation || !token) return;
 
