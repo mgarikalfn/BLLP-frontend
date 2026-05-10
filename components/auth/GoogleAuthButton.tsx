@@ -19,24 +19,24 @@ export default function GoogleAuthButton() {
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     setServerError("");
 
-    const token = credentialResponse.credential;
-    if (!token) {
+    const googleToken = credentialResponse.credential;
+    if (!googleToken) {
       setServerError("Missing Google token. Please try again.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const res = await api.post("/auth/google-login", { token });
-      const { token: jwt, id, username, role, learningDirection } = res.data as {
-        token: string;
+      const res = await api.post("/auth/google-login", { token: googleToken });
+      const { accessToken, id, username, role, learningDirection } = res.data as {
+        accessToken: string;
         id: string;
         username: string;
         role: string;
         learningDirection?: LearningDirection;
       };
 
-      login({ id, username, role, learningDirection }, jwt);
+      login({ id, username, role, learningDirection }, accessToken);
 
       if (learningDirection) {
         initializeFromProfile(learningDirection);

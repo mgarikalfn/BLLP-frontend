@@ -11,31 +11,32 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
 
-  login: (user: User, token: string) => void;
+  login: (user: User, accessToken: string) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: null,
+  accessToken: null,
 
-  login: (user, token) => {
-    localStorage.setItem("token", token);
+  login: (user, accessToken) => {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.removeItem("token");
 
     set({
       user,
-      token,
+      accessToken,
     });
   },
 
   logout: () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
 
     set({
       user: null,
-      token: null,
+      accessToken: null,
     });
   },
 }));

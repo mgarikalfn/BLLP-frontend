@@ -147,7 +147,7 @@ export default function ExpertDashboardPage() {
   const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     if (user?.role) {
       setRole(user.role);

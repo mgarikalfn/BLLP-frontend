@@ -36,22 +36,26 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
       const res = await api.post(endpoint, values);
 
       if (isLogin) {
-        const { token, id, username, role, learningDirection } = res.data as {
-          token: string;
+        const { accessToken, id, username, role, learningDirection } = res.data as {
+          accessToken: string;
           id: string;
           username: string;
           role: string;
           learningDirection?: LearningDirection;
         };
 
-        login({ id, username, role, learningDirection }, token);
+        login({ id, username, role, learningDirection }, accessToken);
 
         if (learningDirection) {
           initializeFromProfile(learningDirection);
         }
       }
-      
-      router.push("/dashboard");
+
+      if (isLogin) {
+        router.push("/dashboard");
+      } else {
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+      }
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       setServerError(axiosError.response?.data?.message || "Something went wrong");

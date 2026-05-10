@@ -71,7 +71,7 @@ export const SignupForm = () => {
         bio,
       });
       
-      router.push("/login");
+      router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       setServerError(getErrorMessage(err));
     }
