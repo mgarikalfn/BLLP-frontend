@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Confetti from "react-confetti";
 import { Loader2, Shield, Trophy } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { useTopicTest } from "@/hooks/useTopicTest";
-import { submitTopicTestResult } from "@/api/topicTest.api";
+import { submitTopicTest } from "@/api/study.api";
 import { getTopicWorkspace } from "@/api/topicWorkspace.api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useProgressStore } from "@/store/progressStore";
@@ -95,6 +96,46 @@ const normalizeCompareValue = (value: string) => {
     .replace(/[^\p{L}\p{N}'’\-]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
+};
+
+type TopicTestProgressResponse = {
+  leveledUp?: boolean;
+  newLevel?: string;
+};
+
+interface LevelUpCelebrationProps {
+  newLevel: string;
+  width: number;
+  height: number;
+  onUnlock: () => void;
+}
+
+const LevelUpCelebration = ({ newLevel, width, height, onUnlock }: LevelUpCelebrationProps) => {
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,#e9fff5_0%,#ffffff_62%)] px-4 py-12">
+      <Confetti width={width} height={height} numberOfPieces={320} recycle={false} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.18)_0%,transparent_55%)]" />
+
+      <div className="relative z-10 w-full max-w-2xl rounded-[32px] border-2 border-emerald-200 bg-white/95 p-8 text-center shadow-[0_32px_90px_rgba(16,185,129,0.18)] backdrop-blur sm:p-10">
+        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-3xl border-2 border-b-8 border-emerald-600 bg-emerald-500 text-white shadow-lg shadow-emerald-400/40">
+          <Trophy size={44} />
+        </div>
+        <h1 className="mt-6 text-3xl font-black text-slate-900 sm:text-4xl">
+          Congratulations! You are now an {newLevel} Speaker!
+        </h1>
+        <p className="mt-3 text-base font-semibold text-slate-600">
+          You have unlocked the next learning map. Keep the momentum going.
+        </p>
+        <button
+          type="button"
+          onClick={onUnlock}
+          className="mt-8 inline-flex items-center justify-center rounded-2xl border-b-4 border-emerald-700 bg-emerald-600 px-8 py-4 text-base font-black text-white transition hover:bg-emerald-700"
+        >
+          Unlock Next Map
+        </button>
+      </div>
+    </div>
+  );
 };
 
 interface MatchingQuestionProps {
@@ -327,6 +368,21 @@ export default function TopicTestPage() {
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [currentAnswered, setCurrentAnswered] = useState<boolean | null>(null);
   const [finished, setFinished] = useState(false);
+  const [levelUp, setLevelUp] = useState<{ newLevel: string } | null>(null);
+  const [confettiSize, setConfettiSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateSize = () => {
+      setConfettiSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    updateSize();
+    window.addEventListener("resize", updateSize);
+
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
   useEffect(() => {
     if (!questions.length) return;
@@ -334,6 +390,7 @@ export default function TopicTestPage() {
     setAnswers(new Array(questions.length).fill(false));
     setCurrentAnswered(null);
     setFinished(false);
+    setLevelUp(null);
   }, [questions]);
 
   const currentQuestion = questions[currentIndex];
@@ -364,31 +421,6 @@ export default function TopicTestPage() {
   const correctCount = answers.filter(Boolean).length;
   const score = questions.length ? Math.round((correctCount / questions.length) * 100) : 0;
   const passed = score >= PASS_THRESHOLD;
-
-  useEffect(() => {
-    if (!finished || !passed) return;
-
-    let mounted = true;
-
-    const runConfetti = async () => {
-      const { default: confetti } = await import("canvas-confetti");
-
-      if (!mounted) return;
-
-      confetti({
-        particleCount: 160,
-        spread: 120,
-        startVelocity: 50,
-        origin: { y: 0.65 },
-      });
-    };
-
-    runConfetti();
-
-    return () => {
-      mounted = false;
-    };
-  }, [finished, passed]);
 
   const getCachedTopics = (): WorkspaceTopic[] | null => {
     const infiniteData = queryClient.getQueryData<InfiniteData<TopicWorkspaceResponse>>([
@@ -432,11 +464,19 @@ export default function TopicTestPage() {
   };
 
   const completeAndGoTopics = async () => {
+    let shouldCelebrate = false;
+    let newLevel = "";
+
     if (passed && topicId) {
       markCompleted(`${topicId}_test`);
       
       try {
-        await submitTopicTestResult(topicId, true, score);
+        const response = await submitTopicTest(topicId, score);
+        const data = response.data as TopicTestProgressResponse | undefined;
+        if (data?.leveledUp) {
+          shouldCelebrate = true;
+          newLevel = data.newLevel || "";
+        }
       } catch (err) {
         console.error("Failed to submit topic test result", err);
       }
@@ -446,6 +486,11 @@ export default function TopicTestPage() {
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] }),
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace", "infinite"] }),
     ]);
+
+    if (shouldCelebrate) {
+      setLevelUp({ newLevel: newLevel || "Next" });
+      return;
+    }
 
     const nextHref = passed ? await resolveNextTopicHref() : "/topics";
     router.push(nextHref);
@@ -496,6 +541,17 @@ export default function TopicTestPage() {
           {uiText.backToTopic}
         </button>
       </div>
+    );
+  }
+
+  if (levelUp) {
+    return (
+      <LevelUpCelebration
+        newLevel={levelUp.newLevel}
+        width={confettiSize.width || 1200}
+        height={confettiSize.height || 800}
+        onUnlock={() => router.push("/dashboard")}
+      />
     );
   }
 
