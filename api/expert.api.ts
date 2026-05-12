@@ -87,3 +87,14 @@ export const updateExpertContent = (
   id: string,
   payload: Record<string, unknown> | Array<Record<string, unknown>>
 ) => api.put(`/expert/content/${type}/${id}`, payload);
+
+// Fetch pending chat reports
+export const getPendingReports = () => api.get("/reports/pending");
+
+// Resolve a report
+export const resolveReport = (reportId: string, data: { actionTaken: string; note?: string }) => 
+  api.patch(`/reports/${reportId}/resolve`, data);
+
+// Fetch conversation history for moderation
+export const getModerationHistory = (conversationId: string) =>
+  api.get(`/reports/conversations/${conversationId}/messages`);

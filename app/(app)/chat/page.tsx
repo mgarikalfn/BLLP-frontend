@@ -35,7 +35,12 @@ const uiText = {
     reportDesc: "ይህ መልዕክት ለምን አግባብ እንዳልሆነ ይምረጡ።",
     reportSubmit: "ሪፖርት አድርግ",
     cancel: "ሰርዝ",
-    type: "የእርስዎን ተሞክሮ እዚህ ይፃፉ ..."
+    type: "የእርስዎን ተሞክሮ እዚህ ይፃፉ ...",
+    reasonHarassment: "ትንኮሳ (Harassment)",
+    reasonHate: "የጥላቻ ንግግር (Hate Speech)",
+    reasonInappropriate: "ተገቢ ያልሆነ (Inappropriate)",
+    reasonSpam: "አይፈለጌ መልእክት (Spam)",
+    reasonOther: "ሌላ (Other)"
   },
   ao: {
     title: "Waljijjiirraa Afaanii",
@@ -50,9 +55,24 @@ const uiText = {
     reportDesc: "Ergaan kun maaliif akka hin taane filadhu.",
     reportSubmit: "Gabaasi",
     cancel: "Haqi",
-    type: "Ergaa kee asitti barreessi..."
+    type: "Ergaa kee asitti barreessi...",
+    reasonHarassment: "Dararaa (Harassment)",
+    reasonHate: "Haasaa Jibbiinsaa (Hate Speech)",
+    reasonInappropriate: "Sirrii Hin Taane (Inappropriate)",
+    reasonSpam: "Ergaa Hin Barbaadamne (Spam)",
+    reasonOther: "Kaan (Other)"
   }
 } as const;
+
+const isValidImageUrl = (url?: string): boolean => {
+  if (!url) return false;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
 export default function ChatPage() {
   const { 
@@ -87,6 +107,7 @@ export default function ChatPage() {
 
   // Reporting State
   const [reportModal, setReportModal] = useState<{messageId: string, reportedUserId: string} | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("");
   const [isReporting, setIsReporting] = useState(false);
 
@@ -119,11 +140,15 @@ export default function ChatPage() {
   };
 
   const handleReportSubmit = async () => {
-    if (!reportModal || !reportReason) return;
+    if (!reportModal || !selectedCategory) return;
+    const finalReason = selectedCategory === "Other" ? reportReason : selectedCategory;
+    if (selectedCategory === "Other" && !finalReason.trim()) return;
+
     setIsReporting(true);
-    await reportUser(reportModal.reportedUserId, reportModal.messageId, reportReason);
+    await reportUser(reportModal.reportedUserId, reportModal.messageId, finalReason);
     setIsReporting(false);
     setReportModal(null);
+    setSelectedCategory(null);
     setReportReason("");
   };
 
@@ -159,9 +184,9 @@ export default function ChatPage() {
                 className={`w-full flex items-center gap-3 p-3 rounded-2xl transition text-left
                   ${isActive ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
               >
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-indigo-500 font-bold text-lg">
-                  {partner.avatarUrl ? (
-                    <Image src={partner.avatarUrl} alt="Avatar" fill className="object-cover" />
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-indigo-500 font-bold text-lg">
+                  {isValidImageUrl(partner.avatarUrl) ? (
+                    <Image src={partner.avatarUrl as string} alt="Avatar" fill className="object-cover" />
                   ) : (
                     partner.username.charAt(0).toUpperCase()
                   )}
@@ -213,7 +238,7 @@ export default function ChatPage() {
               <button
                 onClick={() => void findMatch()}
                 disabled={isMatching}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-green-500 px-6 py-4 text-base font-black text-white transition-all hover:bg-green-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm shadow-green-500/20 w-fit sm:w-full sm:px-12"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-green-500 px-6 py-4 text-base font-black text-white transition-all hover:bg-green-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-sm shadow-green-500/20 w-full sm:px-12"
               >
                 {isMatching ? (
                   <>
@@ -231,9 +256,9 @@ export default function ChatPage() {
             {/* Header */}
             <header className="flex flex-shrink-0 items-center justify-between bg-white px-6 py-4 border-b border-slate-100 shadow-sm z-10 w-full h-20">
               <div className="flex items-center gap-4">
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-slate-100 bg-slate-100 flex items-center justify-center text-indigo-500 font-bold text-xl">
-                  {activePartner?.avatarUrl ? (
-                      <Image src={activePartner.avatarUrl} alt="Avatar" fill className="object-cover" />
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-slate-100 bg-slate-100 flex items-center justify-center text-indigo-500 font-bold text-xl">
+                  {isValidImageUrl(activePartner?.avatarUrl) ? (
+                      <Image src={activePartner!.avatarUrl as string} alt="Avatar" fill className="object-cover" />
                     ) : (
                       activePartner?.username.charAt(0).toUpperCase()
                     )}
@@ -260,9 +285,17 @@ export default function ChatPage() {
                     <span>{gems}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-slate-400">
-                  <button className="hover:text-slate-600 transition"><Video size={20} strokeWidth={2.5} /></button>
-                  <button className="hover:text-slate-600 transition"><Info size={20} strokeWidth={2.5} /></button>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setReportModal({ 
+                      messageId: messages[messages.length - 1]?._id || "GENERAL", 
+                      reportedUserId: activePartner?._id || "" 
+                    })}
+                    className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-rose-500 hover:bg-rose-100 transition-all active:scale-95 shadow-sm shadow-rose-100/50 border border-rose-100"
+                  >
+                    <AlertTriangle size={14} />
+                    <span className="hidden sm:inline">Report Partner</span>
+                  </button>
                 </div>
               </div>
             </header>
@@ -304,8 +337,8 @@ export default function ChatPage() {
                          <div className="w-8 h-8 flex-shrink-0 hidden sm:block">
                            {showAvatar && (
                               <div className="relative h-8 w-8 overflow-hidden rounded-full border border-slate-100 bg-slate-100 flex items-center justify-center text-indigo-500 font-bold text-xs">
-                                {activePartner?.avatarUrl ? (
-                                    <Image src={activePartner.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                {isValidImageUrl(activePartner?.avatarUrl) ? (
+                                    <Image src={activePartner!.avatarUrl as string} alt="Avatar" fill className="object-cover" />
                                   ) : (
                                     activePartner?.username.charAt(0).toUpperCase()
                                   )}
@@ -324,21 +357,22 @@ export default function ChatPage() {
                         >
                           <p className="text-[15px] font-medium leading-relaxed break-words">{msg.text}</p>
                           
-                          {/* Time */}
-                          <span className={`block text-[10px] font-bold mt-1 text-right ${isMe ? 'text-green-200' : 'text-slate-400'}`}>
-                            {format(new Date(msg.createdAt), 'hh:mm a')}
-                          </span>
-
-                          {/* Report button for partner messages */}
-                          {!isMe && (
-                            <button 
-                               onClick={() => setReportModal({ messageId: msg._id, reportedUserId: msg.senderId })}
-                               className="absolute -right-8 md:-right-10 top-1/2 -translate-y-1/2 opacity-0 md:group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-all p-2 focus:opacity-100"
-                               title="Report user"
-                            >
-                               <AlertTriangle size={16} />
-                            </button>
-                          )}
+                          {/* Time and Report */}
+                          <div className={`mt-1 flex items-center gap-2 ${isMe ? 'justify-end' : 'justify-between'}`}>
+                             <span className={`block text-[10px] font-bold ${isMe ? 'text-green-200' : 'text-slate-400'}`}>
+                               {format(new Date(msg.createdAt), 'hh:mm a')}
+                             </span>
+                             {!isMe && (
+                               <button 
+                                 onClick={() => setReportModal({ messageId: msg._id, reportedUserId: msg.senderId })}
+                                 className="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
+                                 title="Report this message"
+                               >
+                                 <AlertTriangle size={12} />
+                                 <span className="text-[9px] font-black uppercase tracking-tighter">Report</span>
+                               </button>
+                             )}
+                          </div>
                         </div>
                       </div>
 
@@ -405,22 +439,52 @@ export default function ChatPage() {
             <p className="text-sm font-medium text-slate-500 mb-2">
               {t.reportDesc}
             </p>
-            <textarea 
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              placeholder={t.type}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium text-slate-700 outline-none focus:border-rose-300 resize-none h-24"
-            />
+            
+            <div className="grid grid-cols-1 gap-2 mb-2">
+              {[
+                { id: "Harassment", label: t.reasonHarassment },
+                { id: "Hate Speech", label: t.reasonHate },
+                { id: "Inappropriate", label: t.reasonInappropriate },
+                { id: "Spam", label: t.reasonSpam },
+                { id: "Other", label: t.reasonOther }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                    selectedCategory === cat.id 
+                      ? "border-rose-500 bg-rose-50 text-rose-700 shadow-sm" 
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedCategory === "Other" && (
+              <textarea 
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder={t.type}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium text-slate-700 outline-none focus:border-rose-300 resize-none h-20 animate-in fade-in"
+              />
+            )}
+
             <div className="flex items-center gap-3 mt-2">
               <button 
-                onClick={() => setReportModal(null)}
+                onClick={() => {
+                  setReportModal(null);
+                  setSelectedCategory(null);
+                  setReportReason("");
+                }}
                 className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition"
               >
                 {t.cancel}
               </button>
               <button 
                 onClick={handleReportSubmit}
-                disabled={!reportReason.trim() || isReporting}
+                disabled={!selectedCategory || (selectedCategory === "Other" && !reportReason.trim()) || isReporting}
                 className="flex-1 py-3 px-4 rounded-xl font-bold bg-rose-500 text-white hover:bg-rose-600 transition disabled:opacity-50 flex justify-center"
               >
                 {isReporting ? <Loader2 size={20} className="animate-spin" /> : t.reportSubmit}

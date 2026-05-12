@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginSchema, LoginInput } from "@/lib/validations/auth";
 import type { LearningDirection } from "@/types/ProfileData";
+import { getRedirectPath } from "@/lib/roleRedirect";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -52,7 +53,7 @@ export const LoginForm = () => {
         initializeFromProfile(learningDirection);
       }
       
-      router.push("/dashboard");
+      router.push(getRedirectPath(role));
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       setServerError(axiosError.response?.data?.message || "Something went wrong");

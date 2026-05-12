@@ -17,6 +17,7 @@ export interface ContentStatsView {
   totalLessons: number;
   totalQuestions: number;
   lessonsPendingReview: number;
+  pendingReports: number;
 }
 
 export interface WeakContentItem {
@@ -216,7 +217,7 @@ export const fetchUsers = async (page: number, search?: string): Promise<AdminUs
 export const updateUserRole = async (userId: string, role: string): Promise<AdminUserActionResponse> => {
   try {
     const res = await requestAdmin(`/users/${userId}/role`, (url) =>
-      api.patch<AdminUserActionPayload>(url, { role }, { headers: getAuthHeaders() })
+      api.put<AdminUserActionPayload>(url, { role }, { headers: getAuthHeaders() })
     );
 
     return {
@@ -231,7 +232,7 @@ export const updateUserRole = async (userId: string, role: string): Promise<Admi
 export const toggleUserStatus = async (userId: string): Promise<AdminUserActionResponse> => {
   try {
     const res = await requestAdmin(`/users/${userId}/status`, (url) =>
-      api.patch<AdminUserActionPayload>(url, {}, { headers: getAuthHeaders() })
+      api.put<AdminUserActionPayload>(url, {}, { headers: getAuthHeaders() })
     );
 
     return {

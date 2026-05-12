@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "./UserMenu";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/languageStore";
+import { useAuthStore } from "@/store/authStore";
 
 const Pill = ({
   icon,
@@ -42,6 +43,9 @@ export function TopNavbar() {
     return null;
   }
 
+  const user = useAuthStore((state) => state.user);
+  const role = user?.role?.toUpperCase();
+
   const gems = useEconomyStore((state) => state.gems);
   const hearts = useEconomyStore((state) => state.hearts);
   const fetchEconomyStatus = useEconomyStore((state) => state.fetchEconomyStatus);
@@ -63,36 +67,41 @@ export function TopNavbar() {
       </div>
 
       {/* Center/Left: Game Economy Metrics */}
-      <div className="flex flex-1 items-center justify-center lg:justify-start gap-2 sm:gap-4">
-        <Pill
-          icon={<Flame size={20} className="text-orange-500" fill="#f97316" />}
-          value={streak}
-          className="border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100"
-          tooltip="Daily Streak"
-        />
-        <Pill
-          icon={<Gem size={20} className="text-sky-500" fill="#0ea5e9" />}
-          value={gems}
-          className="border-sky-200 bg-sky-50 text-sky-600 hover:bg-sky-100"
-          tooltip="Gems"
-        />
-        <Pill
-          icon={
-            <Heart
-              size={20}
-              className={hearts > 0 ? "text-rose-500" : "text-rose-300"}
-              fill={hearts > 0 ? "#f43f5e" : "transparent"}
-            />
-          }
-          value={hearts}
-          className={
-            hearts > 0
-              ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
-              : "border-rose-200 bg-slate-50 text-rose-400 opacity-80"
-          }
-          tooltip="Hearts"
-        />
-      </div>
+      {(role === "LEARNER" || !role) && (
+        <div className="flex flex-1 items-center justify-center lg:justify-start gap-2 sm:gap-4">
+          <Pill
+            icon={<Flame size={20} className="text-orange-500" fill="#f97316" />}
+            value={streak}
+            className="border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100"
+            tooltip="Daily Streak"
+          />
+          <Pill
+            icon={<Gem size={20} className="text-sky-500" fill="#0ea5e9" />}
+            value={gems}
+            className="border-sky-200 bg-sky-50 text-sky-600 hover:bg-sky-100"
+            tooltip="Gems"
+          />
+          <Pill
+            icon={
+              <Heart
+                size={20}
+                className={hearts > 0 ? "text-rose-500" : "text-rose-300"}
+                fill={hearts > 0 ? "#f43f5e" : "transparent"}
+              />
+            }
+            value={hearts}
+            className={
+              hearts > 0
+                ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                : "border-rose-200 bg-slate-50 text-rose-400 opacity-80"
+            }
+            tooltip="Hearts"
+          />
+        </div>
+      )}
+
+      {/* Spacer if economy is hidden */}
+      {(role === "EXPERT" || role === "ADMIN") && <div className="flex-1" />}
 
       {/* Right side: XP, User Profile & Notifications */}
       <div className="flex items-center gap-4">

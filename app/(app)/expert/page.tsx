@@ -7,6 +7,7 @@ import { BookOpen, CheckCircle2, Layers, LayoutDashboard, AlertTriangle, Loader2
 import { deleteTopic, generateTopic, getAllTopics, getExpertStats, publishTopic, updateTopic } from "@/api/expert.api";
 import { useAuthStore } from "@/store/authStore";
 import type { ExpertDashboardStats } from "@/types/learning";
+import { getRedirectPath } from "@/lib/roleRedirect";
 
 const emptyStats: ExpertDashboardStats = {
   totals: {},
@@ -112,7 +113,8 @@ export default function ExpertDashboardPage() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
 
-  const [role, setRole] = useState<string | null>(user?.role ?? null);
+  const role = user?.role?.toUpperCase();
+  const isAllowed = role === "EXPERT" || role === "ADMIN";
   const [isCheckingRole, setIsCheckingRole] = useState(true);
 
   const [stats, setStats] = useState<ExpertDashboardStats>(emptyStats);
@@ -147,33 +149,17 @@ export default function ExpertDashboardPage() {
   const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-
-    if (user?.role) {
-      setRole(user.role);
+    // If the store is initialized (user is not null or we finished checking)
+    if (user !== undefined) {
       setIsCheckingRole(false);
-      return;
     }
-
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setRole(typeof payload.role === "string" ? payload.role : null);
-      } catch {
-        setRole(null);
-      }
-    }
-
-    setIsCheckingRole(false);
-  }, [user?.role]);
-
-  const isAllowed = role === "EXPERT" || role === "ADMIN";
+  }, [user]);
 
   useEffect(() => {
     if (!isCheckingRole && !isAllowed) {
-      router.replace("/dashboard");
+      router.replace(getRedirectPath(role));
     }
-  }, [isCheckingRole, isAllowed, router]);
+  }, [isCheckingRole, isAllowed, role, router]);
 
   useEffect(() => {
     if (!isAllowed) return;

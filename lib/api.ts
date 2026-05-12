@@ -41,7 +41,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
+    const responseData = error.response?.data as { message?: string } | undefined;
     const originalRequest = error.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
+
+    // Handle globally banned users
+    if (status === 403 && responseData?.message && responseData.message.toLowerCase().includes("banned")) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+        window.location.href = "/banned";
+      }
+      return Promise.reject(error);
+    }
 
     if (!originalRequest || status !== 401) {
       return Promise.reject(error);

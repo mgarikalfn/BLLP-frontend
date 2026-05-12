@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Loader2, X, XCircle, Play, RefreshCw, Volume2 } from "lucide-react";
-import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio } from "@/api/expert.api";
+import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio, getPendingReports, resolveReport } from "@/api/expert.api";
 import { useAuthStore } from "@/store/authStore";
-import type { ExpertContentItem, ExpertContentType } from "@/types/learning";
+import type { ExpertContentItem, ExpertContentType, ChatReport } from "@/types/learning";
 import { QuestionEditor, QuestionRecord } from "@/components/expert/QuestionEditor";
 
 interface TopicOption {
@@ -332,6 +332,7 @@ const typeMeta: Record<ExpertContentType, { label: string; icon: string; badge: 
   WRITING: { label: "Writing", icon: "✍️", badge: "bg-rose-50 text-rose-600" },
   SPEAKING: { label: "Speaking", icon: "🎤", badge: "bg-purple-50 text-purple-600" },
   QUESTION: { label: "Question", icon: "❓", badge: "bg-amber-50 text-amber-600" },
+  MODERATION: { label: "Moderation", icon: "🛡️", badge: "bg-rose-50 text-rose-600" },
 };
 
 export default function ExpertReviewPage() {
@@ -363,6 +364,10 @@ export default function ExpertReviewPage() {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [regeneratingAudioFor, setRegeneratingAudioFor] = useState<{ vocabIndex: number; isExample: boolean; language: "am" | "ao" } | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  const [reports, setReports] = useState<ChatReport[]>([]);
+  const [selectedReport, setSelectedReport] = useState<ChatReport | null>(null);
+  const [isResolvingReport, setIsResolvingReport] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -404,25 +409,32 @@ export default function ExpertReviewPage() {
     }
   }, []);
 
-  const fetchItems = useCallback(async () => {
+  const fetchContent = useCallback(async () => {
+    if (!isAllowed) return;
     setIsLoading(true);
     setError(null);
-
     try {
-      const params = {
-        type: contentType === "ALL" ? undefined : contentType,
-        topicId: topicId === "ALL" ? undefined : topicId,
-      };
-
-      const res = await getPendingContent(params);
-      const resolved = resolvePayload(res.data) as ExpertContentItem[] | null;
-      setItems(Array.isArray(resolved) ? resolved : []);
-    } catch {
-      setError("Failed to load pending content. Please try again.");
+      if (contentType === "MODERATION") {
+        const res = await getPendingReports();
+        setReports(res.data.reports || []);
+        setItems([]);
+      } else {
+        const params = {
+          type: contentType === "ALL" ? undefined : contentType,
+          topicId: topicId === "ALL" ? undefined : topicId,
+        };
+        const res = await getPendingContent(params);
+        const resolved = resolvePayload(res.data) as ExpertContentItem[] | null;
+        setItems(resolved || []);
+        setReports([]);
+      }
+    } catch (err: any) {
+      console.error("Fetch content error:", err);
+      setError(err.response?.data?.message || "Failed to load content.");
     } finally {
       setIsLoading(false);
     }
-  }, [contentType, topicId]);
+  }, [isAllowed, contentType, topicId]);
 
   useEffect(() => {
     if (!isAllowed) return;
@@ -431,8 +443,8 @@ export default function ExpertReviewPage() {
 
   useEffect(() => {
     if (!isAllowed) return;
-    void fetchItems();
-  }, [fetchItems, isAllowed]);
+    void fetchContent();
+  }, [fetchContent, isAllowed]);
 
   const pendingCount = useMemo(() => items.length, [items.length]);
 
@@ -452,7 +464,7 @@ export default function ExpertReviewPage() {
 
     try {
       await verifyContent(item._contentType, item._id);
-      await fetchItems();
+      await fetchContent();
     } catch {
       setError("Failed to publish content. Please try again.");
     } finally {
@@ -466,11 +478,26 @@ export default function ExpertReviewPage() {
 
     try {
       await rejectContent(item._contentType, item._id);
-      await fetchItems();
+      await fetchContent();
     } catch {
       setError("Failed to reject content. Please try again.");
     } finally {
       setActionId(null);
+    }
+  };
+
+  const handleResolveReport = async (reportId: string, actionTaken: "DISMISS" | "WARN" | "DELETE_MESSAGE" | "FLAG_USER") => {
+    setIsResolvingReport(true);
+    try {
+      await resolveReport(reportId, { actionTaken });
+      showToast("success", `Report resolved: ${actionTaken}`);
+      setSelectedReport(null);
+      void fetchContent();
+    } catch (err) {
+      console.error("Resolve report error:", err);
+      showToast("error", "Failed to resolve report.");
+    } finally {
+      setIsResolvingReport(false);
     }
   };
 
@@ -804,6 +831,7 @@ export default function ExpertReviewPage() {
             <option value="WRITING">Writing</option>
             <option value="SPEAKING">Speaking</option>
             <option value="QUESTION">Question</option>
+            <option value="MODERATION">Moderation</option>
           </select>
         </label>
 
@@ -844,10 +872,61 @@ export default function ExpertReviewPage() {
                   <td colSpan={7} className="px-4 py-10 text-center text-sm font-semibold text-slate-500">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading content...
+                      Loading...
                     </div>
                   </td>
                 </tr>
+              ) : contentType === "MODERATION" ? (
+                reports.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-sm font-semibold text-emerald-600">
+                      No pending reports! ✨
+                    </td>
+                  </tr>
+                ) : (
+                  reports.map((report) => (
+                    <tr
+                      key={report._id}
+                      className="cursor-pointer text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      onClick={() => setSelectedReport(report)}
+                    >
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-xs font-black uppercase text-rose-600">
+                          🛡️ Report
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="text-slate-800 line-clamp-1">{report.context || report.reason}</span>
+                          <span className="text-[10px] text-slate-400">Reporter: {report.reporterId?.username}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black uppercase text-amber-700">
+                          {report.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-black uppercase text-slate-600">
+                          {report.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-lg">🚩 {report.targetId?.reportCount || 1}</td>
+                      <td className="px-4 py-3">{formatDate(report.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedReport(report);
+                          }}
+                          className="rounded-lg bg-indigo-50 px-3 py-1 text-xs font-black uppercase text-indigo-600 hover:bg-indigo-100"
+                        >
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-sm font-semibold text-emerald-600">
@@ -858,7 +937,6 @@ export default function ExpertReviewPage() {
                 items.map((item) => {
                   const meta = typeMeta[item._contentType];
                   const statusClass = statusStyles[item.status ?? "DRAFT"] ?? statusStyles.DRAFT;
-                  const canEditLesson = item._contentType === "LESSON";
 
                   return (
                     <tr
@@ -1452,11 +1530,102 @@ export default function ExpertReviewPage() {
         </div>
       ) : null}
 
+      {/* Moderation Resolution Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-[2.5rem] bg-white shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-8 py-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-wider text-slate-900">Moderate Report</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action required</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedReport(null)} 
+                className="group rounded-full p-2 text-slate-300 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+              {/* Context Section */}
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reported Content</h4>
+                <div className="group relative rounded-3xl border-2 border-rose-100 bg-rose-50/20 p-6 transition hover:border-rose-200">
+                   <p className="text-sm font-bold text-slate-800 leading-relaxed italic">
+                     "{selectedReport.context || selectedReport.targetId?.text}"
+                   </p>
+                   <div className="mt-4 flex items-center justify-between border-t border-rose-100 pt-4">
+                     <span className="flex items-center gap-1.5 text-[10px] font-black text-rose-500 uppercase">
+                       <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                       Reason: {selectedReport.reason}
+                     </span>
+                     <span className="text-[10px] font-black text-slate-400 uppercase">{formatDate(selectedReport.createdAt)}</span>
+                   </div>
+                </div>
+              </div>
+
+              {/* Resolution Actions */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Select Resolution</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { id: "DISMISS", label: "Ignore", icon: "✅", color: "slate", emoji: "👍" },
+                    { id: "WARN", label: "Warn User", icon: "⚠️", color: "amber", emoji: "🔔" },
+                    { id: "DELETE_MESSAGE", label: "Delete", icon: "🗑️", color: "rose", emoji: "✂️" },
+                    { id: "FLAG_USER", label: "Flag User", icon: "🚩", color: "indigo", emoji: "🚨" },
+                  ].map((act) => (
+                    <button 
+                      key={act.id}
+                      onClick={() => handleResolveReport(selectedReport._id, act.id as any)}
+                      disabled={isResolvingReport}
+                      className={`flex flex-col items-center gap-3 rounded-[2rem] border-2 border-slate-50 bg-white p-5 transition-all duration-300 hover:border-${act.color}-200 hover:bg-${act.color}-50/50 hover:shadow-xl group active:scale-95`}
+                    >
+                      <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 transform group-hover:scale-125">
+                        {act.emoji}
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-${act.color}-600`}>
+                        {act.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {isResolvingReport && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Processing Resolution...</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {toast ? (
-        <div className="fixed right-4 top-4 z-[60] rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold shadow-lg">
-          <span className={toast.type === "success" ? "text-emerald-600" : "text-rose-600"}>
-            {toast.message}
-          </span>
+        <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-3 rounded-3xl px-8 py-5 shadow-2xl transition-all duration-500 animate-in slide-in-from-right-10 ${
+          toast.type === "success" 
+            ? "bg-slate-900 text-white" 
+            : "bg-rose-600 text-white"
+        }`}>
+          {toast.type === "success" ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+              <CheckCircle2 size={20} />
+            </div>
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 text-white">
+              <XCircle size={20} />
+            </div>
+          )}
+          <span className="text-sm font-black uppercase tracking-wider">{toast.message}</span>
         </div>
       ) : null}
     </div>
