@@ -162,6 +162,10 @@ export interface Dialogue {
     order: number;
     characterId: string;
     content: LocalizedString;
+    audioUrl?: {
+      am?: string;
+      ao?: string;
+    };
     isInteractive: boolean;
     question?: LocalizedString;
     options?: LocalizedString[];

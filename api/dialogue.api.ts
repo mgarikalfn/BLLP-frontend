@@ -35,3 +35,30 @@ export const getDialogueById = async (dialogueId: string): Promise<Dialogue> => 
 
   return dialogue;
 };
+
+export const generateDialogueAudio = async (dialogueId: string): Promise<Dialogue> => {
+  const res = await api.put<ApiResponse<Dialogue>>(`/dialogues/${dialogueId}/generate-audio`);
+  
+  if ("success" in res.data && !res.data.success) {
+    throw new Error(res.data.message || "Failed to generate dialogue audio");
+  }
+
+  return "data" in res.data ? res.data.data : res.data as Dialogue;
+};
+
+export const regenerateDialogueAudio = async (
+  dialogueId: string,
+  lineIndex: number,
+  language: "am" | "ao"
+): Promise<Dialogue> => {
+  const res = await api.put<ApiResponse<Dialogue>>(
+    `/dialogues/${dialogueId}/regenerate-audio`,
+    { lineIndex, language }
+  );
+  
+  if ("success" in res.data && !res.data.success) {
+    throw new Error(res.data.message || "Failed to regenerate dialogue audio");
+  }
+
+  return "data" in res.data ? res.data.data : res.data as Dialogue;
+};

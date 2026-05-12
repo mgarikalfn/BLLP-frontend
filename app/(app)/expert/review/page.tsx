@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Loader2, X, XCircle, Play, RefreshCw, Volume2 } from "lucide-react";
 import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio, getPendingReports, resolveReport } from "@/api/expert.api";
+import { generateDialogueAudio, regenerateDialogueAudio, getDialogueById } from "@/api/dialogue.api";
 import { useAuthStore } from "@/store/authStore";
 import type { ExpertContentItem, ExpertContentType, ChatReport } from "@/types/learning";
 import { QuestionEditor, QuestionRecord } from "@/components/expert/QuestionEditor";
@@ -363,6 +364,8 @@ export default function ExpertReviewPage() {
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [regeneratingAudioFor, setRegeneratingAudioFor] = useState<{ vocabIndex: number; isExample: boolean; language: "am" | "ao" } | null>(null);
+  const [isGeneratingDialogueAudio, setIsGeneratingDialogueAudio] = useState(false);
+  const [regeneratingDialogueAudioFor, setRegeneratingDialogueAudioFor] = useState<{ lineIndex: number; language: "am" | "ao" } | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const [reports, setReports] = useState<ChatReport[]>([]);
@@ -608,8 +611,10 @@ export default function ExpertReviewPage() {
 
     setIsSaving(true);
     try {
+      let response: any;
+
       if (selectedItem._contentType === "LESSON" && lessonDraft) {
-        await updateLesson(selectedItem._id, {
+        response = await updateLesson(selectedItem._id, {
           title: lessonDraft.title,
           grammarNotes: lessonDraft.grammarNotes,
           vocabulary: lessonDraft.vocabulary,
@@ -617,20 +622,42 @@ export default function ExpertReviewPage() {
           quiz: quizDraft,
         });
       } else if (selectedItem._contentType === "DIALOGUE" && dialogueDraft) {
-        await updateExpertContent("DIALOGUE", selectedItem._id, dialogueDraft);
+        response = await updateExpertContent("DIALOGUE", selectedItem._id, dialogueDraft);
       } else if (selectedItem._contentType === "WRITING" && writingDraft) {
-        await updateExpertContent("WRITING", selectedItem._id, writingDraft);
+        response = await updateExpertContent("WRITING", selectedItem._id, writingDraft);
       } else if (selectedItem._contentType === "SPEAKING" && speakingDraft) {
-        await updateExpertContent("SPEAKING", selectedItem._id, speakingDraft);
+        response = await updateExpertContent("SPEAKING", selectedItem._id, speakingDraft);
       } else if (selectedItem._contentType === "QUESTION" && questionDraft) {
         // question draft is an array of questions, but for standalone question it might be just the object payload
         const payload = questionDraft.length === 1 ? questionDraft[0] : questionDraft;
-        await updateExpertContent("QUESTION", selectedItem._id, payload);
+        response = await updateExpertContent("QUESTION", selectedItem._id, payload);
       }
 
-      showToast("success", "Content updated successfully.");
+      // Extract audio changes from response
+      const responseData = response?.data || response;
+      const audioChanges = responseData?._audioChanges;
+
+      if (audioChanges) {
+        // Count total audio items cleared
+        const vocabCount = audioChanges.vocabulary?.length || 0;
+        const dialogueCount = audioChanges.dialogue?.length || 0;
+        const lineCount = audioChanges.lines?.length || 0;
+        const totalCount = vocabCount + dialogueCount + lineCount;
+
+        if (totalCount > 0) {
+          showToast(
+            "success",
+            `Content updated. ${totalCount} audio item(s) cleared. Regenerate audio to update.`
+          );
+        } else {
+          showToast("success", "Content updated successfully.");
+        }
+      } else {
+        showToast("success", "Content updated successfully.");
+      }
+
       setIsEditing(false);
-      
+
       // Attempt to locally update the title without reloading the whole queue if possible
       let newTitle = selectedItem._title;
       if (selectedItem._contentType === "LESSON" && lessonDraft) newTitle = lessonDraft.title.am || lessonDraft.title.ao || newTitle;
@@ -717,6 +744,46 @@ export default function ExpertReviewPage() {
       showToast("error", "Failed to regenerate audio.");
     } finally {
       setRegeneratingAudioFor(null);
+    }
+  };
+
+  const handleGenerateDialogueAudio = async () => {
+    if (!selectedItem?._id) return;
+    setIsGeneratingDialogueAudio(true);
+    try {
+      await generateDialogueAudio(selectedItem._id);
+      showToast("success", "Missing dialogue audio generated successfully!");
+      
+      // Reload dialogue to get new audio URLs
+      const dialogueRes = await getDialogueById(selectedItem._id);
+      if (isRecord(dialogueRes as unknown)) {
+        const nextDraft = buildDialogueDraft(dialogueRes as unknown as Record<string, unknown>);
+        setDialogueDraft(nextDraft);
+      }
+    } catch (error) {
+      showToast("error", "Failed to generate dialogue audio. Make sure you haven't hit rate limits.");
+    } finally {
+      setIsGeneratingDialogueAudio(false);
+    }
+  };
+
+  const handleRegenerateDialogueAudio = async (lineIndex: number, language: "am" | "ao") => {
+    if (!selectedItem?._id) return;
+    setRegeneratingDialogueAudioFor({ lineIndex, language });
+    try {
+      await regenerateDialogueAudio(selectedItem._id, lineIndex, language);
+      showToast("success", `Dialogue audio regenerated for ${language === 'am' ? 'Amharic' : 'Afaan Oromoo'}`);
+      
+      // Reload dialogue to get new audio URLs
+      const dialogueRes = await getDialogueById(selectedItem._id);
+      if (isRecord(dialogueRes as unknown)) {
+        const nextDraft = buildDialogueDraft(dialogueRes as unknown as Record<string, unknown>);
+        setDialogueDraft(nextDraft);
+      }
+    } catch (error) {
+      showToast("error", "Failed to regenerate dialogue audio.");
+    } finally {
+      setRegeneratingDialogueAudioFor(null);
     }
   };
 
@@ -1340,14 +1407,29 @@ export default function ExpertReviewPage() {
                         )}
                       </div>
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Lines</h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Lines</h4>
+                          {isEditing && (
+                            <button
+                              type="button"
+                              onClick={handleGenerateDialogueAudio}
+                              disabled={isGeneratingDialogueAudio}
+                              className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-purple-600 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1"
+                            >
+                              {isGeneratingDialogueAudio ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                              Generate Missing Audio
+                            </button>
+                          )}
+                        </div>
                         <div className="mt-2 space-y-2">
                           {lines.length === 0 ? (
                             <p className="text-sm font-semibold text-slate-500">No dialogue lines returned.</p>
                           ) : (
                             lines.map((line, index) => {
-                              const record = line as Record<string, unknown>;
+                              const record = line as Record<string, any>;
                               const content = isRecord(record.content) ? record.content : { am: "", ao: "" };
+                              const audioUrl = record.audioUrl || {};
+                              
                               return (
                                 <div
                                   key={`${String(record._id ?? index)}`}
@@ -1362,18 +1444,50 @@ export default function ExpertReviewPage() {
                                         placeholder="Character / Speaker"
                                       />
                                       <div className="grid gap-2 sm:grid-cols-2">
-                                        <input
-                                          className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                          value={typeof content.am === "string" ? content.am : ""}
-                                          onChange={(e) => updateDialogueLine(index, "am", e.target.value)}
-                                          placeholder="Amharic text"
-                                        />
-                                        <input
-                                          className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                          value={typeof content.ao === "string" ? content.ao : ""}
-                                          onChange={(e) => updateDialogueLine(index, "ao", e.target.value)}
-                                          placeholder="Afaan Oromoo text"
-                                        />
+                                        <div>
+                                          <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase text-slate-400">Amharic</span>
+                                            <div className="flex items-center gap-1">
+                                              {audioUrl.am ? (
+                                                <>
+                                                  <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                  <button onClick={() => playAudio(audioUrl.am)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                  <button onClick={() => handleRegenerateDialogueAudio(index, "am")} disabled={regeneratingDialogueAudioFor?.lineIndex === index && regeneratingDialogueAudioFor?.language === 'am'} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingDialogueAudioFor?.lineIndex === index && regeneratingDialogueAudioFor?.language === 'am' ? "animate-spin" : ""}/></button>
+                                                </>
+                                              ) : (
+                                                <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <input
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                            value={typeof content.am === "string" ? content.am : ""}
+                                            onChange={(e) => updateDialogueLine(index, "am", e.target.value)}
+                                            placeholder="Amharic text"
+                                          />
+                                        </div>
+                                        <div>
+                                          <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase text-slate-400">Afaan Oromoo</span>
+                                            <div className="flex items-center gap-1">
+                                              {audioUrl.ao ? (
+                                                <>
+                                                  <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                  <button onClick={() => playAudio(audioUrl.ao)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                  <button onClick={() => handleRegenerateDialogueAudio(index, "ao")} disabled={regeneratingDialogueAudioFor?.lineIndex === index && regeneratingDialogueAudioFor?.language === 'ao'} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingDialogueAudioFor?.lineIndex === index && regeneratingDialogueAudioFor?.language === 'ao' ? "animate-spin" : ""}/></button>
+                                                </>
+                                              ) : (
+                                                <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <input
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                            value={typeof content.ao === "string" ? content.ao : ""}
+                                            onChange={(e) => updateDialogueLine(index, "ao", e.target.value)}
+                                            placeholder="Afaan Oromoo text"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   ) : (
