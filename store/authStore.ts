@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { LearningDirection } from "@/types/ProfileData";
+import { api } from "@/lib/api";
 
 interface User {
   id: string;
@@ -14,7 +15,7 @@ interface AuthState {
   accessToken: string | null;
 
   login: (user: User, accessToken: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -31,12 +32,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  logout: () => {
-    localStorage.removeItem("accessToken");
-
-    set({
-      user: null,
-      accessToken: null,
-    });
+  logout: async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout API failed", error);
+    } finally {
+      localStorage.removeItem("accessToken");
+      set({
+        user: null,
+        accessToken: null,
+      });
+    }
   },
 }));

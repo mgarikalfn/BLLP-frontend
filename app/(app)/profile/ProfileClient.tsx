@@ -1,34 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/useProfile";
 import { ProfileHeader } from "@/features/profile/ProfileHeader";
 import { StatisticsGrid } from "@/features/profile/StatisticsGrid";
 import { AchievementsWall } from "@/features/profile/AchievementsWall";
-import { EditProfileModal } from "@/features/profile/EditProfileModal";
 import { useLanguageStore } from "@/store/languageStore";
+import { useRouter } from "next/navigation";
 
 export default function ProfileClient() {
   const { data, isLoading, isError } = useProfile();
-  const updateProfile = useUpdateProfile();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const lang = useLanguageStore((state) => state.lang);
+  const router = useRouter();
 
   const text = {
     loading: lang === "am" ? "ፕሮፋይል በመጫን ላይ..." : "Profaayilii fe'aa jira...",
     failed: lang === "am" ? "የፕሮፋይል ውሂብ መጫን አልተቻለም።" : "Odeeffannoo profaayilii fe'uu hin dandeenye.",
   };
-
-  const initialValues = useMemo(
-    () => ({
-      avatarUrl: data?.identity?.avatarUrl || "",
-      bio: data?.identity?.bio || "",
-      targetLanguage: data?.learningSettings?.targetLanguage || "AMHARIC",
-      learningDirection: data?.learningSettings?.learningDirection || "AM_TO_OR",
-    }),
-    [data]
-  );
 
   if (isLoading) {
     return (
@@ -50,17 +38,11 @@ export default function ProfileClient() {
   return (
     <div className="min-h-screen bg-[#f8fafc] px-4 py-5 md:px-6">
       <main className="mx-auto w-full max-w-3xl space-y-5">
-        <ProfileHeader identity={data.identity} onEdit={() => setIsModalOpen(true)} />
+        <ProfileHeader identity={data.identity} onEdit={() => router.push("/settings")} />
         <StatisticsGrid stats={data.stats} />
         <AchievementsWall />
       </main>
-
-      <EditProfileModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialValues={initialValues}
-        onSave={(payload) => updateProfile.mutateAsync(payload)}
-      />
     </div>
   );
 }
+

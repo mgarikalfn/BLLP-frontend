@@ -197,8 +197,8 @@ export default function  Sidebar  ({ className }: Props)  {
       </div>
       <div className="p-4">
         <SidebarItem
-          label="Profile"
-          href="/profile"
+          label="Settings"
+          href="/settings"
           icon={UserCircle2}
         />
       </div>

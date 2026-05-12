@@ -7,6 +7,7 @@ export interface ProfileIdentity {
   avatarUrl: string | null;
   bio: string | null;
   joinedAt: string;
+  hasPassword?: boolean;
 }
 
 export interface ProfileLearningSettings {
@@ -49,6 +50,7 @@ export interface ProfileData {
 
 export interface UpdateProfilePayload {
   avatarUrl?: string;
+  avatarFile?: File;
   bio?: string;
   learningDirection: LearningDirection;
   targetLanguage: TargetLanguage;

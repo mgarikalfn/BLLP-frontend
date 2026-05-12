@@ -7,9 +7,9 @@ import { useEconomyStore } from "@/store/useEconomyStore";
 import { useDashboard } from "@/hooks/useDashboard";
 import { MobileSidebar } from "./mobile-sidebar";
 import { NotificationBell } from "@/components/NotificationBell";
+import { UserMenu } from "./UserMenu";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/languageStore";
-import { getLocalizedTier } from "@/lib/tierTranslations";
 
 const Pill = ({
   icon,
@@ -50,7 +50,6 @@ export function TopNavbar() {
   const { data } = useDashboard();
   const streak = data?.user?.streak ?? 0;
   const xp = data?.user?.xp ?? 0;
-  const tier = data?.user?.tier ?? "Bronze";
 
   useEffect(() => {
     void fetchEconomyStatus();
@@ -104,14 +103,7 @@ export function TopNavbar() {
 
         <NotificationBell />
 
-        <div className="hidden sm:flex items-center gap-3 pl-2 border-l-2 border-slate-200">
-          <div className="flex flex-col items-end">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-              {getLocalizedTier(tier, lang)} {lang === "am" ? "ምድብ" : "Garee"}
-            </span>
-          </div>
-          <div className="h-10 w-10 cursor-pointer rounded-full border-b-4 border-indigo-700 bg-indigo-500 hover:bg-indigo-400 transition" />
-        </div>
+        <UserMenu />
       </div>
     </nav>
   );
