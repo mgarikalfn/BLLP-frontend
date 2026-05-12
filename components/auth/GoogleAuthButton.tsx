@@ -8,6 +8,7 @@ import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuthStore } from "@/store/authStore";
 import { useLanguageStore } from "@/store/languageStore";
 import type { LearningDirection } from "@/types/ProfileData";
+import { getRedirectPath } from "@/lib/roleRedirect";
 
 export default function GoogleAuthButton() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function GoogleAuthButton() {
         initializeFromProfile(learningDirection);
       }
 
-      router.push("/dashboard");
+      router.push(getRedirectPath(role));
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
       setServerError(axiosError.response?.data?.message || "Google login failed");

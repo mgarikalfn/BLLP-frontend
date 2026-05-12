@@ -359,7 +359,27 @@ export interface ApiResponse<T> {
 
 // Expert Dashboard Types
 export type ContentStatus = "DRAFT" | "NEEDS_REVIEW" | "PUBLISHED";
-export type ExpertContentType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING" | "QUESTION";
+export type ExpertContentType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING" | "QUESTION" | "MODERATION";
+
+export interface ChatReport {
+  _id: string;
+  targetId: {
+    _id: string;
+    text: string;
+    createdAt: string;
+    reportCount: number;
+    senderId: string;
+    conversationId: string;
+  };
+  reporterId: { _id: string; username: string };
+  reportedUserId: { _id: string; username: string; email: string; userStatus: string };
+  type: string;
+  reason: string;
+  context?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface ExpertContentItem {
   _id: string;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, BookOpen, ClipboardCheck, UserPlus, Users, UserCheck } from "lucide-react";
+import Link from "next/link";
+import { Activity, BookOpen, ClipboardCheck, UserPlus, Users, UserCheck, AlertTriangle } from "lucide-react";
 import { fetchAnalytics, fetchContentStats, type AnalyticsView, type ContentStatsView } from "@/api/admin.api";
 
 const emptyStats: ContentStatsView = {
@@ -11,6 +12,7 @@ const emptyStats: ContentStatsView = {
   totalLessons: 0,
   totalQuestions: 0,
   lessonsPendingReview: 0,
+  pendingReports: 0,
 };
 
 const emptyAnalytics: AnalyticsView = {
@@ -181,6 +183,20 @@ export default function AdminDashboardPage() {
             {analyticsLoading ? "..." : analytics.usersJoinedToday.toLocaleString()}
           </p>
         </div>
+
+        <Link href="/admin/moderation" className="block transition-transform hover:scale-[1.02] active:scale-[0.98]">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black uppercase tracking-widest text-rose-500">Pending Reports</p>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                <AlertTriangle size={18} />
+              </div>
+            </div>
+            <p className="mt-4 text-2xl font-black text-rose-900">
+              {isLoading ? "..." : stats.pendingReports.toLocaleString()}
+            </p>
+          </div>
+        </Link>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
