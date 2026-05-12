@@ -22,9 +22,6 @@ export const useUpdateProfile = () => {
       queryClient.setQueryData(PROFILE_QUERY_KEY, data);
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["topicWorkspace"] });
-      
-      // Optionally route to login or full refresh to apply new language contexts project-wide
-      window.location.href = "/";
     },
   });
 };

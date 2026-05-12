@@ -1,4 +1,4 @@
-import { CalendarDays, Edit2, UserCircle2 } from "lucide-react";
+import { CalendarDays, Settings, UserCircle2 } from "lucide-react";
 import { ProfileData } from "@/types/ProfileData";
 import { useLanguageStore } from "@/store/languageStore";
 
@@ -10,11 +10,11 @@ interface ProfileHeaderProps {
 const headerText = {
   am: {
     joined: "ተቀላቀለ",
-    editProfile: "ፕሮፋይል አርትዕ",
+    settings: "ቅንብሮች",
   },
   ao: {
     joined: "Miseensa ta'e",
-    editProfile: "Profaayilii gulaali",
+    settings: "Qindaa'inaalee",
   },
 } as const;
 
@@ -49,9 +49,9 @@ export function ProfileHeader({ identity, onEdit }: ProfileHeaderProps) {
             type="button"
             onClick={onEdit}
             className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-b-4 border-green-700 bg-green-500 text-white transition hover:bg-green-600"
-            aria-label={text.editProfile}
+            aria-label={text.settings}
           >
-            <Edit2 size={16} />
+            <Settings size={16} />
           </button>
         </div>
 

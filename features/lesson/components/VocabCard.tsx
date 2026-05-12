@@ -46,7 +46,7 @@ export const VocabCard = ({ vocab, topicId }: VocabCardProps) => {
     const url = getAudioUrl(path);
     if (url) {
       const audio = new Audio(url);
-      audio.play();
+      audio.play().catch((err) => console.warn("Failed to play audio:", err));
     } else {
       console.warn("No audio URL available.");
     }
