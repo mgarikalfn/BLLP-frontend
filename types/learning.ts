@@ -306,6 +306,7 @@ export interface WorkspaceTopic {
   section?: "INTRO" | "A1" | "A2" | "B1" | "B2";
   unitNumber?: number;
   tips?: { am?: string; ao?: string };
+  isAutoCompleted?: boolean;
   pathNodes?: WorkspacePathNode[];
   topicTest?: WorkspaceTopicTest;
   lessons?: WorkspaceLesson[];

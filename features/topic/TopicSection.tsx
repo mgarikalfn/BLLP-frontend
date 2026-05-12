@@ -126,6 +126,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
           pathNodes={topic.pathNodes || []}
           topicTest={topic.topicTest}
           topicTitle={topicTitle}
+          isAutoCompleted={topic.isAutoCompleted}
         />
       </div>
 

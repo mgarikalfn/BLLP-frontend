@@ -14,6 +14,7 @@ interface LessonPathContainerProps {
   pathNodes: WorkspacePathNode[];
   topicTest?: WorkspaceTopicTest;
   topicTitle: string;
+  isAutoCompleted?: boolean;
 }
 
 export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
@@ -21,6 +22,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   pathNodes,
   topicTest,
   topicTitle,
+  isAutoCompleted = false,
 }) => {
   const lang = useLanguageStore((state) => state.lang);
   const {
@@ -34,6 +36,8 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
     handlePractice,
   } = useLessonGuard();
   const testNodeStatus: NodeStatus = topicTest?.status || "locked";
+  const isLegacyTopic = Boolean(isAutoCompleted);
+  const resolvedTestStatus: NodeStatus = isLegacyTopic ? "completed" : testNodeStatus;
   const testNodeLabel = lang === "am" ? "የመጨረሻ ግምገማ" : "Final Review";
   const amplitude = 90;
   const videoXOffset = Math.sin((pathNodes.length / 2) * Math.PI) * amplitude;
@@ -57,11 +61,13 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
               : videoXOffset;
         }
         const nodeStatus: NodeStatus = node.status || "locked";
-        const isCompleted = nodeStatus === "completed";
+        const resolvedStatus: NodeStatus = isLegacyTopic ? "completed" : nodeStatus;
+        const isCompleted = resolvedStatus === "completed";
+        const isLegacyCompleted = isLegacyTopic && isCompleted;
 
         if (node.type === "LESSON") {
-          const isLocked = nodeStatus === "locked";
-          const isActive = nodeStatus === "active";
+          const isLocked = resolvedStatus === "locked";
+          const isActive = resolvedStatus === "active";
           const amharicTitle =
             typeof node.title === "object" && node.title
               ? node.title.am
@@ -70,6 +76,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
                 : "Lesson";
           let bgColor = "bg-gray-200 border-gray-300 text-gray-500";
           if (isCompleted) bgColor = "bg-green-500 border-green-600 text-white shadow-lg shadow-green-500/30";
+          if (isLegacyCompleted) bgColor = "bg-amber-200 border-amber-300 text-amber-700 shadow-sm";
           if (isActive) bgColor = "bg-blue-600 border-blue-700 text-white shadow-lg shadow-blue-500/40 ring-4 ring-blue-300 animate-pulse";
           let icon = <Lock size={28} />;
           if (isCompleted) icon = <CheckCircle2 size={28} />;
@@ -99,7 +106,13 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
                       fill="none"
                       strokeWidth="8"
                       strokeLinecap="round"
-                      className={isCompleted ? "stroke-green-500" : "stroke-gray-300"}
+                      className={
+                        isLegacyCompleted
+                          ? "stroke-amber-300"
+                          : isCompleted
+                            ? "stroke-green-500"
+                            : "stroke-gray-300"
+                      }
                     />
                   </svg>
                 </div>
@@ -126,7 +139,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
                 }}
               >
                 {amharicTitle}
-                <div className="text-xs text-gray-400 font-normal capitalize">{nodeStatus}</div>
+                <div className="text-xs text-gray-400 font-normal capitalize">{resolvedStatus}</div>
               </div>
             </div>
           );
@@ -156,7 +169,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
               id={node._id}
               type={node.type}
               items={[{ _id: node._id, topicId }]}
-              status={nodeStatus}
+              status={resolvedStatus}
               styleOffset={xOffset}
             />
           </div>
@@ -211,7 +224,7 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
           id={topicId}
           type="TEST"
           items={[{ topicId }]}
-          status={testNodeStatus}
+          status={resolvedTestStatus}
           styleOffset={finalXOffset}
           label={testNodeLabel}
         />

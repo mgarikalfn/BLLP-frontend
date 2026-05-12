@@ -158,3 +158,6 @@ export const submitStudyReview = async (payload: SubmitStudyReviewPayload): Prom
   const res = await api.post<SubmitStudyReviewResponse>("/study/review", payload);
   return res.data;
 };
+
+export const submitTopicTest = (topicId: string, score: number) =>
+  api.post("/study/progress/topic-test", { topicId, score });
