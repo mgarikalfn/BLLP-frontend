@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -160,10 +160,31 @@ export default function DialoguePage() {
   const options = currentSlide?.line.options || [];
   const correctAnswerIndex = currentSlide?.line.correctAnswerIndex ?? -1;
 
+  // Audio URLs for current line
+  const lineAudioTarget = currentSlide?.line.audioUrl?.[targetLanguage];
+  const lineAudioNative = currentSlide?.line.audioUrl?.[nativeLanguage];
+
   const correctAnswerText =
     status === "incorrect" && isInteractive && correctAnswerIndex >= 0
       ? getLocalizedText(options[correctAnswerIndex], targetLanguage, nativeLanguage)
       : undefined;
+
+  const getAudioUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
+    return `${baseUrl}${path}`;
+  };
+
+  const playAudio = (path?: string) => {
+    const url = getAudioUrl(path);
+    if (url) {
+      const audio = new Audio(url);
+      audio.play().catch((err) => console.warn("Failed to play audio:", err));
+    } else {
+      console.warn("No audio URL available.");
+    }
+  };
 
   const handleSelectOption = (index: number) => {
     if (status !== "idle") return;
@@ -349,8 +370,34 @@ export default function DialoguePage() {
             </div>
           </div>
 
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}</p>
-          <p className="mt-2 text-lg font-medium text-gray-500">{getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}</p>
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-2xl font-bold text-gray-900 leading-tight flex items-center gap-2">
+                {getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}
+                {lineAudioTarget && (
+                  <button 
+                    onClick={() => playAudio(lineAudioTarget)} 
+                    className="text-blue-500 hover:bg-blue-50 p-2 rounded-full transition-colors active:scale-95"
+                    aria-label={`Play ${targetLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
+                  >
+                    <Volume2 size={24} strokeWidth={2.5} />
+                  </button>
+                )}
+              </p>
+              <p className="mt-2 text-lg font-medium text-gray-500 flex items-center gap-2">
+                {getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}
+                {lineAudioNative && (
+                  <button 
+                    onClick={() => playAudio(lineAudioNative)} 
+                    className="text-orange-500 hover:bg-orange-50 p-1.5 rounded-full transition-colors active:scale-95"
+                    aria-label={`Play ${nativeLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
+                  >
+                    <Volume2 size={20} strokeWidth={2.5} />
+                  </button>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
         {isInteractive && (
