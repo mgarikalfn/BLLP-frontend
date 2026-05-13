@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const uiText = {
   am: {
-    title: "የሕይወት ዘመን ሜዳሊያዎች",
+    title: " ሜዳሊያዎች",
     subtitle: "የእርስዎ ስኬቶች ታሪክ",
     noAchievements: "ምንም ስኬት ገና አልተገኘም።",
     gem: "አልማዝ",

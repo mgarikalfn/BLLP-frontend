@@ -90,7 +90,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     if ("prompt" in nextContent) nextContent.prompt = nextPrompt;
     else if ("question" in nextContent) nextContent.question = nextPrompt;
     else nextContent.prompt = nextPrompt;
-    onChange(index, { ...question, content: nextContent });
+    onChange(index, { ...question, type, content: nextContent });
   };
 
   const renderPrompt = () => (
@@ -126,19 +126,11 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
       const opt = toLocalizedRecord(nextOptions[optIndex]);
       nextOptions[optIndex] = { ...opt, [lang]: val };
       
-      if (source === "content") {
-        onChange(index, { ...question, content: { ...content, options: nextOptions } });
-      } else {
-        onChange(index, { ...question, options: nextOptions });
-      }
+      onChange(index, { ...question, type, content: { ...content, options: nextOptions } });
     };
 
     const updateCorrectIndex = (newIndex: number) => {
-      if (source === "content") {
-        onChange(index, { ...question, content: { ...content, correctIndex: newIndex } });
-      } else {
-        onChange(index, { ...question, correctIndex: newIndex });
-      }
+      onChange(index, { ...question, type, content: { ...content, correctIndex: newIndex } });
     };
 
     return (
@@ -203,7 +195,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     const updatePair = (pairIndex: number, field: "left" | "right", val: string) => {
       const nextPairs = [...pairs];
       nextPairs[pairIndex] = { ...nextPairs[pairIndex], [field]: val };
-      onChange(index, { ...question, content: { ...content, pairs: nextPairs } });
+      onChange(index, { ...question, type, content: { ...content, pairs: nextPairs } });
     };
 
     return (
@@ -263,6 +255,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
       const parts = val.split(",").map(s => s.trim()).filter(s => s.length > 0);
       onChange(index, { 
         ...question, 
+        type,
         content: { 
           ...content, 
           scrambled: { ...scrambled, [lang]: parts } 
@@ -273,6 +266,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     const updateAnswer = (lang: "am" | "ao", val: string) => {
       onChange(index, { 
         ...question, 
+        type,
         content: { 
           ...content, 
           answer: { ...answer, [lang]: val } 
@@ -368,11 +362,11 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     }
 
     const updateTextBeforeBlank = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, content: { ...content, textBeforeBlank: { ...textBeforeBlank, [lang]: val } } });
+      onChange(index, { ...question, type, content: { ...content, textBeforeBlank: { ...textBeforeBlank, [lang]: val } } });
     };
 
     const updateTextAfterBlank = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, content: { ...content, textAfterBlank: { ...textAfterBlank, [lang]: val } } });
+      onChange(index, { ...question, type, content: { ...content, textAfterBlank: { ...textAfterBlank, [lang]: val } } });
     };
 
     const updateClozeOption = (optIndex: number, lang: "am" | "ao", val: string) => {
@@ -386,13 +380,13 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
         nextCorrectAnswer = { ...nextCorrectAnswer, [lang]: val };
       }
       
-      onChange(index, { ...question, content: { ...content, options: nextOptions, correctAnswer: nextCorrectAnswer } });
+      onChange(index, { ...question, type, content: { ...content, options: nextOptions, correctAnswer: nextCorrectAnswer } });
     };
 
     const updateClozeCorrectIndex = (newIndex: number) => {
       // Also update correctAnswer to reflect the new chosen option
       const newCorrectAnswer = toLocalizedRecord(options[newIndex]);
-      onChange(index, { ...question, content: { ...content, correctIndex: newIndex, correctAnswer: newCorrectAnswer } });
+      onChange(index, { ...question, type, content: { ...content, correctIndex: newIndex, correctAnswer: newCorrectAnswer } });
     };
 
     return (

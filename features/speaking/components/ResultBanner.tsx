@@ -7,10 +7,12 @@ interface ResultBannerProps {
   labels: {
     successTitle: string;
     retryTitle: string;
+    continue?: string;
   };
+  onContinue?: () => void;
 }
 
-export const ResultBanner = ({ isCorrect, feedback, labels }: ResultBannerProps) => {
+export const ResultBanner = ({ isCorrect, feedback, labels, onContinue }: ResultBannerProps) => {
   const Icon = isCorrect ? CheckCircle2 : XCircle;
 
   return (
@@ -24,14 +26,26 @@ export const ResultBanner = ({ isCorrect, feedback, labels }: ResultBannerProps)
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-start gap-3">
-        <Icon className="mt-0.5 shrink-0" size={24} />
-        <div>
-          <p className="text-xs font-black uppercase tracking-widest">
-            {isCorrect ? labels.successTitle : labels.retryTitle}
-          </p>
-          <p className="mt-1 text-sm font-semibold leading-relaxed">{feedback}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <Icon className="mt-0.5 shrink-0" size={24} />
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest">
+              {isCorrect ? labels.successTitle : labels.retryTitle}
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-relaxed">{feedback}</p>
+          </div>
         </div>
+        
+        {onContinue && isCorrect && (
+          <button
+            type="button"
+            onClick={onContinue}
+            className="shrink-0 rounded-xl bg-white/20 px-6 py-2.5 font-bold text-white transition-transform hover:bg-white/30 active:scale-95"
+          >
+            {labels.continue || "Continue"}
+          </button>
+        )}
       </div>
     </div>
   );

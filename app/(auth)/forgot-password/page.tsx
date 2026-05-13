@@ -11,7 +11,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   ForgotPasswordInput, 
-  ResetPasswordInput 
+  ResetPasswordInput,
+  forgotPasswordSchema,
+  resetPasswordSchema
 } from "@/lib/validations/auth";
 import { useLanguageStore } from "@/store/languageStore";
 

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { getStudySession, type StudyFlashcardItem } from "@/api/study.api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useEconomyStore } from "@/store/useEconomyStore";
@@ -96,6 +97,15 @@ export function FlashcardScreen() {
   return (
     <section className="mx-auto w-full max-w-3xl px-4 py-8 md:py-10">
       <div className="mb-6 space-y-3">
+        <div className="mb-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+          >
+            <ArrowLeft size={16} />
+            {nativeLanguage === "am" ? "ተመለስ" : "Deebi'i"}
+          </Link>
+        </div>
         <h1 className="text-3xl font-black text-slate-900 md:text-4xl">{text.title}</h1>
         <p className="text-sm font-medium text-slate-600 md:text-base">{text.subtitle}</p>
 

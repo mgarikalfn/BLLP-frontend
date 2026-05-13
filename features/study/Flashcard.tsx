@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
+import { Volume2, RotateCcw } from "lucide-react";
 import { submitStudyReview, type StudyFlashcardItem } from "@/api/study.api";
 import { useLanguageStore } from "@/store/languageStore";
 
@@ -61,10 +62,30 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
   const targetWord = card.word[targetLanguage] || card.word.am || card.word.ao;
   const nativeWord = card.word[nativeLanguage] || card.word.am || card.word.ao;
   const nativeExample = card.example?.[nativeLanguage] || card.example?.am || card.example?.ao || "";
+  
+  const targetAudio = card.audioUrl?.[targetLanguage];
+  const nativeAudio = card.audioUrl?.[nativeLanguage];
+
+  const getAudioUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
+    return `${baseUrl}${path}`;
+  };
+
+  const playAudio = (path?: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const url = getAudioUrl(path);
+    if (url) {
+      const audio = new Audio(url);
+      audio.play().catch((err) => console.warn("Failed to play audio:", err));
+    }
+  };
 
   const uiText = useMemo(
     () => ({
       reveal: nativeLanguage === "am" ? "መልሱን አሳይ" : "Deebii mul'isi",
+      flipBack: nativeLanguage === "am" ? "ወደ ፊት መልስ" : "Gara fuula duraatti deebi'i",
       translation: nativeLanguage === "am" ? "ትርጉም" : "Hiika",
       example: nativeLanguage === "am" ? "ምሳሌ" : "Fakkeenya",
       saving: nativeLanguage === "am" ? "በማስቀመጥ ላይ..." : "Olkaa'aa jira...",
@@ -104,8 +125,17 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
               Flashcard
             </div>
 
-            <div className="flex flex-1 items-center justify-center">
+            <div className="flex flex-1 items-center justify-center gap-4">
               <p className="text-center text-5xl font-black leading-tight text-slate-900 sm:text-6xl">{targetWord}</p>
+              {targetAudio ? (
+                <button
+                  onClick={(e) => playAudio(targetAudio, e)}
+                  className="rounded-full p-3 text-sky-500 transition-colors hover:bg-sky-100 active:scale-95"
+                  aria-label="Play audio"
+                >
+                  <Volume2 size={36} strokeWidth={2.5} />
+                </button>
+              ) : null}
             </div>
 
             <button
@@ -120,9 +150,28 @@ export function Flashcard({ card, onRated }: FlashcardProps) {
 
           <div className="absolute inset-0 flex h-full w-full [transform:rotateY(180deg)] flex-col rounded-3xl border border-violet-200 bg-[linear-gradient(165deg,#ffffff_0%,#f8fafc_46%,#eef2ff_100%)] p-8 shadow-[0_22px_60px_rgba(55,48,163,0.18)] [backface-visibility:hidden]">
             <div className="space-y-4">
-              <div>
+              <div className="flex items-center justify-between">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">{uiText.translation}</p>
-                <p className="mt-2 text-3xl font-black text-slate-900">{nativeWord}</p>
+                <button
+                  type="button"
+                  onClick={() => setIsFlipped(false)}
+                  className="flex items-center gap-1 text-xs font-black uppercase tracking-wider text-violet-500 transition hover:text-violet-700"
+                >
+                  <RotateCcw size={14} />
+                  {uiText.flipBack}
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-3xl font-black text-slate-900">{nativeWord}</p>
+                {nativeAudio ? (
+                  <button
+                    onClick={(e) => playAudio(nativeAudio, e)}
+                    className="rounded-full p-2 text-violet-500 transition-colors hover:bg-violet-100 active:scale-95"
+                    aria-label="Play audio"
+                  >
+                    <Volume2 size={24} strokeWidth={2.5} />
+                  </button>
+                ) : null}
               </div>
 
               {nativeExample ? (

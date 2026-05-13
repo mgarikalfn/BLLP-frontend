@@ -51,6 +51,7 @@ const speakingUiText = {
     resultLabels: {
       successTitle: "ትክክለኛ አነባበብ",
       retryTitle: "ቀጥለው ይሞክሩ",
+      continue: "ቀጥል",
     },
     errors: {
       unsupportedAudioRecording: "ይህ አሳሽ የድምፅ መቅጃን አይደግፍም።",
@@ -81,6 +82,7 @@ const speakingUiText = {
     resultLabels: {
       successTitle: "Dubbisni kee gaarii dha",
       retryTitle: "Itti fufi shaakaluu",
+      continue: "Itti fufi",
     },
     errors: {
       unsupportedAudioRecording: "Browser kun sagalee galmeessuu hin deeggartu.",
@@ -299,10 +301,6 @@ export const SpeakingExerciseScreen = ({
       }
 
       setResult(payload.data);
-
-      if (payload.data.isCorrect) {
-        onComplete?.(payload.data);
-      }
     } catch (submissionError) {
       const message =
         submissionError instanceof Error
@@ -397,7 +395,14 @@ export const SpeakingExerciseScreen = ({
         ) : null}
       </div>
 
-      {result ? <ResultBanner isCorrect={result.isCorrect} feedback={result.feedback} labels={uiText.resultLabels} /> : null}
+      {result ? (
+        <ResultBanner 
+          isCorrect={result.isCorrect} 
+          feedback={result.feedback} 
+          labels={uiText.resultLabels} 
+          onContinue={result.isCorrect ? () => onComplete?.(result) : undefined}
+        />
+      ) : null}
     </div>
   );
 };

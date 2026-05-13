@@ -80,7 +80,10 @@ const normalizeSentenceForCompare = (value: string): string => {
 };
 
 export const SentenceScramble = ({ content, language, onComplete, disabled = false, testMode = false }: SentenceScrambleProps) => {
-  const prompt = toDisplayText(content.prompt, language);
+  // The learner's native language is the opposite of the target language (which is what `language` represents here)
+  const nativeLanguage = language === "am" ? "ao" : "am";
+
+  const prompt = toDisplayText(content.prompt, nativeLanguage);
   const correctSentence = useMemo(() => {
     const preferred = resolveSentenceValue(content.correctSentence, language);
     const fallback = resolveSentenceValue(content.answer, language);
@@ -117,9 +120,9 @@ export const SentenceScramble = ({ content, language, onComplete, disabled = fal
   const expectedSlots = Math.max(initialWordBank.length, 1);
 
   // Localized labels
-  const answerBoxLabel = language === "am" ? "መልስ" : "Deebii";
-  const wordBankLabel = language === "am" ? "ቃላት" : "Jechootaa";
-  const checkLabel = language === "am" ? "መልስ ያረጋግጡ" : "Deebii mirkaneessi";
+  const answerBoxLabel = nativeLanguage === "am" ? "መልስ" : "Deebii";
+  const wordBankLabel = nativeLanguage === "am" ? "ቃላት" : "Jechootaa";
+  const checkLabel = nativeLanguage === "am" ? "መልስ ያረጋግጡ" : "Deebii mirkaneessi";
 
   return (
     <div className="w-full animate-in slide-in-from-bottom-4 duration-300">

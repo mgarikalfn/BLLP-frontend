@@ -63,7 +63,7 @@ export const ClozeTest = ({ content, language, onComplete, disabled = false, tes
   const instructionLabel =
     nativeLanguage === "am" ? "ባዶ ቦታውን ይሙሉ" : "Bakka duwwaa guuti";
 
-  const promptText = toDisplayText((content as any).prompt, language);
+  const promptText = toDisplayText((content as any).prompt, nativeLanguage);
 
   return (
     <div className="w-full animate-in slide-in-from-bottom-4 duration-300">

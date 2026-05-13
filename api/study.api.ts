@@ -13,6 +13,10 @@ export interface StudyFlashcardItem {
     am?: string;
     ao?: string;
   };
+  audioUrl?: {
+    am?: string;
+    ao?: string;
+  };
 }
 
 interface StudySessionPayload {
@@ -59,6 +63,8 @@ const toFlashcardItem = (value: unknown, index: number): StudyFlashcardItem | nu
     content?: unknown;
     example?: unknown;
     exampleSentence?: unknown;
+    audioUrl?: unknown;
+    audio?: unknown;
   };
 
   const targetId =
@@ -97,7 +103,22 @@ const toFlashcardItem = (value: unknown, index: number): StudyFlashcardItem | nu
       }
     : undefined;
 
-  return { id, targetId, word, example };
+  const audioLocalized =
+    (record.audioUrl && typeof record.audioUrl === "object"
+      ? (record.audioUrl as { am?: unknown; ao?: unknown })
+      : null) ||
+    (record.audio && typeof record.audio === "object"
+      ? (record.audio as { am?: unknown; ao?: unknown })
+      : undefined);
+
+  const audioUrl = audioLocalized
+    ? {
+        am: typeof audioLocalized.am === "string" ? audioLocalized.am : undefined,
+        ao: typeof audioLocalized.ao === "string" ? audioLocalized.ao : undefined,
+      }
+    : undefined;
+
+  return { id, targetId, word, example, audioUrl };
 };
 
 const getCardsArray = (payload: StudySessionResponse): unknown[] => {

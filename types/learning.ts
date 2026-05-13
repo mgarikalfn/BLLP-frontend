@@ -102,8 +102,9 @@ export interface LessonQuestion {
 }
 
 export interface TopicTestClozeContent {
-  sentence: LocalizedOrString;
-  answer: LocalizedOrString;
+  textWithBlank: LocalizedOrString;
+  options: Array<LocalizedOrString>;
+  correctIndex?: number;
 }
 
 export type TopicTestQuestionType = "MATCHING" | "CLOZE";

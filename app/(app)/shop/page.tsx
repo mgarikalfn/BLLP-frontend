@@ -128,7 +128,7 @@ export default function ShopPage() {
         </div>
 
         {/* Premium Avatar (Coming Soon) */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm opacity-70">
+       {/*  <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm opacity-70">
           <div className="flex items-center gap-4">
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-500">
               <Gem size={28} />
@@ -141,7 +141,7 @@ export default function ShopPage() {
           <div className="flex items-center justify-center rounded-xl bg-slate-200 px-4 py-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-500">{t.comingSoon}</span>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

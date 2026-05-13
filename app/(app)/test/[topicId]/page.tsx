@@ -11,6 +11,10 @@ import { getTopicWorkspace } from "@/api/topicWorkspace.api";
 import { useLanguageStore } from "@/store/languageStore";
 import { useProgressStore } from "@/store/progressStore";
 import { cn } from "@/lib/utils";
+import { MultipleChoice } from "@/features/lesson/components/questions/MultipleChoice";
+import { MatchingGame } from "@/features/lesson/components/questions/MatchingGame";
+import { SentenceScramble } from "@/features/lesson/components/questions/SentenceScramble";
+import { ClozeTest } from "@/features/lesson/components/questions/ClozeTest";
 import {
   LocalizedOrString,
   MatchingQuestionContent,
@@ -138,215 +142,7 @@ const LevelUpCelebration = ({ newLevel, width, height, onUnlock }: LevelUpCelebr
   );
 };
 
-interface MatchingQuestionProps {
-  question: TopicTestQuestion;
-  uiLanguage: UiLanguage;
-  targetLanguage: LearningLanguage;
-  fallbackLanguage: LearningLanguage;
-  onAnswered: (isCorrect: boolean) => void;
-  disabled?: boolean;
-}
 
-const MatchingQuestion = ({
-  question,
-  uiLanguage,
-  targetLanguage,
-  fallbackLanguage,
-  onAnswered,
-  disabled = false,
-}: MatchingQuestionProps) => {
-  const content = question.content as MatchingQuestionContent;
-  const prompt = getLocalizedText(content.prompt, targetLanguage, fallbackLanguage);
-  const text = getPageText(uiLanguage);
-
-  const sourcePairs = useMemo(
-    () =>
-      (content.pairs || []).map((pair, index) => ({
-        id: `${question._id}-${index}`,
-        left: pair.left,
-        right: pair.right,
-      })),
-    [content.pairs, question._id]
-  );
-
-  const [leftSelectedId, setLeftSelectedId] = useState<string | null>(null);
-  const [rightSelectedId, setRightSelectedId] = useState<string | null>(null);
-  const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
-  const [mistakes, setMistakes] = useState(0);
-  const [wrongPair, setWrongPair] = useState<{ left: string; right: string } | null>(null);
-
-  const shuffledLeft = useMemo(() => sourcePairs, [sourcePairs]);
-  const shuffledRight = useMemo(() => [...sourcePairs].reverse(), [sourcePairs]);
-
-  const checkMatch = (leftId: string, rightId: string) => {
-    const isCorrectPair = leftId === rightId;
-
-    if (isCorrectPair) {
-      const isAlreadyMatched = matchedIds.has(leftId);
-      const newSize = isAlreadyMatched ? matchedIds.size : matchedIds.size + 1;
-
-      setMatchedIds((prev) => {
-        const next = new Set(prev);
-        next.add(leftId);
-        return next;
-      });
-
-      if (newSize === sourcePairs.length) {
-        onAnswered(mistakes === 0);
-      }
-    } else {
-      setMistakes((prev) => prev + 1);
-      setWrongPair({ left: leftId, right: rightId });
-      window.setTimeout(() => setWrongPair(null), 300);
-    }
-
-    setLeftSelectedId(null);
-    setRightSelectedId(null);
-  };
-
-  const onSelectLeft = (pairId: string) => {
-    if (disabled || matchedIds.has(pairId)) return;
-
-    if (rightSelectedId) {
-      checkMatch(pairId, rightSelectedId);
-      return;
-    }
-
-    setLeftSelectedId(pairId);
-  };
-
-  const onSelectRight = (pairId: string) => {
-    if (disabled || matchedIds.has(pairId)) return;
-
-    if (leftSelectedId) {
-      checkMatch(leftSelectedId, pairId);
-      return;
-    }
-
-    setRightSelectedId(pairId);
-  };
-
-  return (
-    <div className="w-full animate-in slide-in-from-bottom-4 duration-300">
-      {prompt ? (
-        <div className="mb-6 rounded-2xl border-2 border-green-100 bg-green-50/70 p-4">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">{text.mode}</p>
-          <h2 className="mt-2 text-2xl font-black leading-tight text-slate-900">{prompt}</h2>
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-        <div className="space-y-3">
-          {shuffledLeft.map((pair) => (
-            <button
-              key={`left-${pair.id}`}
-              type="button"
-              disabled={disabled || matchedIds.has(pair.id)}
-              onClick={() => onSelectLeft(pair.id)}
-              className={cn(
-                "w-full rounded-xl border-2 border-b-4 px-4 py-3 text-left font-semibold transition-all",
-                "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-                leftSelectedId === pair.id && "border-indigo-400 bg-indigo-50 text-indigo-700",
-                wrongPair?.left === pair.id && "border-rose-400 bg-rose-50 text-rose-700",
-                matchedIds.has(pair.id) && "border-emerald-300 bg-emerald-50 text-emerald-700",
-                (disabled || matchedIds.has(pair.id)) && "cursor-not-allowed opacity-80"
-              )}
-            >
-              {pair.left}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          {shuffledRight.map((pair) => (
-            <button
-              key={`right-${pair.id}`}
-              type="button"
-              disabled={disabled || matchedIds.has(pair.id)}
-              onClick={() => onSelectRight(pair.id)}
-              className={cn(
-                "w-full rounded-xl border-2 border-b-4 px-4 py-3 text-left font-semibold transition-all",
-                "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-                rightSelectedId === pair.id && "border-indigo-400 bg-indigo-50 text-indigo-700",
-                wrongPair?.right === pair.id && "border-rose-400 bg-rose-50 text-rose-700",
-                matchedIds.has(pair.id) && "border-emerald-300 bg-emerald-50 text-emerald-700",
-                (disabled || matchedIds.has(pair.id)) && "cursor-not-allowed opacity-80"
-              )}
-            >
-              {pair.right}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface ClozeQuestionProps {
-  question: TopicTestQuestion;
-  uiLanguage: UiLanguage;
-  targetLanguage: LearningLanguage;
-  fallbackLanguage: LearningLanguage;
-  onAnswered: (isCorrect: boolean) => void;
-  disabled?: boolean;
-}
-
-const ClozeQuestion = ({
-  question,
-  uiLanguage,
-  targetLanguage,
-  fallbackLanguage,
-  onAnswered,
-  disabled = false,
-}: ClozeQuestionProps) => {
-  const content = question.content as TopicTestClozeContent;
-  const sentence = getLocalizedText(content.sentence, targetLanguage, fallbackLanguage);
-  const translation = getLocalizedText(content.sentence, fallbackLanguage, targetLanguage);
-  const answer = getLocalizedText(content.answer, targetLanguage, fallbackLanguage);
-  const text = getPageText(uiLanguage);
-
-  const [input, setInput] = useState("");
-
-  const check = () => {
-    if (disabled || !input.trim()) return;
-    onAnswered(normalizeCompareValue(input) === normalizeCompareValue(answer));
-  };
-
-  return (
-    <div className="w-full animate-in slide-in-from-bottom-4 duration-300">
-      <div className="rounded-2xl border-2 border-violet-100 bg-violet-50/60 p-5">
-        <p className="text-xs font-black uppercase tracking-widest text-violet-600">{text.fillBlank}</p>
-        <p className="mt-2 text-xl font-black leading-relaxed text-slate-800">{sentence}</p>
-        {translation && translation !== sentence ? (
-          <p className="mt-1 text-sm font-medium text-slate-500">{translation}</p>
-        ) : null}
-      </div>
-
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          disabled={disabled}
-          placeholder={text.typeAnswer}
-          className="h-12 w-full rounded-xl border-2 border-slate-300 bg-white px-4 text-lg font-semibold text-slate-800 outline-none focus:border-violet-400 disabled:opacity-70"
-        />
-        <button
-          type="button"
-          onClick={check}
-          disabled={disabled || input.trim().length === 0}
-          className={cn(
-            "h-12 min-w-36 rounded-xl border-b-4 px-5 font-black text-white transition-all",
-            disabled || input.trim().length === 0
-              ? "cursor-not-allowed border-slate-300 bg-slate-300"
-              : "border-violet-700 bg-violet-600 hover:bg-violet-700"
-          )}
-        >
-          {text.check}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export default function TopicTestPage() {
   const params = useParams<{ topicId: string }>();
@@ -355,8 +151,8 @@ export default function TopicTestPage() {
   const markCompleted = useProgressStore((state) => state.markCompleted);
   const lang = useLanguageStore((state) => state.lang);
   const uiText = getPageText(lang);
-  const targetLanguage: LearningLanguage = lang === "ao" ? "ao" : "am";
-  const helperLanguage: LearningLanguage = targetLanguage === "am" ? "ao" : "am";
+  const targetLanguage: LearningLanguage = lang === "am" ? "ao" : "am";
+  const helperLanguage: LearningLanguage = lang;
 
   const topicId = Array.isArray(params.topicId) ? params.topicId[0] : params.topicId;
 
@@ -635,27 +431,60 @@ export default function TopicTestPage() {
         </header>
 
         <section className="rounded-3xl border-2 border-slate-200 bg-white p-5 shadow-[0_16px_50px_rgba(15,23,42,0.10)] sm:p-6">
-          {currentQuestion.type === "MATCHING" ? (
-            <MatchingQuestion
-              key={currentQuestion._id}
-              question={currentQuestion}
-              uiLanguage={lang}
-              targetLanguage={targetLanguage}
-              fallbackLanguage={helperLanguage}
-              onAnswered={onAnswered}
-              disabled={currentAnswered !== null}
-            />
-          ) : (
-            <ClozeQuestion
-              key={currentQuestion._id}
-              question={currentQuestion}
-              uiLanguage={lang}
-              targetLanguage={targetLanguage}
-              fallbackLanguage={helperLanguage}
-              onAnswered={onAnswered}
-              disabled={currentAnswered !== null}
-            />
-          )}
+          <div key={currentQuestion._id}>
+            {(() => {
+              const disabled = currentAnswered !== null;
+              switch (currentQuestion.type) {
+                case "MULTIPLE_CHOICE":
+                  return (
+                    <MultipleChoice
+                      content={currentQuestion.content as any}
+                      nativeLanguage={helperLanguage}
+                      targetLanguage={targetLanguage}
+                      onComplete={onAnswered}
+                      disabled={disabled}
+                      testMode={false}
+                    />
+                  );
+                case "MATCHING":
+                  return (
+                    <MatchingGame
+                      content={currentQuestion.content as any}
+                      language={lang}
+                      onComplete={onAnswered}
+                      disabled={disabled}
+                      testMode={false}
+                    />
+                  );
+                case "SCRAMBLE":
+                  return (
+                    <SentenceScramble
+                      content={currentQuestion.content as any}
+                      language={targetLanguage}
+                      onComplete={onAnswered}
+                      disabled={disabled}
+                      testMode={false}
+                    />
+                  );
+                case "CLOZE":
+                  return (
+                    <ClozeTest
+                      content={currentQuestion.content as any}
+                      language={targetLanguage}
+                      onComplete={onAnswered}
+                      disabled={disabled}
+                      testMode={false}
+                    />
+                  );
+                default:
+                  return (
+                    <p className="text-center text-rose-500 font-semibold py-4">
+                      Unsupported question type: {currentQuestion.type}
+                    </p>
+                  );
+              }
+            })()}
+          </div>
 
           {currentAnswered !== null ? (
             <div

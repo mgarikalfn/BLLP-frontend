@@ -8,7 +8,7 @@ import { useLanguageStore } from "@/store/languageStore";
 const uiText = {
   am: {
     title: "ተልዕኮዎች እና ባጆች",
-    subtitle: "ዕለታዊ ተግባራትን ያጠናቅቁ እና የዕድሜ ልክ ስኬቶችን ያግኙ!",
+    subtitle: "ዕለታዊ ተግባራትን ያጠናቅቁ እና  ስኬቶችን ያግኙ!",
   },
   ao: {
     title: "Gaaffiilee fi Baajota",

@@ -162,7 +162,7 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
               className="px-4 py-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition text-slate-700 font-semibold text-sm flex items-center gap-3"
               onClick={() => setIsMoreOpen(false)}
             >
-              <Image src="/certificate.png" alt="Certification" height={20} width={20} unoptimized />
+              <Image src="/certification.png" alt="Certification" height={20} width={20} unoptimized />
               Certification
             </Link>
             
