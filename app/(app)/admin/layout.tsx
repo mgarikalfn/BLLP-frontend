@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Settings, ShieldCheck, Users, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Settings, ShieldCheck, Users, ShieldAlert, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { SidebarItem } from "@/components/layout/sidebar-item";
 
@@ -17,6 +17,7 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
 
   const [role, setRole] = useState<string | null>(user?.role ?? null);
@@ -50,6 +51,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace("/");
     }
   }, [isCheckingRole, isAllowed, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   if (isCheckingRole) {
     return (
@@ -92,11 +98,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </div>
 
-        <div className="p-4">
+        <div className="p-4 space-y-2">
           <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-white">
             <ShieldCheck size={16} />
             <span className="text-xs font-black uppercase tracking-widest">Admin Only</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 rounded-xl border-2 border-red-200 px-3 py-2.5 text-red-600 font-bold text-sm hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </div>
       </aside>
 

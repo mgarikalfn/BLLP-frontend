@@ -381,9 +381,9 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
       nextOptions[optIndex] = { ...opt, [lang]: val };
       
       // If we are editing the currently correct option, we MUST also update correctAnswer!
-      let nextCorrectAnswer = content.correctAnswer;
+      let nextCorrectAnswer = toLocalizedRecord(content.correctAnswer);
       if (optIndex === correctIndex) {
-        nextCorrectAnswer = { ...toLocalizedRecord(nextCorrectAnswer), [lang]: val };
+        nextCorrectAnswer = { ...nextCorrectAnswer, [lang]: val };
       }
       
       onChange(index, { ...question, content: { ...content, options: nextOptions, correctAnswer: nextCorrectAnswer } });

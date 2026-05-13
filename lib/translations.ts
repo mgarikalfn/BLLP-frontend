@@ -1,6 +1,6 @@
 export const translations = {
   am: {
-    title: "አዳዲስ ቋንቋዎችን በሊንጎ ይማሩ፣ ይለማመዱ እና ያሳድጉ።",
+    title: "አዳዲስ ቋንቋዎችን Afaan-ልሳን ይማሩ፣ ይለማመዱ እና ያሳድጉ።",
     login: "ግባ",
     getStarted: "ጀምር",
     haveAccount: "አካውንት አለኝ",
@@ -11,7 +11,7 @@ export const translations = {
     totalXP: "ጠቅላላ XP",
   },
   ao: {
-    title: "Afaanota haaraa Lingo waliin baradhu, shaakali, fi itti cimaa.",
+    title: "Afaanota haaraa Afaan-ልሳን waliin baradhu, shaakali, fi itti cimaa.",
     login: "Seeni",
     getStarted: "Eegali",
     haveAccount: "Herrega nan qaba",

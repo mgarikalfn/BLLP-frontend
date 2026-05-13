@@ -65,25 +65,49 @@ export default function LoginPage() {
     </div>
   );
 } */
+"use client";
+
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { useLanguageStore } from "@/store/languageStore";
 
 export default function LoginPage() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-700 text-center">እንኳን ደህና መጡ! (Welcome back!)</h2>
-      <LoginForm />
+  const lang = useLanguageStore((s) => s.lang);
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-slate-200" />
+  const t = {
+    welcome: lang === "am" ? "እንኳን ደህና መጡ!" : "Baga nagaan dhuftan!",
+    or: lang === "am" ? "ወይም በዚህ ይቀጥሉ" : "Yookaan kanaan itti fufi",
+    noAccount: lang === "am" ? "Account የለዎት?" : "Akkaawuntii hin qabduu?",
+    signup: lang === "am" ? "ተመዝገብ" : "Galmaa'i",
+  };
+
+  return (
+    <div className="max-w-md mx-auto">
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-slate-700 text-center">{t.welcome}</h2>
+        <LoginForm />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-3 text-slate-500 font-bold">{t.or}</span>
+          </div>
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-3 text-slate-500 font-bold">Or continue with</span>
+
+        <GoogleAuthButton />
+
+        {/* Signup Link */}
+        <div className="text-center pt-1">
+          <p className="text-sm text-slate-600">
+            {t.noAccount} {" "}
+            <a href="/signup" className="text-green-600 font-bold hover:text-green-700 transition-colors">
+              {t.signup}
+            </a>
+          </p>
         </div>
       </div>
-
-      <GoogleAuthButton />
     </div>
   );
 }

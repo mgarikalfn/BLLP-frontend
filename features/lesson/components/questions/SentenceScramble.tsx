@@ -6,8 +6,9 @@ import { toDisplayText } from "../QuestionHost";
 interface SentenceScrambleProps {
   content: ScrambleQuestionContent;
   language: "am" | "ao";
-  onComplete: (isCorrect: boolean) => void;
+  onComplete: (isCorrect: boolean, answerGiven?: any) => void;
   disabled?: boolean;
+  testMode?: boolean;
 }
 
 const resolveSentenceValue = (value: unknown, language: "am" | "ao"): string => {
@@ -78,7 +79,7 @@ const normalizeSentenceForCompare = (value: string): string => {
     .trim();
 };
 
-export const SentenceScramble = ({ content, language, onComplete, disabled = false }: SentenceScrambleProps) => {
+export const SentenceScramble = ({ content, language, onComplete, disabled = false, testMode = false }: SentenceScrambleProps) => {
   const prompt = toDisplayText(content.prompt, language);
   const correctSentence = useMemo(() => {
     const preferred = resolveSentenceValue(content.correctSentence, language);
@@ -110,7 +111,7 @@ export const SentenceScramble = ({ content, language, onComplete, disabled = fal
   const checkAnswer = () => {
     const composed = normalizeSentenceForCompare(answerWords.join(" "));
     const expected = normalizeSentenceForCompare(correctSentence);
-    onComplete(composed === expected);
+    onComplete(composed === expected, answerWords);
   };
 
   const expectedSlots = Math.max(initialWordBank.length, 1);
@@ -181,7 +182,7 @@ export const SentenceScramble = ({ content, language, onComplete, disabled = fal
             : "border-green-700 bg-green-600 hover:bg-green-700"
         )}
       >
-        {checkLabel}
+        {testMode ? "Lock In" : checkLabel}
       </button>
     </div>
   );

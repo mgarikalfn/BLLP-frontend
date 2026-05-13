@@ -45,6 +45,7 @@ export function TopNavbar() {
 
   const user = useAuthStore((state) => state.user);
   const role = user?.role?.toUpperCase();
+  const isLearner = role === "LEARNER" || !role;
 
   const gems = useEconomyStore((state) => state.gems);
   const hearts = useEconomyStore((state) => state.hearts);
@@ -56,8 +57,10 @@ export function TopNavbar() {
   const xp = data?.user?.xp ?? 0;
 
   useEffect(() => {
-    void fetchEconomyStatus();
-  }, [fetchEconomyStatus]);
+    if (isLearner) {
+      void fetchEconomyStatus();
+    }
+  }, [fetchEconomyStatus, isLearner]);
 
   return (
     <nav className="fixed top-0 left-0 lg:left-[256px] right-0 z-50 flex h-16 items-center justify-between border-b-2 border-slate-200 bg-white/80 px-4 backdrop-blur-md shadow-sm">
@@ -66,8 +69,8 @@ export function TopNavbar() {
         <MobileSidebar />
       </div>
 
-      {/* Center/Left: Game Economy Metrics */}
-      {(role === "LEARNER" || !role) && (
+      {/* Center/Left: Game Economy Metrics — Learner only */}
+      {isLearner ? (
         <div className="flex flex-1 items-center justify-center lg:justify-start gap-2 sm:gap-4">
           <Pill
             icon={<Flame size={20} className="text-orange-500" fill="#f97316" />}
@@ -98,19 +101,20 @@ export function TopNavbar() {
             tooltip="Hearts"
           />
         </div>
+      ) : (
+        <div className="flex-1" />
       )}
 
-      {/* Spacer if economy is hidden */}
-      {(role === "EXPERT" || role === "ADMIN") && <div className="flex-1" />}
-
-      {/* Right side: XP, User Profile & Notifications */}
+      {/* Right side: XP (learner only), User Profile */}
       <div className="flex items-center gap-4">
-        <div className="hidden lg:flex items-center gap-2" title="Total XP">
-          <Star size={24} className="text-amber-400" fill="#fbbf24" />
-          <span className="text-base font-black text-amber-500">{xp} XP</span>
-        </div>
+        {isLearner && (
+          <div className="hidden lg:flex items-center gap-2" title="Total XP">
+            <Star size={24} className="text-amber-400" fill="#fbbf24" />
+            <span className="text-base font-black text-amber-500">{xp} XP</span>
+          </div>
+        )}
 
-        <NotificationBell />
+        {isLearner && <NotificationBell />}
 
         <UserMenu />
       </div>

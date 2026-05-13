@@ -7,8 +7,9 @@ interface MultipleChoiceProps {
   content: MultipleChoiceQuestionContent;
   nativeLanguage: "am" | "ao";
   targetLanguage: "am" | "ao";
-  onComplete: (isCorrect: boolean) => void;
+  onComplete: (isCorrect: boolean, answerGiven?: any) => void;
   disabled?: boolean;
+  testMode?: boolean;
 }
 
 export const MultipleChoice = ({
@@ -17,6 +18,7 @@ export const MultipleChoice = ({
   targetLanguage,
   onComplete,
   disabled = false,
+  testMode = false,
 }: MultipleChoiceProps) => {
   const instructionLabel =
     nativeLanguage === "am" ? "ትክክለኛውን ትርጉም ይምረጡ" : "Hiikkaa sirrii filadhu";
@@ -45,15 +47,19 @@ export const MultipleChoice = ({
               onClick={() => {
                 const isCorrect = index === correctIndex;
                 setSelectedIndex(index);
-                setSelectedIsCorrect(isCorrect);
-                onComplete(isCorrect);
+                if (!testMode) {
+                  setSelectedIsCorrect(isCorrect);
+                }
+                // Send the actual text they clicked as answerGiven
+                onComplete(isCorrect, option);
               }}
               disabled={disabled}
               className={cn(
                 "w-full rounded-2xl border-2 border-b-4 bg-white p-4 text-left text-gray-700 transition-transform duration-150",
                 "hover:bg-gray-50 active:scale-[0.99] active:border-b-2",
-                selectedIndex === index && selectedIsCorrect && "border-green-400 bg-green-50 text-green-700",
-                selectedIndex === index && selectedIsCorrect === false && "border-red-400 bg-red-50 text-red-700",
+                selectedIndex === index && !testMode && selectedIsCorrect && "border-green-400 bg-green-50 text-green-700",
+                selectedIndex === index && !testMode && selectedIsCorrect === false && "border-red-400 bg-red-50 text-red-700",
+                selectedIndex === index && testMode && "border-blue-400 bg-blue-50 text-blue-700",
                 disabled && "pointer-events-none opacity-70"
               )}
             >

@@ -142,7 +142,6 @@ export default function ExpertDashboardPage() {
     section: "A1",
     level: "BEGINNER",
     unitNumber: "",
-    thumbnailUrl: "",
     isPublished: false,
   });
   const [editLoading, setEditLoading] = useState(false);
@@ -222,7 +221,6 @@ export default function ExpertDashboardPage() {
       section: topic?.section ?? "A1",
       level: topic?.level ?? "BEGINNER",
       unitNumber: Number.isFinite(Number(topic?.unitNumber)) ? String(topic.unitNumber) : "",
-      thumbnailUrl: topic?.thumbnailUrl ?? "",
       isPublished: Boolean(topic?.isPublished),
     });
   };
@@ -278,7 +276,6 @@ export default function ExpertDashboardPage() {
     const descriptionAo = editForm.descriptionAo.trim();
     const tipsAm = editForm.tipsAm.trim();
     const tipsAo = editForm.tipsAo.trim();
-    const thumbnailUrl = editForm.thumbnailUrl.trim();
 
     if (!titleAm || !titleAo || !descriptionAm || !descriptionAo) {
       setEditError("Title and description are required.");
@@ -299,7 +296,6 @@ export default function ExpertDashboardPage() {
         section: editForm.section,
         level: editForm.level,
         unitNumber,
-        thumbnailUrl,
         isPublished: editForm.isPublished,
       });
       closeEditModal();
@@ -478,8 +474,8 @@ export default function ExpertDashboardPage() {
         </button>
       </div>
 
-      <div className="mt-4 rounded-2xl border-2 border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid grid-cols-7 gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <div className="mt-4 overflow-x-auto rounded-2xl border-2 border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid min-w-[800px] grid-cols-[100px_70px_1fr_120px_60px_120px_220px] items-center gap-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
           <span>Section</span>
           <span>Unit#</span>
           <span>Title (Amharic)</span>
@@ -489,12 +485,12 @@ export default function ExpertDashboardPage() {
           <span>Actions</span>
         </div>
 
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 min-w-[800px] space-y-2">
           {topicsLoading ? (
             Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={`topic-skeleton-${index}`}
-                className="grid grid-cols-7 gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+                className="grid grid-cols-[100px_70px_1fr_120px_60px_120px_220px] items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
               >
                 <div className="h-4 w-16 rounded bg-slate-200" />
                 <div className="h-4 w-10 rounded bg-slate-200" />
@@ -519,7 +515,7 @@ export default function ExpertDashboardPage() {
               return (
                 <div
                   key={topic._id ?? `${sectionLabel}-${topic.unitNumber}`}
-                  className="grid grid-cols-7 gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700"
+                  className="grid grid-cols-[100px_70px_1fr_120px_60px_120px_220px] items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700"
                 >
                   <span
                     className={`inline-flex items-center justify-center rounded-full border px-2.5 py-1 text-xs font-black uppercase tracking-[0.18em] ${badgeClass}`}
@@ -727,22 +723,24 @@ export default function ExpertDashboardPage() {
         >
           <div className="absolute inset-0 bg-slate-900/60" />
           <div
-            className="relative z-10 w-full max-w-md rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-xl"
+            className="relative z-10 w-full max-w-md max-h-[85vh] flex flex-col rounded-2xl border-2 border-slate-200 bg-white shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={closeEditModal}
-              className="absolute right-4 top-4 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-black text-slate-500"
-            >
-              ✕
-            </button>
-            <div className="space-y-1">
-              <h3 className="text-xl font-black text-slate-900">Edit Topic</h3>
-              <p className="text-sm font-semibold text-slate-600">Update the bilingual topic details below.</p>
+            <div className="flex items-center justify-between p-6 pb-0">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900">Edit Topic</h3>
+                <p className="text-sm font-semibold text-slate-600">Update the bilingual topic details below.</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-black text-slate-500"
+              >
+                ✕
+              </button>
             </div>
 
-            <form className="mt-5 space-y-4" onSubmit={handleUpdateTopic}>
+            <form className="flex-1 overflow-y-auto p-6 pt-5 space-y-4" onSubmit={handleUpdateTopic}>
               <div className="space-y-2">
                 <label
                   htmlFor="edit-title-am"
@@ -837,23 +835,7 @@ export default function ExpertDashboardPage() {
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="edit-thumbnail-url"
-                    className="text-xs font-black uppercase tracking-[0.2em] text-slate-500"
-                  >
-                    Thumbnail URL
-                  </label>
-                  <input
-                    id="edit-thumbnail-url"
-                    value={editForm.thumbnailUrl}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, thumbnailUrl: event.target.value }))}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-                  />
-                </div>
-
+              <div className="grid gap-3 sm:grid-cols-1">
                 <div className="space-y-2">
                   <label
                     htmlFor="edit-status"

@@ -46,39 +46,41 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold text-slate-700">Verify your email</h2>
-        <p className="text-sm text-slate-500">
-          {email ? `Check ${email} for your verification code.` : "Check your inbox for the verification code."}
-        </p>
-      </div>
+    <div className="max-w-md mx-auto">
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-bold text-slate-700">Verify your email</h2>
+          <p className="text-sm text-slate-500">
+            {email ? `Check ${email} for your verification code.` : "Check your inbox for the verification code."}
+          </p>
+        </div>
 
-      <div className={`rounded-xl px-4 py-3 text-sm font-semibold ${getMessageStyle(status)}`}>
-        {message}
-      </div>
+        <div className={`rounded-xl px-4 py-3 text-sm font-semibold ${getMessageStyle(status)}`}>
+          {message}
+        </div>
 
-      <form onSubmit={handleVerify} className="space-y-3">
-        <Input
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          placeholder="Enter verification code"
-          className="h-14 rounded-2xl border-2 border-slate-200"
-        />
-        <Button
-          type="submit"
-          disabled={status === "loading"}
-          className="w-full h-14 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl shadow-[0_4px_0_0_#15803d] active:shadow-none active:translate-y-1 transition-all"
-        >
-          {status === "loading" ? "Verifying..." : "Verify email"}
-        </Button>
-      </form>
+        <form onSubmit={handleVerify} className="space-y-3">
+          <Input
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+            placeholder="Enter verification code"
+            className="h-14 rounded-2xl border-2 border-slate-200"
+          />
+          <Button
+            type="submit"
+            disabled={status === "loading"}
+            className="w-full h-14 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl shadow-[0_4px_0_0_#15803d] active:shadow-none active:translate-y-1 transition-all"
+          >
+            {status === "loading" ? "Verifying..." : "Verify email"}
+          </Button>
+        </form>
 
-      <div className="text-center text-sm text-slate-500">
-        Already verified?{" "}
-        <Link href="/login" className="font-semibold text-green-600 hover:text-green-700">
-          Sign in
-        </Link>
+        <div className="text-center text-sm text-slate-500">
+          Already verified?{" "}
+          <Link href="/login" className="font-semibold text-green-600 hover:text-green-700">
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   );

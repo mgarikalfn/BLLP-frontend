@@ -11,15 +11,18 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const accessToken = useAuthStore((s) => s.accessToken);
+  const hydrate = useAuthStore((s) => s.hydrate);
   const router = useRouter();
 
   useEffect(() => {
+    hydrate();
+
     const storedToken = localStorage.getItem("accessToken");
 
     if (!accessToken && !storedToken) {
       router.push("/login");
     }
-  }, [accessToken]);
+  }, [accessToken, hydrate]);
 
   return <AppShell>{children}</AppShell>;
 }

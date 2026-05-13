@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, User, BookOpen, SlidersHorizontal, Camera, UserCircle2 } from "lucide-react";
+import { Loader2, User, BookOpen, SlidersHorizontal, Camera, UserCircle2, Eye, EyeOff } from "lucide-react";
+import { changePasswordSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { ProfileData, UpdateProfilePayload } from "@/types/ProfileData";
 import { useLanguageStore } from "@/store/languageStore";
+import { useAuthStore } from "@/store/authStore";
 import { api } from "@/lib/api";
 
 type Tab = "account" | "learning" | "preferences";
 
-const tabs: { id: Tab; icon: React.ElementType }[] = [
+const allTabs: { id: Tab; icon: React.ElementType }[] = [
   { id: "account", icon: User },
   { id: "learning", icon: BookOpen },
   { id: "preferences", icon: SlidersHorizontal },
@@ -22,6 +24,15 @@ export default function SettingsClient() {
   const updateProfile = useUpdateProfile();
   const lang = useLanguageStore((s) => s.lang);
   const setLearningDirection = useLanguageStore((s) => s.setLearningDirection);
+  const user = useAuthStore((s) => s.user);
+  const role = user?.role?.toUpperCase();
+  const isLearner = role === "LEARNER" || !role;
+
+  // Filter tabs based on role — hide 'learning' for non-learners
+  const tabs = allTabs.filter((tab) => {
+    if (tab.id === "learning" && !isLearner) return false;
+    return true;
+  });
 
   // ---------- Form State ----------
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -31,6 +42,10 @@ export default function SettingsClient() {
   const [learningDirection, setLearningDirectionLocal] = useState<ProfileData["learningSettings"]["learningDirection"]>("AM_TO_OR");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -62,7 +77,8 @@ export default function SettingsClient() {
       learningDirection: lang === "am" ? "የመማር አቅጣጫ" : "Kallattii Barnootaa",
       changePassword: lang === "am" ? "የይለፍ ቃል ቀይር" : "Jecha Darbii Jijjiiri",
       currentPassword: lang === "am" ? "የአሁኑ የይለፍ ቃል" : "Jecha Darbii Ammaa",
-      newPassword: lang === "am" ? "አዲስ የይለፍ ቃል (ቢያንስ 6)" : "Jecha Darbii Haaraa (gadi aanaan 6)",
+      newPassword: lang === "am" ? "አዲስ የይለፍ ቃል" : "Jecha Darbii Haaraa",
+      confirmPassword: lang === "am" ? "አዲስ የይለፍ ቃል ያረጋግጡ" : "Jecha Darbii Mirkaneessi",
       interfaceLang: lang === "am" ? "የመተግበሪያ ቋንቋ" : "Afaan Appii",
       save: lang === "am" ? "ለውጦችን አስቀምጥ" : "Jijjiirama olkaa'i",
       saving: lang === "am" ? "በማስቀመጥ ላይ..." : "Olkaa'aa jira...",
@@ -91,21 +107,31 @@ export default function SettingsClient() {
       // Profile update
       const payload: UpdateProfilePayload = {
         bio: bio.trim() || undefined,
-        targetLanguage,
-        learningDirection,
       };
+      // Only include learning settings for learners
+      if (isLearner) {
+        payload.targetLanguage = targetLanguage;
+        payload.learningDirection = learningDirection;
+      }
       if (avatarFile) payload.avatarFile = avatarFile;
 
       await updateProfile.mutateAsync(payload);
 
-      // Sync language store
-      setLearningDirection(learningDirection);
+      // Sync language store (learner only)
+      if (isLearner) {
+        setLearningDirection(learningDirection);
+      }
 
-      // Password change (if filled in)
-      if (currentPassword && newPassword) {
+      // Password change (if any field is filled)
+      if (currentPassword || newPassword || confirmPassword) {
+        const validation = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
+        if (!validation.success) {
+          throw new Error(validation.error.errors[0].message);
+        }
         await api.post("/auth/change-password", { currentPassword, newPassword });
         setCurrentPassword("");
         setNewPassword("");
+        setConfirmPassword("");
       }
 
       setAvatarFile(null);
@@ -223,21 +249,57 @@ export default function SettingsClient() {
                     <div className="space-y-4">
                       <div>
                         <label className="mb-1 block text-sm font-bold text-gray-700">{text.currentPassword}</label>
-                        <input
-                          type="password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          className="h-11 w-full rounded-xl border-2 border-gray-200 px-4 text-sm outline-none transition focus:border-green-400"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showCurrentPassword ? "text" : "password"}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="h-11 w-full rounded-xl border-2 border-gray-200 px-4 pr-12 text-sm outline-none transition focus:border-green-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword((prev) => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <label className="mb-1 block text-sm font-bold text-gray-700">{text.newPassword}</label>
-                        <input
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="h-11 w-full rounded-xl border-2 border-gray-200 px-4 text-sm outline-none transition focus:border-green-400"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="h-11 w-full rounded-xl border-2 border-gray-200 px-4 pr-12 text-sm outline-none transition focus:border-green-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword((prev) => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-bold text-gray-700">{text.confirmPassword}</label>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="h-11 w-full rounded-xl border-2 border-gray-200 px-4 pr-12 text-sm outline-none transition focus:border-green-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword((prev) => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

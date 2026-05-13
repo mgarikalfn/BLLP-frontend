@@ -16,9 +16,10 @@ interface AuthState {
 
   login: (user: User, accessToken: string) => void;
   logout: () => Promise<void>;
+  hydrate: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
 
@@ -43,6 +44,30 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null,
         accessToken: null,
       });
+    }
+  },
+
+  hydrate: () => {
+    // If user is already in the store, nothing to do
+    if (get().user) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      set({
+        user: {
+          id: payload.id || payload.sub || "",
+          username: payload.username || "",
+          role: payload.role || "LEARNER",
+          learningDirection: payload.learningDirection,
+        },
+        accessToken: token,
+      });
+    } catch {
+      // Token is malformed — clear it
+      localStorage.removeItem("accessToken");
     }
   },
 }));
