@@ -71,7 +71,7 @@ export const TopicSection: React.FC<TopicSectionProps> = ({ topic }) => {
   return (
     <section className="w-full mb-16 relative">
       {/* ── Sticky topic banner ── */}
-      <div className={`sticky top-0 z-50 w-full ${bannerColor} text-white shadow-md`}>
+      <div className={`sticky top-0 z-40 w-full ${bannerColor} text-white shadow-md`}>
         {/* Top micro-bar: section pill + unit number + tips button */}
         <div className="flex items-center justify-between px-4 pt-3 pb-1 max-w-3xl mx-auto">
           <div className="flex items-center gap-2">

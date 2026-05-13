@@ -6,11 +6,12 @@ import { toDisplayText } from "../QuestionHost";
 interface ClozeTestProps {
   content: ClozeQuestionContent;
   language: "am" | "ao";
-  onComplete: (isCorrect: boolean) => void;
+  onComplete: (isCorrect: boolean, answerGiven?: any) => void;
   disabled?: boolean;
+  testMode?: boolean;
 }
 
-export const ClozeTest = ({ content, language, onComplete, disabled = false }: ClozeTestProps) => {
+export const ClozeTest = ({ content, language, onComplete, disabled = false, testMode = false }: ClozeTestProps) => {
   const [selectedWord, setSelectedWord] = useState<string>("");
 
   // Also handle legacy "sentence" field that some old questions may have
@@ -49,7 +50,13 @@ export const ClozeTest = ({ content, language, onComplete, disabled = false }: C
   const handleSelect = (option: string) => {
     if (disabled) return;
     setSelectedWord(option);
-    onComplete(option === correctAnswer);
+    onComplete(option === correctAnswer, option);
+  };
+
+  const handleInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (disabled || !selectedWord.trim()) return;
+    onComplete(selectedWord === correctAnswer, selectedWord);
   };
 
   const nativeLanguage = language === "am" ? "ao" : "am"; // The learner's native language is the opposite of the target language
@@ -71,28 +78,48 @@ export const ClozeTest = ({ content, language, onComplete, disabled = false }: C
         <span> {textAfter}</span>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        {options.map((option, index) => {
-          const isSelected = selectedWord === option;
+      {options.length > 0 ? (
+        <div className="flex flex-wrap gap-3">
+          {options.map((option, index) => {
+            const isSelected = selectedWord === option;
 
-          return (
-            <button
-              key={`${option}-${index}`}
-              type="button"
-              onClick={() => handleSelect(option)}
-              disabled={disabled}
-              className={cn(
-                "rounded-full border-2 border-b-4 px-4 py-2 font-semibold transition-transform",
-                "hover:bg-gray-50 active:scale-95",
-                isSelected ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700",
-                disabled && "opacity-70"
-              )}
-            >
-              {option}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={`${option}-${index}`}
+                type="button"
+                onClick={() => handleSelect(option)}
+                disabled={disabled}
+                className={cn(
+                  "rounded-full border-2 border-b-4 px-4 py-2 font-semibold transition-transform",
+                  "hover:bg-gray-50 active:scale-95",
+                  isSelected ? "border-blue-400 bg-blue-50 text-blue-700" : "border-gray-300 bg-white text-gray-700",
+                  disabled && "opacity-70"
+                )}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <form onSubmit={handleInputSubmit} className="flex w-full flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            value={selectedWord}
+            onChange={(e) => setSelectedWord(e.target.value)}
+            disabled={disabled}
+            placeholder="Type your answer here..."
+            className="w-full sm:flex-1 rounded-xl border-2 border-gray-300 px-4 py-3 font-semibold text-gray-800 focus:border-blue-500 focus:outline-none disabled:opacity-70"
+          />
+          <button
+            type="submit"
+            disabled={disabled || !selectedWord.trim()}
+            className="w-full sm:w-auto rounded-xl border-b-4 border-blue-700 bg-blue-600 px-6 py-3 font-bold text-white transition-transform hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-300"
+          >
+            {testMode ? "Lock In" : "Check"}
+          </button>
+        </form>
+      )}
     </div>
   );
 };

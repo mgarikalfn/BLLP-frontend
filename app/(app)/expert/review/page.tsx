@@ -130,7 +130,17 @@ type ToastState = {
 type LessonDraft = {
   title: { am: string; ao: string };
   grammarNotes: { am: string; ao: string };
-  vocabulary: Array<Record<string, unknown>>;
+  vocabulary: Array<{
+    am: string;
+    ao: string;
+    audioUrl?: { am?: string | null; ao?: string | null };
+    example?: {
+      am: string;
+      ao: string;
+      audioUrl?: { am?: string | null; ao?: string | null };
+    };
+    [key: string]: unknown;
+  }>;
   dialogue: Array<Record<string, unknown>>;
   quiz: Array<Record<string, unknown>>;
 };
@@ -152,7 +162,17 @@ type SpeakingDraft = {
   expectedText: { am: string; ao: string };
 };
 
-const normalizeVocabularyItem = (value: unknown): Record<string, unknown> => {
+const normalizeVocabularyItem = (value: unknown): {
+  am: string;
+  ao: string;
+  audioUrl?: { am?: string | null; ao?: string | null };
+  example?: {
+    am: string;
+    ao: string;
+    audioUrl?: { am?: string | null; ao?: string | null };
+  };
+  [key: string]: unknown;
+} => {
   if (!isRecord(value)) {
     return { am: "", ao: "" };
   }
@@ -526,6 +546,17 @@ export default function ExpertReviewPage() {
     });
   };
 
+  const updateVocabularyExample = (index: number, lang: "am" | "ao", value: string) => {
+    setLessonDraft((prev) => {
+      if (!prev) return prev;
+      const nextVocabulary = [...prev.vocabulary];
+      const current = isRecord(nextVocabulary[index]) ? { ...nextVocabulary[index] } : { am: "", ao: "" };
+      const currentExample = isRecord(current.example) ? { ...current.example } : { am: "", ao: "" };
+      nextVocabulary[index] = { ...current, example: { ...currentExample, [lang]: value } };
+      return { ...prev, vocabulary: nextVocabulary };
+    });
+  };
+
   const updateDialogueSpeaker = (index: number, value: string) => {
     setLessonDraft((prev) => {
       if (!prev) return prev;
@@ -640,9 +671,10 @@ export default function ExpertReviewPage() {
       if (audioChanges) {
         // Count total audio items cleared
         const vocabCount = audioChanges.vocabulary?.length || 0;
+        const exampleCount = audioChanges.vocabularyExamples?.length || 0;
         const dialogueCount = audioChanges.dialogue?.length || 0;
         const lineCount = audioChanges.lines?.length || 0;
-        const totalCount = vocabCount + dialogueCount + lineCount;
+        const totalCount = vocabCount + exampleCount + dialogueCount + lineCount;
 
         if (totalCount > 0) {
           showToast(
@@ -1268,16 +1300,135 @@ export default function ExpertReviewPage() {
                                           />
                                         </div>
                                       </div>
+                                      <div className="mt-3 border-t border-slate-200 pt-3">
+                                        <h5 className="text-[10px] font-black uppercase text-slate-400 mb-2">Example Sentences</h5>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                          <div>
+                                            <div className="mb-1 flex items-center justify-between">
+                                              <span className="text-[10px] font-black uppercase text-slate-400">Amharic Example</span>
+                                              <div className="flex items-center gap-1">
+                                                {exAudioUrl.am ? (
+                                                  <>
+                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                    <button onClick={() => playAudio(exAudioUrl.am)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                    <button onClick={() => handleRegenerateAudio(index, true, "am")} disabled={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.isExample} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'am' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                  </>
+                                                ) : (
+                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <textarea
+                                              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 min-h-[60px]"
+                                              value={typeof vItem.example?.am === "string" ? vItem.example.am : ""}
+                                              onChange={(event) => updateVocabularyExample(index, "am", event.target.value)}
+                                              placeholder="Amharic example sentence"
+                                            />
+                                          </div>
+                                          <div>
+                                            <div className="mb-1 flex items-center justify-between">
+                                              <span className="text-[10px] font-black uppercase text-slate-400">Oromo Example</span>
+                                              <div className="flex items-center gap-1">
+                                                {exAudioUrl.ao ? (
+                                                  <>
+                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                    <button onClick={() => playAudio(exAudioUrl.ao)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                    <button onClick={() => handleRegenerateAudio(index, true, "ao")} disabled={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.isExample} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'ao' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                  </>
+                                                ) : (
+                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <textarea
+                                              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700 min-h-[60px]"
+                                              value={typeof vItem.example?.ao === "string" ? vItem.example.ao : ""}
+                                              onChange={(event) => updateVocabularyExample(index, "ao", event.target.value)}
+                                              placeholder="Oromo example sentence"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="mt-3 border-t border-slate-200 pt-3">
+                                        <h5 className="mb-2 text-[10px] font-black uppercase text-slate-400">Example Sentences</h5>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                          <div>
+                                            <div className="mb-1 flex items-center justify-between">
+                                              <span className="text-[10px] font-black uppercase text-slate-400">Amharic Example</span>
+                                              <div className="flex items-center gap-1">
+                                                {exAudioUrl.am ? (
+                                                  <>
+                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                    <button onClick={() => playAudio(exAudioUrl.am)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                    <button onClick={() => handleRegenerateAudio(index, true, "am")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'am' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                  </>
+                                                ) : (
+                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <textarea
+                                              className="min-h-[60px] w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                              value={typeof vItem.example?.am === "string" ? vItem.example.am : ""}
+                                              onChange={(event) => updateVocabularyExample(index, "am", event.target.value)}
+                                              placeholder="Amharic example sentence"
+                                            />
+                                          </div>
+                                          <div>
+                                            <div className="mb-1 flex items-center justify-between">
+                                              <span className="text-[10px] font-black uppercase text-slate-400">Afaan Oromoo Example</span>
+                                              <div className="flex items-center gap-1">
+                                                {exAudioUrl.ao ? (
+                                                  <>
+                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
+                                                    <button onClick={() => playAudio(exAudioUrl.ao)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
+                                                    <button onClick={() => handleRegenerateAudio(index, true, "ao")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'ao' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
+                                                  </>
+                                                ) : (
+                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <textarea
+                                              className="min-h-[60px] w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
+                                              value={typeof vItem.example?.ao === "string" ? vItem.example.ao : ""}
+                                              onChange={(event) => updateVocabularyExample(index, "ao", event.target.value)}
+                                              placeholder="Afaan Oromoo example sentence"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
                                   ) : (
-                                    <div className="flex items-center justify-between">
-                                      <p className="text-sm font-semibold text-slate-800">
-                                        {formatLocalized(isRecord(vItem) ? vItem.word ?? vItem.text ?? vItem.content ?? vItem : vItem)}
-                                      </p>
-                                      <div className="flex gap-2">
-                                        {audioUrl.am && <button onClick={() => playAudio(audioUrl.am)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
-                                        {audioUrl.ao && <button onClick={() => playAudio(audioUrl.ao)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <p className="text-sm font-semibold text-slate-800">
+                                          {formatLocalized(isRecord(vItem) ? vItem.word ?? vItem.text ?? vItem.content ?? vItem : vItem)}
+                                        </p>
+                                        <div className="flex gap-2">
+                                          {audioUrl.am && <button onClick={() => playAudio(audioUrl.am)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
+                                          {audioUrl.ao && <button onClick={() => playAudio(audioUrl.ao)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100"><Play size={12}/></button>}
+                                        </div>
                                       </div>
+                                      {(vItem.example?.am || vItem.example?.ao) && (
+                                        <div className="border-t border-slate-200 pt-2">
+                                          <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Examples</p>
+                                          <div className="space-y-1">
+                                            {vItem.example?.am && (
+                                              <div className="flex items-start justify-between gap-2">
+                                                <p className="text-xs text-slate-700 flex-1">{vItem.example.am}</p>
+                                                {exAudioUrl.am && <button onClick={() => playAudio(exAudioUrl.am)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100 flex-shrink-0"><Play size={10}/></button>}
+                                              </div>
+                                            )}
+                                            {vItem.example?.ao && (
+                                              <div className="flex items-start justify-between gap-2">
+                                                <p className="text-xs text-slate-700 flex-1">{vItem.example.ao}</p>
+                                                {exAudioUrl.ao && <button onClick={() => playAudio(exAudioUrl.ao)} className="p-1 bg-slate-200 rounded-full text-slate-700 hover:bg-emerald-100 flex-shrink-0"><Play size={10}/></button>}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { AxiosError } from "axios";
 import { useAuthStore } from "@/store/authStore";
@@ -19,8 +20,18 @@ export const LoginForm = () => {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const initializeFromProfile = useLanguageStore((s) => s.initializeFromProfile);
+  const lang = useLanguageStore((s) => s.lang);
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const t = {
+    emailPlaceholder: lang === "am" ? "ኢሜይል" : "Iimeeyilii",
+    passwordPlaceholder: lang === "am" ? "የይለፍ ቃል" : "Jecha Darbii",
+    forgotPassword: lang === "am" ? "የይለፍ ቃልዎን ረሱ?" : "Jecha darbii dagattan?",
+    loginButton: lang === "am" ? "ግባ" : "Seeni",
+    loading: lang === "am" ? "በመጫን ላይ..." : "Fe'aa jira...",
+    errorFallback: lang === "am" ? "ችግር ተፈጥሯል" : "Rakkoon uumameera",
+  };
 
   
 
@@ -73,7 +84,7 @@ export const LoginForm = () => {
         <div>
           <Input
             {...register("email")}
-            placeholder="ኢሜይል (Email)"
+            placeholder={t.emailPlaceholder}
             className={`h-14 rounded-2xl border-2 ${errors.email ? 'border-red-500' : 'border-slate-200'}`}
           />
           {errors.email && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.email.message}</p>}
@@ -83,7 +94,7 @@ export const LoginForm = () => {
           <Input
             {...register("password")}
             type={showPassword ? "text" : "password"}
-            placeholder="የይለፍ ቃል (Password)"
+            placeholder={t.passwordPlaceholder}
             className={`h-14 rounded-2xl border-2 pr-12 ${errors.password ? 'border-red-500' : 'border-slate-200'}`}
           />
           <button
@@ -98,12 +109,21 @@ export const LoginForm = () => {
         </div>
       </div>
 
+      <div className="flex justify-end">
+        <Link
+          href="/forgot-password"
+          className="text-xs font-semibold text-slate-500 hover:text-green-600 transition-colors"
+        >
+          {t.forgotPassword}
+        </Link>
+      </div>
+
       <Button 
         type="submit" 
         disabled={isSubmitting}
         className="w-full h-14 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl shadow-[0_4px_0_0_#15803d] active:shadow-none active:translate-y-1 transition-all"
       >
-        {isSubmitting ? "በመጫን ላይ..." : "ግባ (Login)"}
+        {isSubmitting ? t.loading : t.loginButton}
       </Button>
     </form>
   );

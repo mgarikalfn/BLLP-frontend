@@ -12,17 +12,23 @@ import { getRedirectPath } from "@/lib/roleRedirect";
 
 export default function GoogleAuthButton() {
   const router = useRouter();
+  const lang = useLanguageStore((s) => s.lang);
   const login = useAuthStore((s) => s.login);
   const initializeFromProfile = useLanguageStore((s) => s.initializeFromProfile);
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const t = {
+    errorToken: lang === "am" ? "የጉግል መረጃ ማግኘት አልተቻለም። እባክዎ እንደገና ይሞክሩ።" : "Odeeffannoo Google argachuun hin danda'amne. Maaloo irra deebi'ii yaali.",
+    errorFailed: lang === "am" ? "የጉግል መግቢያ አልተሳካም።" : "Seensi Google hin milkoofne.",
+  };
 
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     setServerError("");
 
     const googleToken = credentialResponse.credential;
     if (!googleToken) {
-      setServerError("Missing Google token. Please try again.");
+      setServerError(t.errorToken);
       return;
     }
 
@@ -46,14 +52,14 @@ export default function GoogleAuthButton() {
       router.push(getRedirectPath(role));
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string }>;
-      setServerError(axiosError.response?.data?.message || "Google login failed");
+      setServerError(axiosError.response?.data?.message || t.errorFailed);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleError = () => {
-    setServerError("Google login failed. Please try again.");
+    setServerError(t.errorFailed);
   };
 
   return (

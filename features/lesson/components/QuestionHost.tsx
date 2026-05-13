@@ -7,8 +7,9 @@ import { ClozeTest } from "./questions/ClozeTest";
 
 interface QuestionHostProps {
   question: LessonQuestion;
-  onComplete: (isCorrect: boolean) => void;
+  onComplete: (isCorrect: boolean, answerGiven?: any) => void;
   disabled?: boolean;
+  testMode?: boolean;
 }
 
 export const toDisplayText = (value: LocalizedOrString | undefined, lang: "am" | "ao"): string => {
@@ -37,7 +38,7 @@ export const normalizeQuestion = (question: LessonQuestion | LegacyQuizQuestion)
   return question;
 };
 
-export const QuestionHost = ({ question, onComplete, disabled = false }: QuestionHostProps) => {
+export const QuestionHost = ({ question, onComplete, disabled = false, testMode = false }: QuestionHostProps) => {
   const nativeLanguage = useLanguageStore((state) => state.lang);
   const targetLanguage = useLanguageStore((state) => state.targetLang);
 
@@ -50,6 +51,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
           targetLanguage={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
+          testMode={testMode}
         />
       );
 
@@ -60,6 +62,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
           language={nativeLanguage}
           onComplete={onComplete}
           disabled={disabled}
+          testMode={testMode}
         />
       );
 
@@ -71,6 +74,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
           language={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
+          testMode={testMode}
         />
       );
 
@@ -81,6 +85,7 @@ export const QuestionHost = ({ question, onComplete, disabled = false }: Questio
           language={targetLanguage}
           onComplete={onComplete}
           disabled={disabled}
+          testMode={testMode}
         />
       );
 
