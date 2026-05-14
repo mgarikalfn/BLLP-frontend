@@ -60,7 +60,7 @@ export const VocabCard = ({ vocab, topicId }: VocabCardProps) => {
             type="button"
             onClick={() => {
               if (primaryWord) {
-                void openDictionary(primaryWord, topicId);
+                void openDictionary(primaryWord, topicId, vocab.audioUrl);
               }
             }}
             className="rounded-md border-b-2 border-dotted border-sky-400 px-1 text-left text-sky-700 decoration-sky-400 underline-offset-4 transition hover:bg-sky-100/70"

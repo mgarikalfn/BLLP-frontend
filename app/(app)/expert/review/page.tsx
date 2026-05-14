@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Loader2, X, XCircle, Play, RefreshCw, Volume2 } from "lucide-react";
-import { generateQuestions, getLessonById, getPendingContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio, getPendingReports, resolveReport } from "@/api/expert.api";
+import { generateQuestions, getLessonById, getPendingContent, getAllExpertContent, getTopics, rejectContent, updateExpertContent, updateLesson, verifyContent, generateLessonAudio, regenerateAudio, getPendingReports, resolveReport } from "@/api/expert.api";
 import { generateDialogueAudio, regenerateDialogueAudio, getDialogueById } from "@/api/dialogue.api";
 import { useAuthStore } from "@/store/authStore";
 import type { ExpertContentItem, ExpertContentType, ChatReport } from "@/types/learning";
@@ -162,6 +162,12 @@ type SpeakingDraft = {
   expectedText: { am: string; ao: string };
 };
 
+type TopicDraft = {
+  title: { am: string; ao: string };
+  description: { am: string; ao: string };
+  tips: { am: string; ao: string };
+};
+
 const normalizeVocabularyItem = (value: unknown): {
   am: string;
   ao: string;
@@ -274,6 +280,14 @@ const buildSpeakingDraft = (source: Record<string, unknown>): SpeakingDraft => {
   };
 };
 
+const buildTopicDraft = (source: Record<string, unknown>): TopicDraft => {
+  return {
+    title: toLocalizedRecord(source.title ?? ""),
+    description: toLocalizedRecord(source.description ?? ""),
+    tips: toLocalizedRecord(source.tips ?? ""),
+  };
+};
+
 const extractQuestionsArray = (payload: unknown) => {
   if (Array.isArray(payload)) return payload;
   if (isRecord(payload)) {
@@ -328,7 +342,13 @@ const pickDetailPayload = (item: ExpertContentItem, type: ExpertContentType) => 
   }
 
   if (type === "QUESTION") {
-    return record.question ?? record.questions ?? base ?? record;
+    // The item record IS the question document - it has type, content, topicId etc.
+    // Never use `base` (record.content) here, that strips away the type field.
+    return record.question ?? record.questions ?? record;
+  }
+
+  if (type === "TOPIC") {
+    return record;
   }
 
   return base ?? record;
@@ -354,6 +374,7 @@ const typeMeta: Record<ExpertContentType, { label: string; icon: string; badge: 
   WRITING: { label: "Writing", icon: "✍️", badge: "bg-rose-50 text-rose-600" },
   SPEAKING: { label: "Speaking", icon: "🎤", badge: "bg-purple-50 text-purple-600" },
   QUESTION: { label: "Question", icon: "❓", badge: "bg-amber-50 text-amber-600" },
+  TOPIC: { label: "Topic", icon: "📚", badge: "bg-emerald-50 text-emerald-600" },
   MODERATION: { label: "Moderation", icon: "🛡️", badge: "bg-rose-50 text-rose-600" },
 };
 
@@ -368,6 +389,7 @@ export default function ExpertReviewPage() {
   const [topics, setTopics] = useState<TopicOption[]>([]);
   const [contentType, setContentType] = useState<ExpertContentType | "ALL">("ALL");
   const [topicId, setTopicId] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -378,7 +400,8 @@ export default function ExpertReviewPage() {
   const [dialogueDraft, setDialogueDraft] = useState<DialogueDraft | null>(null);
   const [writingDraft, setWritingDraft] = useState<WritingDraft | null>(null);
   const [speakingDraft, setSpeakingDraft] = useState<SpeakingDraft | null>(null);
-  const [questionDraft, setQuestionDraft] = useState<Array<Record<string, unknown>>>([]);
+  const [topicDraft, setTopicDraft] = useState<TopicDraft | null>(null);
+  const [questionDraft, setQuestionDraft] = useState<QuestionRecord[]>([]);
   const [quizDraft, setQuizDraft] = useState<Array<Record<string, unknown>>>([]);
   const [isLessonLoading, setIsLessonLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -439,27 +462,22 @@ export default function ExpertReviewPage() {
     setIsLoading(true);
     setError(null);
     try {
-      if (contentType === "MODERATION") {
-        const res = await getPendingReports();
-        setReports(res.data.reports || []);
-        setItems([]);
-      } else {
-        const params = {
-          type: contentType === "ALL" ? undefined : contentType,
-          topicId: topicId === "ALL" ? undefined : topicId,
-        };
-        const res = await getPendingContent(params);
-        const resolved = resolvePayload(res.data) as ExpertContentItem[] | null;
-        setItems(resolved || []);
-        setReports([]);
-      }
+      const params = {
+        type: contentType === "ALL" ? undefined : contentType,
+        topicId: topicId === "ALL" ? undefined : topicId,
+        status: statusFilter === "ALL" ? undefined : statusFilter,
+      };
+      const res = await getAllExpertContent(params);
+      const resolved = resolvePayload(res.data) as ExpertContentItem[] | null;
+      setItems(resolved || []);
+      setReports([]);
     } catch (err: any) {
       console.error("Fetch content error:", err);
       setError(err.response?.data?.message || "Failed to load content.");
     } finally {
       setIsLoading(false);
     }
-  }, [isAllowed, contentType, topicId]);
+  }, [isAllowed, contentType, topicId, statusFilter]);
 
   useEffect(() => {
     if (!isAllowed) return;
@@ -664,6 +682,8 @@ export default function ExpertReviewPage() {
         // question draft is an array of questions, but for standalone question it might be just the object payload
         const payload = questionDraft.length === 1 ? questionDraft[0] : questionDraft;
         response = await updateExpertContent("QUESTION", selectedItem._id, payload);
+      } else if (selectedItem._contentType === "TOPIC" && topicDraft) {
+        response = await updateExpertContent("TOPIC", selectedItem._id, topicDraft);
       }
 
       // Extract audio changes from response
@@ -873,6 +893,7 @@ export default function ExpertReviewPage() {
     setDialogueDraft(null);
     setWritingDraft(null);
     setSpeakingDraft(null);
+    setTopicDraft(null);
     setQuestionDraft([]);
     setQuizDraft([]);
   };
@@ -939,8 +960,8 @@ export default function ExpertReviewPage() {
           <h1 className="text-3xl font-black text-slate-900">Review Queue</h1>
           <p className="text-sm font-semibold text-slate-600">Pending content awaiting verification</p>
         </div>
-        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-amber-700">
-          {pendingCount} pending
+        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-600">
+          {items.length} {statusFilter === "NEEDS_REVIEW" ? "pending" : statusFilter === "ALL" ? "total" : statusFilter.toLowerCase()}
         </span>
       </div>
 
@@ -951,7 +972,7 @@ export default function ExpertReviewPage() {
         </div>
       ) : null}
 
-      <div className="mb-6 grid gap-4 rounded-2xl border-2 border-slate-200 bg-white p-4 md:grid-cols-2">
+      <div className="mb-6 grid gap-4 rounded-2xl border-2 border-slate-200 bg-white p-4 md:grid-cols-3">
         <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
           Content Type
           <select
@@ -962,10 +983,25 @@ export default function ExpertReviewPage() {
             <option value="ALL">All</option>
             <option value="LESSON">Lesson</option>
             <option value="DIALOGUE">Dialogue</option>
+            <option value="TOPIC">Topic</option>
             <option value="WRITING">Writing</option>
             <option value="SPEAKING">Speaking</option>
             <option value="QUESTION">Question</option>
 
+          </select>
+        </label>
+
+        <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          Status
+          <select
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="NEEDS_REVIEW">Needs Review</option>
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
           </select>
         </label>
 
@@ -1069,7 +1105,7 @@ export default function ExpertReviewPage() {
                 </tr>
               ) : (
                 items.map((item) => {
-                  const meta = typeMeta[item._contentType];
+                  const meta = typeMeta[item._contentType] || { label: item._contentType || "Content", icon: "📄", badge: "bg-slate-50 text-slate-600" };
                   const statusClass = statusStyles[item.status ?? "DRAFT"] ?? statusStyles.DRAFT;
 
                   return (
@@ -1756,6 +1792,47 @@ export default function ExpertReviewPage() {
                           ) : (
                             <p className="mt-2 text-sm font-semibold text-slate-700">
                               {formatLocalized(data[field as keyof SpeakingDraft])}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                if (selectedItem._contentType === "TOPIC") {
+                  const topicRecord = payload as Record<string, unknown>;
+                  const fallbackDraft = buildTopicDraft(topicRecord);
+                  const data = topicDraft ?? fallbackDraft;
+
+                  const updateTopicField = (field: keyof TopicDraft, lang: "am" | "ao", val: string) => {
+                    const next = { ...data, [field]: { ...data[field], [lang]: val } };
+                    setTopicDraft(next);
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      {(["title", "description", "tips"] as const).map((field) => (
+                        <div key={field}>
+                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">{field}</h4>
+                          {isEditing ? (
+                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                              <textarea
+                                className="min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                                value={data[field].am}
+                                onChange={(e) => updateTopicField(field, "am", e.target.value)}
+                                placeholder="Amharic"
+                              />
+                              <textarea
+                                className="min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                                value={data[field].ao}
+                                onChange={(e) => updateTopicField(field, "ao", e.target.value)}
+                                placeholder="Afaan Oromoo"
+                              />
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-sm font-semibold text-slate-700">
+                              {formatLocalized(data[field])}
                             </p>
                           )}
                         </div>

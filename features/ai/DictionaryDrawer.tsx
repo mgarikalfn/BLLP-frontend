@@ -71,6 +71,7 @@ export function DictionaryDrawer() {
   const isLoading = useDictionaryStore((state) => state.isLoading);
   const result = useDictionaryStore((state) => state.result as Record<string, unknown> | null);
   const error = useDictionaryStore((state) => state.error);
+  const audioUrl = useDictionaryStore((state) => state.audioUrl);
   const closeDictionary = useDictionaryStore((state) => state.closeDictionary);
 
   const nativeLanguage = useLanguageStore((state) => state.lang);
@@ -93,11 +94,32 @@ export function DictionaryDrawer() {
 
   const normalized = normalizeResult(result);
 
+  const getGCSAudioUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
+    return `${baseUrl}${path}`;
+  };
+
   const speakTargetWord = () => {
+    // 1. Try GCS audio first (pre-recorded, native speaker)
+    const gcsUrl = getGCSAudioUrl(audioUrl?.[targetLanguage]);
+    if (gcsUrl) {
+      const audio = new Audio(gcsUrl);
+      audio.play().catch(() => {
+        // 2. Fallback to browser TTS if GCS fails
+        speakViaTTS();
+      });
+      return;
+    }
+    // 2. Fallback to browser TTS
+    speakViaTTS();
+  };
+
+  const speakViaTTS = () => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     const text = normalized.word || selectedWord || "";
     if (!text) return;
-
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = targetLanguage === "am" ? "am-ET" : "om-ET";
     utterance.rate = 0.92;

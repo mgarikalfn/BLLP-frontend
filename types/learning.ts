@@ -365,7 +365,7 @@ export interface ApiResponse<T> {
 
 // Expert Dashboard Types
 export type ContentStatus = "DRAFT" | "NEEDS_REVIEW" | "PUBLISHED";
-export type ExpertContentType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING" | "QUESTION" | "MODERATION";
+export type ExpertContentType = "LESSON" | "DIALOGUE" | "WRITING" | "SPEAKING" | "QUESTION" | "TOPIC" | "MODERATION";
 
 export interface ChatReport {
   _id: string;

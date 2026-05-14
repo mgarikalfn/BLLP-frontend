@@ -372,32 +372,43 @@ export default function DialoguePage() {
 
           <div className="flex items-start gap-3">
             <div className="flex-1">
-              <p className="text-2xl font-bold text-gray-900 leading-tight flex items-center gap-2">
-                {getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}
-                {lineAudioTarget && (
-                  <button 
-                    onClick={() => playAudio(lineAudioTarget)} 
-                    className="text-blue-500 hover:bg-blue-50 p-2 rounded-full transition-colors active:scale-95"
-                    aria-label={`Play ${targetLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
-                  >
-                    <Volume2 size={24} strokeWidth={2.5} />
-                  </button>
-                )}
-              </p>
-              <p className="mt-2 text-lg font-medium text-gray-500 flex items-center gap-2">
-                {getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}
-                {lineAudioNative && (
-                  <button 
-                    onClick={() => playAudio(lineAudioNative)} 
-                    className="text-orange-500 hover:bg-orange-50 p-1.5 rounded-full transition-colors active:scale-95"
-                    aria-label={`Play ${nativeLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
-                  >
-                    <Volume2 size={20} strokeWidth={2.5} />
-                  </button>
-                )}
-              </p>
+              {/* For interactive lines: hide the content until after the answer is checked */}
+              {isInteractive && status === "idle" ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
+                  <div className="h-6 w-32 animate-pulse rounded-lg bg-gray-100" />
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-900 leading-tight flex items-center gap-2">
+                    {getLocalizedText(currentSlide.line.content, targetLanguage, nativeLanguage)}
+                    {lineAudioTarget && (
+                      <button 
+                        onClick={() => playAudio(lineAudioTarget)} 
+                        className="text-blue-500 hover:bg-blue-50 p-2 rounded-full transition-colors active:scale-95"
+                        aria-label={`Play ${targetLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
+                      >
+                        <Volume2 size={24} strokeWidth={2.5} />
+                      </button>
+                    )}
+                  </p>
+                  <p className="mt-2 text-lg font-medium text-gray-500 flex items-center gap-2">
+                    {getLocalizedText(currentSlide.line.content, nativeLanguage, targetLanguage)}
+                    {lineAudioNative && (
+                      <button 
+                        onClick={() => playAudio(lineAudioNative)} 
+                        className="text-orange-500 hover:bg-orange-50 p-1.5 rounded-full transition-colors active:scale-95"
+                        aria-label={`Play ${nativeLanguage === "am" ? "Amharic" : "Afan Oromo"} audio`}
+                      >
+                        <Volume2 size={20} strokeWidth={2.5} />
+                      </button>
+                    )}
+                  </p>
+                </>
+              )}
             </div>
           </div>
+
         </div>
 
         {isInteractive && (

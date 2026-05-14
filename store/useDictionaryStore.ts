@@ -21,10 +21,11 @@ export interface DictionaryResult {
 interface DictionaryState {
   isOpen: boolean;
   selectedWord: string | null;
+  audioUrl: { am?: string; ao?: string } | null;
   isLoading: boolean;
   result: DictionaryResult | null;
   error: string | null;
-  openDictionary: (word: string, topicId?: string) => Promise<void>;
+  openDictionary: (word: string, topicId?: string, audioUrl?: { am?: string; ao?: string }) => Promise<void>;
   closeDictionary: () => void;
 }
 
@@ -38,16 +39,18 @@ const resolveLearningDirection = (): LearningDirection => {
 export const useDictionaryStore = create<DictionaryState>((set) => ({
   isOpen: false,
   selectedWord: null,
+  audioUrl: null,
   isLoading: false,
   result: null,
   error: null,
 
-  openDictionary: async (word, topicId) => {
+  openDictionary: async (word, topicId, audioUrl) => {
     if (!word.trim()) return;
 
     set({
       isOpen: true,
       selectedWord: word,
+      audioUrl: audioUrl ?? null,
       isLoading: true,
       result: null,
       error: null,
@@ -88,6 +91,7 @@ export const useDictionaryStore = create<DictionaryState>((set) => ({
     set({
       isOpen: false,
       selectedWord: null,
+      audioUrl: null,
       isLoading: false,
       result: null,
       error: null,
