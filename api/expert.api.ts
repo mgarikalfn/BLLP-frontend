@@ -71,7 +71,8 @@ export const updateLesson = (
 export const getLessonById = (lessonId: string) => api.get(`/lessons/${lessonId}`);
 
 // Generate missing audio for a lesson
-export const generateLessonAudio = (lessonId: string) => api.put(`/lessons/${lessonId}/generate-audio`);
+export const generateLessonAudio = (lessonId: string, target?: "vocab" | "example" | "both") => 
+  api.put(`/lessons/${lessonId}/generate-audio${target ? `?target=${target}` : ''}`);
 
 // Regenerate specific audio clip
 export const regenerateAudio = (lessonId: string, data: { vocabIndex: number; isExample: boolean; language: "am" | "ao" }) => 

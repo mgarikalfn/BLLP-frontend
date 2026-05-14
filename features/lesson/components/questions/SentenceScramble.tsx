@@ -71,6 +71,18 @@ const resolveScrambledWords = (
   return fallbackSentence ? fallbackSentence.split(/\s+/).filter(Boolean) : [];
 };
 
+const resolveLegacyScramble = (content: any, language: "am" | "ao") => {
+  if (!content) return null;
+  const legacyObj = language === "am" ? content.scrambleAm : content.scrambleOr;
+  if (legacyObj && typeof legacyObj === "object") {
+    return {
+      words: Array.isArray(legacyObj.words) ? legacyObj.words : [],
+      answer: typeof legacyObj.answer === "string" ? legacyObj.answer : ""
+    };
+  }
+  return null;
+};
+
 const normalizeSentenceForCompare = (value: string): string => {
   return value
     .toLocaleLowerCase()
@@ -87,14 +99,23 @@ export const SentenceScramble = ({ content, language, onComplete, disabled = fal
   const correctSentence = useMemo(() => {
     const preferred = resolveSentenceValue(content.correctSentence, language);
     const fallback = resolveSentenceValue(content.answer, language);
+    
+    // Legacy fallback
+    const legacy = resolveLegacyScramble(content, language);
+    if (!preferred && !fallback && legacy?.answer) {
+      return legacy.answer.trim();
+    }
 
     return (preferred || fallback).trim();
-  }, [content.correctSentence, content.answer, language]);
+  }, [content.correctSentence, content.answer, language, content]);
 
-  const initialWordBank = useMemo(
-    () => resolveScrambledWords(content.scrambled, content.shuffledWords, correctSentence, language),
-    [content.shuffledWords, content.scrambled, correctSentence, language]
-  );
+  const initialWordBank = useMemo(() => {
+    const legacy = resolveLegacyScramble(content, language);
+    if (legacy && legacy.words.length > 0) {
+      return [...legacy.words];
+    }
+    return resolveScrambledWords(content.scrambled, content.shuffledWords, correctSentence, language);
+  }, [content, correctSentence, language]);
 
   const [answerWords, setAnswerWords] = useState<string[]>([]);
   const [wordBank, setWordBank] = useState<string[]>(initialWordBank);

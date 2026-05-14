@@ -14,21 +14,31 @@ interface ClozeTestProps {
 export const ClozeTest = ({ content, language, onComplete, disabled = false, testMode = false }: ClozeTestProps) => {
   const [selectedWord, setSelectedWord] = useState<string>("");
 
-  // Also handle legacy "sentence" field that some old questions may have
+  // Also handle legacy "textWithBlank" and "sentence" fields
   const legacySentence = (content as any)?.sentence;
+  const legacyTextWithBlank = (content as any)?.textWithBlank;
+  
   let textBefore = toDisplayText(content.textBeforeBlank, language);
   let textAfter = toDisplayText(content.textAfterBlank, language);
 
-  // Fallback: if textBeforeBlank is empty but we have a legacy "sentence" field
-  if (!textBefore && legacySentence) {
-    const sentenceText = toDisplayText(legacySentence, language);
-    const blankIndex = sentenceText.indexOf("_____");
-    if (blankIndex >= 0) {
-      textBefore = sentenceText.substring(0, blankIndex);
-      textAfter = sentenceText.substring(blankIndex + 5);
-    } else {
-      textBefore = sentenceText;
-      textAfter = "";
+  // Fallback: if textBeforeBlank is empty but we have a legacy field
+  if (!textBefore) {
+    const rawLegacy = legacyTextWithBlank || legacySentence;
+    if (rawLegacy) {
+      const sentenceText = toDisplayText(rawLegacy, language);
+      const blankIndex = sentenceText.indexOf("___");
+      if (blankIndex >= 0) {
+        // Find the end of the underscores
+        let endBlankIndex = blankIndex;
+        while (sentenceText[endBlankIndex] === "_") {
+          endBlankIndex++;
+        }
+        textBefore = sentenceText.substring(0, blankIndex).trim();
+        textAfter = sentenceText.substring(endBlankIndex).trim();
+      } else {
+        textBefore = sentenceText;
+        textAfter = "";
+      }
     }
   }
 

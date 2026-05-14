@@ -278,7 +278,11 @@ export default function ExpertGeneratePage() {
       );
     }
 
-    const questions = Array.isArray(payload.questions) ? payload.questions : [];
+    const questions = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload.questions)
+        ? payload.questions
+        : [];
 
     return (
       <div className="space-y-3">
@@ -288,7 +292,9 @@ export default function ExpertGeneratePage() {
           questions.map((question: Record<string, unknown>, index: number) => (
             <div key={`${String(question._id ?? index)}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
               <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-700">{formatLocalized(question.prompt ?? question.question)}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {formatLocalized(question.prompt ?? question.question ?? question.content)}
+              </p>
             </div>
           ))
         )}

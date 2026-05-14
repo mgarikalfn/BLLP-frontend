@@ -93,6 +93,29 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     onChange(index, { ...question, type, content: nextContent });
   };
 
+  const handleTypeChange = (newType: string) => {
+    // Retain the prompt, but reset the content shape for the new type
+    const nextContent: any = { prompt };
+    
+    if (newType === "MULTIPLE_CHOICE") {
+      nextContent.options = [];
+      nextContent.correctIndex = 0;
+    } else if (newType === "MATCHING") {
+      nextContent.pairs = [];
+    } else if (newType === "SCRAMBLE") {
+      nextContent.scrambled = { am: [], ao: [] };
+      nextContent.answer = { am: "", ao: "" };
+    } else if (newType === "CLOZE") {
+      nextContent.textBeforeBlank = { am: "", ao: "" };
+      nextContent.textAfterBlank = { am: "", ao: "" };
+      nextContent.options = [];
+      nextContent.correctAnswer = { am: "", ao: "" };
+      nextContent.correctIndex = 0;
+    }
+
+    onChange(index, { ...question, type: newType, content: nextContent });
+  };
+
   const renderPrompt = () => (
     <div className="mt-2">
       {isEditing ? (
@@ -135,10 +158,25 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-        <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-        <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
-          {type}
-        </span>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
+          {isEditing ? (
+            <select
+              value={type}
+              onChange={(e) => handleTypeChange(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+              <option value="MATCHING">MATCHING</option>
+              <option value="SCRAMBLE">SCRAMBLE</option>
+              <option value="CLOZE">CLOZE</option>
+            </select>
+          ) : (
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500">
+              {type}
+            </span>
+          )}
+        </div>
         {renderPrompt()}
         <div className="mt-3 space-y-2">
           {options.length === 0 && !isEditing && (
@@ -200,10 +238,25 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-        <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-        <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
-          {type}
-        </span>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
+          {isEditing ? (
+            <select
+              value={type}
+              onChange={(e) => handleTypeChange(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+              <option value="MATCHING">MATCHING</option>
+              <option value="SCRAMBLE">SCRAMBLE</option>
+              <option value="CLOZE">CLOZE</option>
+            </select>
+          ) : (
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500">
+              {type}
+            </span>
+          )}
+        </div>
         {renderPrompt()}
         <div className="mt-2 space-y-2">
           {pairs.length === 0 && !isEditing && (
@@ -240,15 +293,31 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   }
 
   if (type === "SCRAMBLE") {
-    // Scrambled expects: { am: ["word1", "word2"], ao: ["word1", "word2"] }
-    const rawScrambled = isRecord(content.scrambled) ? content.scrambled : { am: [], ao: [] };
-    const scrambled = {
-      am: Array.isArray(rawScrambled.am) ? rawScrambled.am : [],
-      ao: Array.isArray(rawScrambled.ao) ? rawScrambled.ao : []
-    };
-    
-    // Answer expects: { am: "sentence", ao: "sentence" }
-    const answer = toLocalizedRecord(content.answer);
+    // Check if we have legacy 'scrambleAm' and 'scrambleOr'
+    const legacyScrambleAm = isRecord(content.scrambleAm) ? content.scrambleAm : null;
+    const legacyScrambleOr = isRecord(content.scrambleOr) ? content.scrambleOr : null;
+
+    let amWords = [];
+    let aoWords = [];
+    let amAnswer = "";
+    let aoAnswer = "";
+
+    if (legacyScrambleAm || legacyScrambleOr) {
+      amWords = Array.isArray(legacyScrambleAm?.words) ? legacyScrambleAm.words : [];
+      aoWords = Array.isArray(legacyScrambleOr?.words) ? legacyScrambleOr.words : [];
+      amAnswer = typeof legacyScrambleAm?.answer === "string" ? legacyScrambleAm.answer : "";
+      aoAnswer = typeof legacyScrambleOr?.answer === "string" ? legacyScrambleOr.answer : "";
+    } else {
+      const rawScrambled = isRecord(content.scrambled) ? content.scrambled : { am: [], ao: [] };
+      amWords = Array.isArray(rawScrambled.am) ? rawScrambled.am : [];
+      aoWords = Array.isArray(rawScrambled.ao) ? rawScrambled.ao : [];
+      const answerObj = toLocalizedRecord(content.answer || content.correctSentence);
+      amAnswer = answerObj.am;
+      aoAnswer = answerObj.ao;
+    }
+
+    const scrambled = { am: amWords, ao: aoWords };
+    const answer = { am: amAnswer, ao: aoAnswer };
 
     const updateScrambled = (lang: "am" | "ao", val: string) => {
       // Split by comma for easy editing of arrays
@@ -258,7 +327,11 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
         type,
         content: { 
           ...content, 
-          scrambled: { ...scrambled, [lang]: parts } 
+          scrambled: { ...scrambled, [lang]: parts },
+          answer, // ensure answer is also written out
+          scrambleAm: undefined,
+          scrambleOr: undefined,
+          correctSentence: undefined
         } 
       });
     };
@@ -269,17 +342,36 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
         type,
         content: { 
           ...content, 
-          answer: { ...answer, [lang]: val } 
+          scrambled, // ensure scrambled is written out
+          answer: { ...answer, [lang]: val },
+          scrambleAm: undefined,
+          scrambleOr: undefined,
+          correctSentence: undefined
         } 
       });
     };
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-        <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-        <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
-          {type}
-        </span>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
+          {isEditing ? (
+            <select
+              value={type}
+              onChange={(e) => handleTypeChange(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+              <option value="MATCHING">MATCHING</option>
+              <option value="SCRAMBLE">SCRAMBLE</option>
+              <option value="CLOZE">CLOZE</option>
+            </select>
+          ) : (
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500">
+              {type}
+            </span>
+          )}
+        </div>
         {renderPrompt()}
         <div className="mt-3 space-y-4">
           {isEditing ? (
@@ -346,9 +438,30 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   }
 
   if (type === "CLOZE") {
-    // Schema uses textBeforeBlank, textAfterBlank, options, correctAnswer
-    const textBeforeBlank = toLocalizedRecord(content.textBeforeBlank);
-    const textAfterBlank = toLocalizedRecord(content.textAfterBlank);
+    // Check for legacy textWithBlank or sentence
+    const legacySentence = content.textWithBlank || content.sentence;
+    let initialBefore = toLocalizedRecord(content.textBeforeBlank);
+    let initialAfter = toLocalizedRecord(content.textAfterBlank);
+
+    if (!content.textBeforeBlank && legacySentence) {
+      const sentenceLoc = toLocalizedRecord(legacySentence);
+      for (const lang of ["am", "ao"] as const) {
+        const text = sentenceLoc[lang];
+        if (!text) continue;
+        const blankIndex = text.indexOf("___");
+        if (blankIndex >= 0) {
+          let endBlankIndex = blankIndex;
+          while (text[endBlankIndex] === "_") endBlankIndex++;
+          initialBefore[lang] = text.substring(0, blankIndex).trim();
+          initialAfter[lang] = text.substring(endBlankIndex).trim();
+        } else {
+          initialBefore[lang] = text;
+        }
+      }
+    }
+
+    const textBeforeBlank = initialBefore;
+    const textAfterBlank = initialAfter;
     const options = Array.isArray(content.options) ? content.options : [];
     
     // Fallback: Compute correctIndex from correctAnswer if correctIndex is missing
@@ -362,11 +475,31 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     }
 
     const updateTextBeforeBlank = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, type, content: { ...content, textBeforeBlank: { ...textBeforeBlank, [lang]: val } } });
+      onChange(index, { 
+        ...question, 
+        type, 
+        content: { 
+          ...content, 
+          textBeforeBlank: { ...textBeforeBlank, [lang]: val },
+          textAfterBlank, // ensure after is written out
+          textWithBlank: undefined,
+          sentence: undefined
+        } 
+      });
     };
 
     const updateTextAfterBlank = (lang: "am" | "ao", val: string) => {
-      onChange(index, { ...question, type, content: { ...content, textAfterBlank: { ...textAfterBlank, [lang]: val } } });
+      onChange(index, { 
+        ...question, 
+        type, 
+        content: { 
+          ...content, 
+          textBeforeBlank, // ensure before is written out
+          textAfterBlank: { ...textAfterBlank, [lang]: val },
+          textWithBlank: undefined,
+          sentence: undefined
+        } 
+      });
     };
 
     const updateClozeOption = (optIndex: number, lang: "am" | "ao", val: string) => {
@@ -391,10 +524,25 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
 
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-        <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-        <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
-          {type}
-        </span>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
+          {isEditing ? (
+            <select
+              value={type}
+              onChange={(e) => handleTypeChange(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+              <option value="MATCHING">MATCHING</option>
+              <option value="SCRAMBLE">SCRAMBLE</option>
+              <option value="CLOZE">CLOZE</option>
+            </select>
+          ) : (
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500">
+              {type}
+            </span>
+          )}
+        </div>
         {renderPrompt()}
         <div className="mt-3 space-y-3">
           {isEditing ? (
@@ -497,10 +645,25 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
   // Fallback for unknown question types
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-      <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
-      <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500 mt-1">
-        {type}
-      </span>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-black uppercase text-slate-400">Question {index + 1}</p>
+        {isEditing ? (
+          <select
+            value={type}
+            onChange={(e) => handleTypeChange(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+            <option value="MATCHING">MATCHING</option>
+            <option value="SCRAMBLE">SCRAMBLE</option>
+            <option value="CLOZE">CLOZE</option>
+          </select>
+        ) : (
+          <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-slate-500">
+            {type}
+          </span>
+        )}
+      </div>
       {renderPrompt()}
       <p className="mt-2 text-[10px] text-slate-400">Preview not available for this type.</p>
     </div>

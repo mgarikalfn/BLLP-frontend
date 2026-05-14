@@ -179,6 +179,7 @@ const normalizeVocabularyItem = (value: unknown): {
 
   const example = isRecord(value.example)
     ? {
+        ...value.example,
         am: typeof value.example.am === "string" ? value.example.am : undefined,
         ao: typeof value.example.ao === "string" ? value.example.ao : undefined,
       }
@@ -383,6 +384,7 @@ export default function ExpertReviewPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isGeneratingExampleAudio, setIsGeneratingExampleAudio] = useState(false);
   const [regeneratingAudioFor, setRegeneratingAudioFor] = useState<{ vocabIndex: number; isExample: boolean; language: "am" | "ao" } | null>(null);
   const [isGeneratingDialogueAudio, setIsGeneratingDialogueAudio] = useState(false);
   const [regeneratingDialogueAudioFor, setRegeneratingDialogueAudioFor] = useState<{ lineIndex: number; language: "am" | "ao" } | null>(null);
@@ -735,12 +737,26 @@ export default function ExpertReviewPage() {
     }
   };
 
-  const handleGenerateLessonAudio = async () => {
+  const handleGenerateLessonAudio = async (target: "vocab" | "example") => {
     if (!selectedItem?._id) return;
-    setIsGeneratingAudio(true);
+    
+    if (target === "vocab") setIsGeneratingAudio(true);
+    else setIsGeneratingExampleAudio(true);
+
     try {
-      const res = await generateLessonAudio(selectedItem._id);
-      showToast("success", "Missing audio generated successfully!");
+      // Auto-save the draft first, so the backend has the actual text to generate audio for!
+      if (isEditing && lessonDraft) {
+        await updateLesson(selectedItem._id, {
+          title: lessonDraft.title,
+          grammarNotes: lessonDraft.grammarNotes,
+          vocabulary: lessonDraft.vocabulary,
+          dialogue: lessonDraft.dialogue,
+          quiz: quizDraft,
+        });
+      }
+
+      const res = await generateLessonAudio(selectedItem._id, target);
+      showToast("success", `Missing ${target} audio generated successfully!`);
       
       // Reload lesson to get new audio URLs
       setIsLessonLoading(true);
@@ -751,9 +767,10 @@ export default function ExpertReviewPage() {
         setLessonDraft(nextDraft);
       }
     } catch (error) {
-      showToast("error", "Failed to generate audio. Make sure you haven't hit rate limits.");
+      showToast("error", `Failed to generate ${target} audio. Make sure you haven't hit rate limits.`);
     } finally {
-      setIsGeneratingAudio(false);
+      if (target === "vocab") setIsGeneratingAudio(false);
+      else setIsGeneratingExampleAudio(false);
       setIsLessonLoading(false);
     }
   };
@@ -762,6 +779,16 @@ export default function ExpertReviewPage() {
     if (!selectedItem?._id) return;
     setRegeneratingAudioFor({ vocabIndex, isExample, language });
     try {
+      // Auto-save draft first so backend uses the latest edited text
+      if (lessonDraft) {
+        await updateLesson(selectedItem._id, {
+          title: lessonDraft.title,
+          grammarNotes: lessonDraft.grammarNotes,
+          vocabulary: lessonDraft.vocabulary,
+          dialogue: lessonDraft.dialogue,
+          quiz: quizDraft,
+        });
+      }
       await regenerateAudio(selectedItem._id, { vocabIndex, isExample, language });
       showToast("success", `Audio regenerated for ${language === 'am' ? 'Amharic' : 'Afaan Oromoo'}`);
       
@@ -783,6 +810,10 @@ export default function ExpertReviewPage() {
     if (!selectedItem?._id) return;
     setIsGeneratingDialogueAudio(true);
     try {
+      // Auto-save draft first so backend uses the latest edited text
+      if (dialogueDraft) {
+        await updateExpertContent("DIALOGUE", selectedItem._id, dialogueDraft);
+      }
       await generateDialogueAudio(selectedItem._id);
       showToast("success", "Missing dialogue audio generated successfully!");
       
@@ -803,6 +834,10 @@ export default function ExpertReviewPage() {
     if (!selectedItem?._id) return;
     setRegeneratingDialogueAudioFor({ lineIndex, language });
     try {
+      // Auto-save draft first so backend uses the latest edited text
+      if (dialogueDraft) {
+        await updateExpertContent("DIALOGUE", selectedItem._id, dialogueDraft);
+      }
       await regenerateDialogueAudio(selectedItem._id, lineIndex, language);
       showToast("success", `Dialogue audio regenerated for ${language === 'am' ? 'Amharic' : 'Afaan Oromoo'}`);
       
@@ -930,7 +965,7 @@ export default function ExpertReviewPage() {
             <option value="WRITING">Writing</option>
             <option value="SPEAKING">Speaking</option>
             <option value="QUESTION">Question</option>
-            <option value="MODERATION">Moderation</option>
+
           </select>
         </label>
 
@@ -1227,15 +1262,26 @@ export default function ExpertReviewPage() {
                         <div className="flex items-center justify-between">
                           <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Vocabulary</h4>
                           {isEditing && (
-                            <button
-                              type="button"
-                              onClick={handleGenerateLessonAudio}
-                              disabled={isGeneratingAudio || isLessonLoading}
-                              className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-purple-600 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1"
-                            >
-                              {isGeneratingAudio ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
-                              Generate Missing Audio
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleGenerateLessonAudio("vocab")}
+                                disabled={isGeneratingAudio || isGeneratingExampleAudio || isLessonLoading}
+                                className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-purple-600 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1"
+                              >
+                                {isGeneratingAudio ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                                Generate Vocab Audio
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleGenerateLessonAudio("example")}
+                                disabled={isGeneratingAudio || isGeneratingExampleAudio || isLessonLoading}
+                                className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-black uppercase text-purple-600 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-1"
+                              >
+                                {isGeneratingExampleAudio ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                                Generate Example Audio
+                              </button>
+                            </div>
                           )}
                         </div>
                         <div className="mt-2 grid gap-2">
@@ -1349,55 +1395,7 @@ export default function ExpertReviewPage() {
                                           </div>
                                         </div>
                                       </div>
-                                      <div className="mt-3 border-t border-slate-200 pt-3">
-                                        <h5 className="mb-2 text-[10px] font-black uppercase text-slate-400">Example Sentences</h5>
-                                        <div className="grid gap-2 sm:grid-cols-2">
-                                          <div>
-                                            <div className="mb-1 flex items-center justify-between">
-                                              <span className="text-[10px] font-black uppercase text-slate-400">Amharic Example</span>
-                                              <div className="flex items-center gap-1">
-                                                {exAudioUrl.am ? (
-                                                  <>
-                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
-                                                    <button onClick={() => playAudio(exAudioUrl.am)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
-                                                    <button onClick={() => handleRegenerateAudio(index, true, "am")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'am' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
-                                                  </>
-                                                ) : (
-                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <textarea
-                                              className="min-h-[60px] w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                              value={typeof vItem.example?.am === "string" ? vItem.example.am : ""}
-                                              onChange={(event) => updateVocabularyExample(index, "am", event.target.value)}
-                                              placeholder="Amharic example sentence"
-                                            />
-                                          </div>
-                                          <div>
-                                            <div className="mb-1 flex items-center justify-between">
-                                              <span className="text-[10px] font-black uppercase text-slate-400">Afaan Oromoo Example</span>
-                                              <div className="flex items-center gap-1">
-                                                {exAudioUrl.ao ? (
-                                                  <>
-                                                    <span className="text-[10px] font-bold text-emerald-600">🟢 Audio Ready</span>
-                                                    <button onClick={() => playAudio(exAudioUrl.ao)} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Play"><Play size={12}/></button>
-                                                    <button onClick={() => handleRegenerateAudio(index, true, "ao")} disabled={regeneratingAudioFor?.vocabIndex === index} className="p-1 hover:bg-slate-200 rounded text-slate-600" title="Regenerate"><RefreshCw size={12} className={regeneratingAudioFor?.vocabIndex === index && regeneratingAudioFor?.language === 'ao' && regeneratingAudioFor?.isExample ? "animate-spin" : ""}/></button>
-                                                  </>
-                                                ) : (
-                                                  <span className="text-[10px] font-bold text-rose-500">🔴 Missing Audio</span>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <textarea
-                                              className="min-h-[60px] w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-semibold text-slate-700"
-                                              value={typeof vItem.example?.ao === "string" ? vItem.example.ao : ""}
-                                              onChange={(event) => updateVocabularyExample(index, "ao", event.target.value)}
-                                              placeholder="Afaan Oromoo example sentence"
-                                            />
-                                          </div>
-                                        </div>
-                                      </div>
+
                                     </div>
                                   ) : (
                                     <div className="space-y-2">
