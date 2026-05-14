@@ -44,10 +44,23 @@ export const LessonPathContainer: React.FC<LessonPathContainerProps> = ({
   const finalXOffset = Math.sin(((pathNodes.length + 1) / 2) * Math.PI) * amplitude;
   const videoNodeLabel = lang === "am" ? "ተዛማጅ ቪዲዮዎች" : "Viidiyoo Walqabatu";
   const videoTarget = `/videos?q=${encodeURIComponent(topicTitle)}`;
+  const typeOrder: Record<WorkspacePathNode["type"], number> = {
+    LESSON: 0,
+    DIALOGUE: 1,
+    SPEAKING: 2,
+    WRITING: 3,
+  };
+  const orderedPathNodes = [...pathNodes]
+    .map((node, index) => ({ node, index }))
+    .sort((a, b) => {
+      const orderDelta = typeOrder[a.node.type] - typeOrder[b.node.type];
+      return orderDelta !== 0 ? orderDelta : a.index - b.index;
+    })
+    .map(({ node }) => node);
 
   return (
     <div className="relative flex flex-col items-center py-8 min-h-125">
-      {pathNodes.map((node, index) => {
+      {orderedPathNodes.map((node, index) => {
         // Calculate the S-Curve utilizing a sine wave
         const xOffset = Math.sin((index / 2) * Math.PI) * amplitude;
 

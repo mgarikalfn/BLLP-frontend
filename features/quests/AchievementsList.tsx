@@ -94,7 +94,7 @@ function AchievementCard({
   onClaim,
 }: {
   achievement: Achievement;
-  t: (typeof uiText)["am"];
+  t: (typeof uiText)[keyof typeof uiText];
   isClaimingReward: boolean;
   onClaim: () => void;
 }) {

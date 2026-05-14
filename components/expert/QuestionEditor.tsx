@@ -466,10 +466,22 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({ question, index,
     
     // Fallback: Compute correctIndex from correctAnswer if correctIndex is missing
     let correctIndex = 0;
-    if (content.correctAnswer && typeof content.correctAnswer === "object") {
-      const ansAm = content.correctAnswer.am || content.correctAnswer.word || "";
-      const idx = options.findIndex(opt => (opt.am || opt.word || opt) === ansAm);
-      if (idx !== -1) correctIndex = idx;
+    if (content.correctAnswer) {
+      const correctLoc = toLocalizedRecord(content.correctAnswer);
+      const correctWord =
+        isRecord(content.correctAnswer) && typeof content.correctAnswer.word === "string"
+          ? content.correctAnswer.word
+          : "";
+      const ansAm = correctLoc.am || correctWord;
+      if (ansAm) {
+        const idx = options.findIndex((opt) => {
+          const optLoc = toLocalizedRecord(opt);
+          const optWord = isRecord(opt) && typeof opt.word === "string" ? opt.word : "";
+          const optRaw = typeof opt === "string" ? opt : "";
+          return optLoc.am === ansAm || optWord === ansAm || optRaw === ansAm;
+        });
+        if (idx !== -1) correctIndex = idx;
+      }
     } else if (typeof content.correctIndex === "number") {
       correctIndex = content.correctIndex;
     }

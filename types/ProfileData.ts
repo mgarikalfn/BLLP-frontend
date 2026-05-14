@@ -52,6 +52,6 @@ export interface UpdateProfilePayload {
   avatarUrl?: string;
   avatarFile?: File;
   bio?: string;
-  learningDirection: LearningDirection;
-  targetLanguage: TargetLanguage;
+  learningDirection?: LearningDirection;
+  targetLanguage?: TargetLanguage;
 }

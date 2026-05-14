@@ -1,8 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +15,16 @@ const getMessageStyle = (status: "idle" | "loading" | "success" | "error") => {
 };
 
 export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
-  const initialToken = searchParams.get("token") ?? "";
-  const email = searchParams.get("email") ?? "";
+  const [token, setToken] = useState("");
+  const [email, setEmail] = useState("");
 
-  const [token, setToken] = useState(initialToken);
+  useEffect(() => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    if (params) {
+      setToken(params.get("token") ?? "");
+      setEmail(params.get("email") ?? "");
+    }
+  }, []);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("Check your inbox for the verification code.");
 

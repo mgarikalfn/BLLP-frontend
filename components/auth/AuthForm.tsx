@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { FieldErrors, Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import { useLanguageStore } from "@/store/languageStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginSchema, signupSchema, SignupInput } from "@/lib/validations/auth";
+import { LoginInput, loginSchema, signupSchema, SignupInput } from "@/lib/validations/auth";
 import type { LearningDirection } from "@/types/ProfileData";
 
 export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
@@ -25,11 +25,11 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignupInput>({
-     resolver: zodResolver(isLogin ? loginSchema : signupSchema),
+  } = useForm<LoginInput | SignupInput>({
+    resolver: zodResolver(isLogin ? loginSchema : signupSchema) as Resolver<LoginInput | SignupInput>,
   });
 
-  const onSubmit = async (values: SignupInput) => {
+  const onSubmit = async (values: LoginInput | SignupInput) => {
     setServerError("");
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
@@ -61,6 +61,8 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
       setServerError(axiosError.response?.data?.message || "Something went wrong");
     }
   };
+
+  const signupErrors = errors as FieldErrors<SignupInput>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -97,9 +99,11 @@ export const AuthForm = ({ type }: { type: "login" | "signup" }) => {
               {...register("confirmPassword")}
               type="password"
               placeholder="የይለፍ ቃል ያረጋግጡ (Confirm Password)"
-              className={`h-14 rounded-2xl border-2 ${errors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
+              className={`h-14 rounded-2xl border-2 ${signupErrors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
             />
-            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{errors.confirmPassword.message}</p>}
+            {signupErrors.confirmPassword && (
+              <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{signupErrors.confirmPassword.message}</p>
+            )}
           </div>
         )}
       </div>

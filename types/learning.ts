@@ -44,6 +44,8 @@ export interface LegacyQuizQuestion {
   correctAnswerIndex: number;
 }
 
+export type QuizQuestion = LegacyQuizQuestion;
+
 export type QuestionType = "MULTIPLE_CHOICE" | "MATCHING" | "SCRAMBLE" | "CLOZE";
 
 export type LocalizedOrString = LocalizedString | string;
@@ -107,7 +109,7 @@ export interface TopicTestClozeContent {
   correctIndex?: number;
 }
 
-export type TopicTestQuestionType = "MATCHING" | "CLOZE";
+export type TopicTestQuestionType = QuestionType;
 
 export interface TopicTestQuestion {
   _id: string;
@@ -115,7 +117,7 @@ export interface TopicTestQuestion {
   lessonId?: string;
   intendedFor?: "LESSON" | "TOPIC" | "BOTH" | "TEST";
   type: TopicTestQuestionType;
-  content: MatchingQuestionContent | TopicTestClozeContent;
+  content: LessonQuestionContent | TopicTestClozeContent;
   isVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;

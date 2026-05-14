@@ -126,7 +126,7 @@ export default function SettingsClient() {
       if (currentPassword || newPassword || confirmPassword) {
         const validation = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
         if (!validation.success) {
-          throw new Error(validation.error.errors[0].message);
+          throw new Error(validation.error.issues?.[0]?.message || "Invalid password fields");
         }
         await api.post("/auth/change-password", { currentPassword, newPassword });
         setCurrentPassword("");

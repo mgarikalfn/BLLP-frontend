@@ -183,13 +183,16 @@ const normalizeVocabularyItem = (value: unknown): {
     return { am: "", ao: "" };
   }
 
-  const example = isRecord(value.example)
-    ? {
-        ...value.example,
-        am: typeof value.example.am === "string" ? value.example.am : undefined,
-        ao: typeof value.example.ao === "string" ? value.example.ao : undefined,
-      }
-    : value.example;
+  let example: undefined | { am: string; ao: string; audioUrl?: { am?: string | null; ao?: string | null } };
+
+  if (isRecord(value.example)) {
+    const ex = value.example;
+    example = {
+      ...(ex as any),
+      am: typeof ex.am === "string" ? ex.am : "",
+      ao: typeof ex.ao === "string" ? ex.ao : "",
+    };
+  }
 
   return {
     ...value,
