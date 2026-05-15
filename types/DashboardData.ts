@@ -18,6 +18,7 @@ export interface DashboardData {
     level: number
     streak: number
     tier: string
+    proficiencyLevel?: string
   }
 
   actions: {
