@@ -113,18 +113,30 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
         {/* More Button - styled like other sidebar items */}
         <button
           onClick={() => setIsMoreOpen(!isMoreOpen)}
-          className="w-full h-13 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition font-semibold text-sm flex items-center justify-start gap-3 mb-2"
+          className="w-full h-13 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition font-semibold text-sm flex items-center justify-between gap-3 mb-2"
         >
-          <span className="text-lg">⋯</span>
-          <span>More</span>
+          <div className="flex items-center gap-3">
+             <span className="text-lg ml-1">⋯</span>
+             <span className="ml-5">More</span>
+          </div>
+          <ChevronDown className={cn("h-4 w-4 transition-transform text-slate-400", isMoreOpen && "rotate-180")} />
         </button>
+
+        {/* Inline More Items */}
+        {isMoreOpen && (
+          <div className="flex flex-col gap-y-1 mb-4 border-l-4 border-slate-100 ml-4 pl-2 animate-in slide-in-from-top-2 duration-200 fade-in">
+            <SidebarItem href="/activity" label="Activity" iconSrc="/activity.png" showIndicator={unreadCount > 0} />
+            <SidebarItem href={`/certification/${currentLevel}`} label="Certification" iconSrc="/certification.png" />
+            <SidebarItem href="/settings" label="Settings" icon={Settings} />
+          </div>
+        )}
       </>
     );
   };
 
   return (
     <div className={cn(
-      "flex h-full lg:w-[256px] lg:fixed left-0 top-0 px-4 border-r-2 flex-col bg-white relative",
+      "flex h-full lg:w-[256px] lg:fixed left-0 top-0 px-4 border-r-2 flex-col bg-white z-50",
       className,
     )}>
       <Link href="/">
@@ -136,55 +148,9 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
         </div>
       </Link>
 
-      <div className="flex flex-col gap-y-1 flex-1  relative">
+      <div className="flex flex-col gap-y-1 flex-1 overflow-y-auto overflow-x-hidden">
         {renderContent()}
-
-        {/* More Menu Overlay - appears within sidebar bounds */}
-        {isMoreOpen && (
-          <div 
-            className="absolute top-60 left-[105%]  w-68 h-fit max-h-[300px] bg-white rounded-lg shadow-lg p-4 flex flex-col gap-2 z-50 overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-sm font-black text-slate-900 mb-1 px-2">More</h2>
-            
-            <Link 
-              href="/activity" 
-              className="px-4 py-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition text-slate-700 font-semibold text-sm flex items-center gap-3"
-              onClick={() => setIsMoreOpen(false)}
-            >
-              <Image src="/activity.png" alt="Activity" height={20} width={20} unoptimized />
-              Activity
-              {unreadCount > 0 && <span className="ml-auto h-2 w-2 rounded-full bg-rose-500" />}
-            </Link>
-            
-            <Link 
-              href={`/certification/${currentLevel}`} 
-              className="px-4 py-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition text-slate-700 font-semibold text-sm flex items-center gap-3"
-              onClick={() => setIsMoreOpen(false)}
-            >
-              <Image src="/certification.png" alt="Certification" height={20} width={20} unoptimized />
-              Certification
-            </Link>
-            
-            <Link 
-              href="/settings" 
-              className="px-4 py-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition text-slate-700 font-semibold text-sm flex items-center gap-3"
-              onClick={() => setIsMoreOpen(false)}
-            >
-              <UserCircle2 size={20} className="text-slate-700" />
-              Settings
-            </Link>
-          </div>
-        )}
       </div>
-
-      {/* Backdrop - only visible when More menu is open */}
-      {isMoreOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/20" 
-          onClick={() => setIsMoreOpen(false)}
-        />
-      )}
     </div>
   );
 }
