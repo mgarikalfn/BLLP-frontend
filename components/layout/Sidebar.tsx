@@ -11,7 +11,9 @@ import {
   Settings,
   Youtube,
   ShieldAlert,
-  ChevronDown
+  ChevronDown,
+  Moon,
+  Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./sidebar-item";
@@ -21,6 +23,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboard } from "@/api/dashboard.api";
+import { useThemeStore } from "@/store/themeStore";
 
 type Props = {
   className?: string;
@@ -128,6 +131,7 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
             <SidebarItem href="/activity" label="Activity" iconSrc="/activity.png" showIndicator={unreadCount > 0} />
             <SidebarItem href={`/certification/${currentLevel}`} label="Certification" iconSrc="/certification.png" />
             <SidebarItem href="/settings" label="Settings" icon={Settings} />
+            <ThemeToggle />
           </div>
         )}
       </>
@@ -148,10 +152,33 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
         </div>
       </Link>
 
-      <div className="flex flex-col gap-y-1 flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex flex-col gap-y-1 flex-1 overflow-y-auto overflow-x-hidden pb-4">
         {renderContent()}
       </div>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { isDark, toggleTheme } = useThemeStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="h-10 w-full" />;
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="flex items-center h-[52px] w-full px-4 rounded-xl text-slate-500 hover:bg-slate-100 active:bg-slate-200 transition-colors font-bold text-sm"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-[32px] flex justify-center">
+          {isDark ? <Sun className="h-6 w-6 text-amber-500" /> : <Moon className="h-6 w-6 text-slate-500" />}
+        </div>
+        <span className="tracking-wide">{isDark ? "Light Mode" : "Dark Mode"}</span>
+      </div>
+    </button>
   );
 }
 

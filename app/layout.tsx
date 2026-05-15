@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
-
-const font = Nunito({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "BLLP",
@@ -17,7 +14,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={font.className}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const data = localStorage.getItem('theme-storage');
+            if (data && JSON.parse(data).state.isDark) {
+              document.documentElement.classList.add('dark');
+            }
+          } catch (e) {}
+        ` }} />
+      </head>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
