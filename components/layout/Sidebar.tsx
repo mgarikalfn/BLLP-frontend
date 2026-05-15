@@ -53,7 +53,7 @@ function SidebarInner({ className, role, pathname, isMoreOpen, setIsMoreOpen }: 
     queryFn: getDashboard,
     enabled: role === "LEARNER",
   });
-  const currentLevel = dashboardData?.actions?.recommendedLesson?.topic?.level?.toLowerCase() || "beginner";
+  const currentLevel = dashboardData?.user?.proficiencyLevel?.toLowerCase() || "beginner";
 
   useEffect(() => {
     if (role === "LEARNER") {
