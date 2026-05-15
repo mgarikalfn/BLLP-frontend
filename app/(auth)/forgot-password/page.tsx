@@ -35,7 +35,8 @@ export default function ForgotPasswordPage() {
     requestDesc: lang === "am" ? "ኢሜይልዎን ያስገቡና ባለ 6 አሃዝ ኮድ እንልክልዎታለን።" : "Iimeeyilii keessan galchaa, koodii lakkoofsa 6 isiniif ergina.",
     resetDesc: lang === "am" ? `ወደ ${email} የተላከውን ኮድ እና አዲሱን የይለፍ ቃል ያስገቡ።` : `Koodii gara ${email} ergame fi jecha darbii haaraa galchaa.`,
     emailPlaceholder: lang === "am" ? "ኢሜይል" : "Iimeeyilii",
-    codePlaceholder: lang === "am" ? "ባለ 6 አሃዝ ኮድ" : "Koodii lakkoofsa 6",
+    codePlaceholder: lang === "am" ? "ባለ 6 አሃዝ ኮድ ያስገቡ" : "Koodii lakkoofsa 6 galchaa",
+    codeLabel: lang === "am" ? "የማረጋገጫ ኮድ" : "Koodii Mirkaneessaa",
     newPasswordPlaceholder: lang === "am" ? "አዲስ የይለፍ ቃል" : "Jecha darbii haaraa",
     confirmPasswordPlaceholder: lang === "am" ? "አዲስ የይለፍ ቃል ያረጋግጡ" : "Jecha darbii mirkaneessi",
     sendCode: lang === "am" ? "ኮድ ላክ" : "Koodii ergi",
@@ -138,59 +139,84 @@ export default function ForgotPasswordPage() {
         </form>
       ) : (
         <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
-          <div>
-            <Input
-              {...resetForm.register("code")}
-              placeholder={t.codePlaceholder}
-              className={`h-14 rounded-2xl border-2 text-center text-lg tracking-widest font-bold ${resetForm.formState.errors.code ? 'border-red-500' : 'border-slate-200'}`}
-              maxLength={6}
-            />
-            {resetForm.formState.errors.code && (
-              <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.code.message}</p>
-            )}
+          <div className="space-y-4 bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
+            <div>
+              <label className="text-xs font-bold text-slate-500 ml-2 uppercase tracking-wider">
+                {t.emailPlaceholder}
+              </label>
+              <Input
+                value={email}
+                disabled
+                className="h-12 rounded-xl border-none bg-transparent font-semibold text-slate-600"
+              />
+            </div>
+            
+            <div>
+              <label className="text-xs font-bold text-green-600 ml-2 uppercase tracking-wider">
+                {t.codeLabel}
+              </label>
+              <Input
+                {...resetForm.register("code")}
+                placeholder={t.codePlaceholder}
+                className={`h-14 rounded-2xl border-2 text-center text-lg tracking-widest font-black ${resetForm.formState.errors.code ? 'border-red-500' : 'border-slate-200 focus:border-green-500'}`}
+                maxLength={6}
+              />
+              {resetForm.formState.errors.code && (
+                <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.code.message}</p>
+              )}
+            </div>
           </div>
           
-          <div>
-            <div className="relative">
-              <Input
-                {...resetForm.register("password")}
-                type={showPassword ? "text" : "password"}
-                placeholder={t.newPasswordPlaceholder}
-                className={`h-14 rounded-2xl border-2 pr-12 ${resetForm.formState.errors.password ? 'border-red-500' : 'border-slate-200'}`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-500 ml-2 uppercase tracking-wider">
+                {t.newPasswordPlaceholder}
+              </label>
+              <div className="relative">
+                <Input
+                  {...resetForm.register("password")}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className={`h-14 rounded-2xl border-2 pr-12 ${resetForm.formState.errors.password ? 'border-red-500' : 'border-slate-200 focus:border-green-500'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {resetForm.formState.errors.password && (
+                <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.password.message}</p>
+              )}
             </div>
-            {resetForm.formState.errors.password && (
-              <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.password.message}</p>
-            )}
+
+            <div>
+              <label className="text-xs font-bold text-slate-500 ml-2 uppercase tracking-wider">
+                {t.confirmPasswordPlaceholder}
+              </label>
+              <div className="relative">
+                <Input
+                  {...resetForm.register("confirmPassword")}
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className={`h-14 rounded-2xl border-2 pr-12 ${resetForm.formState.errors.confirmPassword ? 'border-red-500' : 'border-slate-200 focus:border-green-500'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {resetForm.formState.errors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.confirmPassword.message}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <div className="relative">
-              <Input
-                {...resetForm.register("confirmPassword")}
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder={t.confirmPasswordPlaceholder}
-                className={`h-14 rounded-2xl border-2 pr-12 ${resetForm.formState.errors.confirmPassword ? 'border-red-500' : 'border-slate-200'}`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            {resetForm.formState.errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1 ml-2 font-bold">{resetForm.formState.errors.confirmPassword.message}</p>
-            )}
-          </div>
           <Button
             type="submit"
             disabled={status === "loading"}
